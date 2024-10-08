@@ -1,12 +1,12 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import HeaderComponent from "./component/HeaderComponent";
-import FooterComponent from "./component/FooterComponent";
-import ListUserComponent from "./component/ListUserComponent";
-import Register from "./component/RegisterComponent";
-import Login from "./component/LoginComponent";
-import ProtectedRoute from "./component/ProtectedRoute"; // Import ProtectedRoute
-import LogoutComponent from "./component/LogoutComponent"; // Import logout component
+import HeaderComponent from "./components/HeaderComponent";
+import FooterComponent from "./components/FooterComponent";
+import ListUserComponent from "./pages/ListUserComponent";
+import Register from "./pages/RegisterComponent";
+import Login from "./pages/LoginComponent";
+import ProtectedRoute from "./components/ProtectedRoute"; // Import ProtectedRoute
+import LogoutComponent from "./pages/LogoutComponent"; // Import logout component
 
 function App() {
   return (

@@ -34,7 +34,7 @@ const ListUserComponent = () => {
             <tr>
               <th>User ID</th>
               <th>User Name</th>
-              <th>User Password</th>
+              <th>User email</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -43,7 +43,7 @@ const ListUserComponent = () => {
               <tr key={User.id}>
                 <td>{User.id}</td>
                 <td>{User.username}</td>
-                <td>{User.password}</td>
+                <td>{User.email}</td>
                 {/* <td>
                   <Link
                     className="btn btn-info mr-2"
