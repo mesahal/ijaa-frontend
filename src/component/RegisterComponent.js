@@ -7,16 +7,29 @@ function Register() {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // Added confirmPassword
+  const [registrationNo, setRegistrationNo] = useState(""); // Added registrationNo
+  const [errorMessage, setErrorMessage] = useState(""); // Added errorMessage state
   const navigate = useNavigate();
 
   async function save(event) {
     event.preventDefault();
+
+    // Check if passwords match
+    if (password !== confirmPassword) {
+      setErrorMessage("Passwords do not match"); // Set the error message
+      return;
+    } else {
+      setErrorMessage(""); // Clear the error message if passwords match
+    }
+
     try {
       await axios
         .post("http://localhost:8080/api/register", {
           userName: username,
           email: email,
           password: password,
+          registrationNo: registrationNo, // Added registrationNo to payload
         })
         .then(
           (res) => {
@@ -25,18 +38,18 @@ function Register() {
               alert("User Registration Successful");
               navigate("/");
             } else if (res.data.message === "Invalid Email") {
-              alert("Invalid Email");
+              setErrorMessage("Invalid Email");
             } else {
-              alert(res.data.message);
+              setErrorMessage(res.data.message);
             }
           },
           (fail) => {
             console.error(fail);
-            alert(fail.response.data);
+            setErrorMessage(fail.response.data);
           }
         );
     } catch (err) {
-      alert(err);
+      setErrorMessage(err.message);
     }
   }
 
@@ -71,6 +84,19 @@ function Register() {
           </div>
 
           <div className="form-group">
+            <label>Registration Number</label>{" "}
+            {/* Added registrationNo field */}
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Enter Registration No"
+              value={registrationNo}
+              onChange={(event) => setRegistrationNo(event.target.value)}
+              required
+            />
+          </div>
+
+          <div className="form-group">
             <label>Password</label>
             <input
               type="password"
@@ -81,6 +107,21 @@ function Register() {
               required
             />
           </div>
+
+          <div className="form-group">
+            <label>Confirm Password</label> {/* Added confirmPassword field */}
+            <input
+              type="password"
+              className="form-control"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              required
+            />
+          </div>
+
+          {/* Error message for password mismatch */}
+          {errorMessage && <div className="error-message">{errorMessage}</div>}
 
           <button
             type="submit"
