@@ -9,7 +9,8 @@ function Register() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState(""); // Added confirmPassword
   const [registrationNo, setRegistrationNo] = useState(""); // Added registrationNo
-  const [errorMessage, setErrorMessage] = useState(""); // Added errorMessage state
+  const [errorMessage, setErrorMessage] = useState(""); // Error message state
+  const [successMessage, setSuccessMessage] = useState(""); // Success message state
   const navigate = useNavigate();
 
   async function save(event) {
@@ -18,6 +19,7 @@ function Register() {
     // Check if passwords match
     if (password !== confirmPassword) {
       setErrorMessage("Passwords do not match"); // Set the error message
+      setSuccessMessage(""); // Clear success message if there's an error
       return;
     } else {
       setErrorMessage(""); // Clear the error message if passwords match
@@ -25,8 +27,8 @@ function Register() {
 
     try {
       await axios
-        .post("http://localhost:8080/api/register", {
-          userName: username,
+        .post("http://localhost:8081/ijaa/register", {
+          username: username,
           email: email,
           password: password,
           registrationNo: registrationNo, // Added registrationNo to payload
@@ -34,22 +36,33 @@ function Register() {
         .then(
           (res) => {
             console.log(res.data);
-            if (res.data.status === true) {
-              alert("User Registration Successful");
-              navigate("/");
+            if (res.data === "Successfully registered") {
+              setSuccessMessage("User Registration Successful"); // Set success message
+              setErrorMessage(""); // Clear any error message
+              // Optionally redirect after a delay
+              setTimeout(() => {
+                navigate("/");
+              }, 2000);
+            } else if (res.data === "username already exists") {
+              setErrorMessage("Username already exists");
+              setSuccessMessage(""); // Clear success message if there's an error
             } else if (res.data.message === "Invalid Email") {
               setErrorMessage("Invalid Email");
+              setSuccessMessage(""); // Clear success message if there's an error
             } else {
               setErrorMessage(res.data.message);
+              setSuccessMessage(""); // Clear success message if there's an error
             }
           },
           (fail) => {
             console.error(fail);
             setErrorMessage(fail.response.data);
+            setSuccessMessage(""); // Clear success message if there's an error
           }
         );
     } catch (err) {
       setErrorMessage(err.message);
+      setSuccessMessage(""); // Clear success message if there's an error
     }
   }
 
@@ -120,8 +133,13 @@ function Register() {
             />
           </div>
 
-          {/* Error message for password mismatch */}
+          {/* Error message for validation */}
           {errorMessage && <div className="error-message">{errorMessage}</div>}
+
+          {/* Success message for successful registration */}
+          {successMessage && (
+            <div className="success-message">{successMessage}</div>
+          )}
 
           <button
             type="submit"

@@ -55,7 +55,13 @@
 }
 
 .error-message {
-  color: red; /* Change to your desired color */
+  color: red; /* Styling for error message */
   margin-top: 10px;
-  font-size: 14px; /* Adjust size as needed */
+  font-size: 14px;
+}
+
+.success-message {
+  color: green; /* Styling for success message */
+  margin-top: 10px;
+  font-size: 14px;
 }
