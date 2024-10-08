@@ -6,6 +6,7 @@ import "./Login.css"; // Import custom styles
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMessage, setErrorMessage] = useState(""); // State for error message
   const navigate = useNavigate();
 
   // Check if the user is already logged in
@@ -26,19 +27,21 @@ function Login() {
         })
         .then((res) => {
           const token = res.data;
-          if (token) {
+          if (token == "User is not active") {
+            setErrorMessage("User is not active"); // Set error message on failure
+          } else if (token == "Wrong username or password") {
+            setErrorMessage("Invalid username or password"); // Set error message on failure
+          } else {
             localStorage.setItem("token", token);
             navigate("/users");
-          } else {
-            alert(res.data.message);
           }
         })
         .catch((err) => {
           console.error(err);
-          alert("Login failed. Please try again.");
+          setErrorMessage("Login failed. Please try again."); // Handle server or network error
         });
     } catch (err) {
-      alert("An error occurred: " + err);
+      setErrorMessage("An error occurred: " + err);
     }
   }
 
@@ -51,6 +54,11 @@ function Login() {
         </div>
 
         <div className="login-body">
+          {/* Show error message if it exists */}
+          {errorMessage && (
+            <div className="alert alert-danger">{errorMessage}</div>
+          )}
+
           <form onSubmit={login}>
             <div className="form-group">
               <label>Username</label>
