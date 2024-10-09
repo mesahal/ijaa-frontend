@@ -1,0 +1,42 @@
+/* Header.css */
+.header-container {
+  background-color: black !important; /* Ensure background color is applied */
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between; /* Ensure spacing between elements */
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  color: white !important; /* Ensure text color is white */
+  text-align: center;
+  width: 90%; /* Center the title */
+}
+
+.navbar-nav {
+  display: flex; /* Use flexbox for navbar items */
+  margin-left: auto; /* Push nav items to the right */
+}
+
+.nav-item {
+  display: inline; /* Ensure nav items are inline */
+}
+
+.nav-link {
+  color: white !important; /* Ensure link text color is white */
+  margin-right: 10px;
+}
+
+.nav-link:hover {
+  color: #cccccc !important; /* Optional hover effect */
+}
+
+.collapse {
+  flex-grow: 0;
+}
+
+.navbar-brand:hover {
+  color: #f8f9fa !important; /* Optional hover effect for brand */
+}

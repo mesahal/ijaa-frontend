@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import "../styles/Header.css";
 
 const HeaderComponent = () => {
   const location = useLocation();
@@ -8,7 +9,7 @@ const HeaderComponent = () => {
   return (
     <div>
       <header>
-        <nav className="navbar navbar-expand-md navbar-dark bg-dark p-3">
+        <nav className="navbar navbar-expand-md navbar p-3 header-container">
           <div className="container-fluid">
             <a className="navbar-brand" href="#">
               IIT JU Alumni Association

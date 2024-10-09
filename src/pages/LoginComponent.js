@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import "../styles/Login.css"; // Import custom styles
 
-function Login() {
+function Login({ onLogin }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState(""); // State for error message
@@ -29,6 +29,7 @@ function Login() {
           if (res.data.data != null) {
             const token = res.data.data.token;
             localStorage.setItem("token", token);
+            onLogin(token); // Update token state in parent (App.js)
             navigate("/users");
           } else {
             setErrorMessage(res.data.message);
