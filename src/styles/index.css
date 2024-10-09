@@ -1,9 +1,80 @@
-.footer{
-    background-color: black;
-    color: white;
-    padding: 15px;
-    text-align: center;
-    position: fixed;
-    bottom: 0;
+/* Footer Styling */
+.footer {
+  background-color: black;
+  color: white;
+  padding: 15px;
+  text-align: center;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+/* Ensure that content and sidebar don't overlap */
+.app-layout {
+  display: flex;
+  min-height: 100vh; /* Ensures full height, even if content is small */
+  flex-direction: column; /* Stacks items vertically */
+}
+
+.app-layout > .main-content {
+  display: flex;
+  flex-grow: 1; /* Allows the main content area to grow and take remaining space */
+}
+
+/* Sidebar Styling */
+.sidebar {
+  width: 250px;
+  background-color: #333;
+  color: white;
+  padding: 15px;
+  position: relative;
+  transition: width 0.3s;
+  height: 100vh;
+}
+
+.sidebar a {
+  color: white;
+  padding: 10px;
+  text-decoration: none;
+  display: block;
+}
+
+.sidebar a:hover {
+  background-color: #575757;
+}
+
+/* Collapsed Sidebar */
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.container {
+  flex-grow: 1;
+  padding: 20px;
+  margin-left: 250px; /* Adjust the margin for the content when the sidebar is open */
+  transition: margin-left 0.3s;
+}
+
+/* Adjust container margin when the sidebar is collapsed */
+.sidebar.collapsed ~ .container {
+  margin-left: 80px;
+}
+
+/* Ensure footer is always at the bottom */
+.footer {
+  position: relative;
+  margin-top: auto;
+}
+
+/* Responsive Design for Small Screens */
+@media (max-width: 768px) {
+  .sidebar {
     width: 100%;
+    height: auto;
+    position: relative;
+  }
+
+  .container {
+    margin-left: 0;
+  }
 }

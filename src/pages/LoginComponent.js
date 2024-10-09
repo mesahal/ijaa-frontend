@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./Login.css"; // Import custom styles
+import "../styles/Login.css"; // Import custom styles
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -26,14 +26,12 @@ function Login() {
           password: password,
         })
         .then((res) => {
-          const token = res.data;
-          if (token == "User is not active") {
-            setErrorMessage("User is not active"); // Set error message on failure
-          } else if (token == "Wrong username or password") {
-            setErrorMessage("Invalid username or password"); // Set error message on failure
-          } else {
+          if (res.data.data != null) {
+            const token = res.data.data.token;
             localStorage.setItem("token", token);
             navigate("/users");
+          } else {
+            setErrorMessage(res.data.message);
           }
         })
         .catch((err) => {

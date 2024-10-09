@@ -34,7 +34,7 @@ const HeaderComponent = () => {
                     ) : (
                       <li className="nav-item">
                         <Link className="nav-link" to="/register">
-                          Register
+                          Sign Up
                         </Link>
                       </li>
                     )}

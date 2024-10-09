@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import "./Register.css"; // Import custom styles
+import "../styles/Register.css"; // Import custom styles
 
 function Register() {
   const [username, setUsername] = useState("");
@@ -69,7 +69,7 @@ function Register() {
   return (
     <div className="register-container">
       <div className="register-card">
-        <h1 className="register-header">Register</h1>
+        <h1 className="register-header">Sign Up</h1>
         <hr />
         <form>
           <div className="form-group">
@@ -146,7 +146,7 @@ function Register() {
             className="btn btn-primary btn-block mt-4"
             onClick={save}
           >
-            Save
+            Sign Up
           </button>
         </form>
       </div>
