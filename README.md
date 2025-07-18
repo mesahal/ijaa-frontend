@@ -1,1 +1,0 @@
-IIT JU Alumni Association
