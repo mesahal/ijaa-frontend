@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Users,
   Search,
@@ -176,10 +177,13 @@ const Groups = () => {
               Join communities and connect with like-minded alumni
             </p>
           </div>
-          <button className="mt-4 sm:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2">
+          <Link
+            to="/groups/create"
+            className="mt-4 sm:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
             <Plus className="h-5 w-5" />
             <span>Create Group</span>
-          </button>
+          </Link>
         </div>
       </div>
 

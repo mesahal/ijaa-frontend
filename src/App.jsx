@@ -16,6 +16,8 @@ import Search from "./pages/Search";
 import EditProfile from "./pages/EditProfile";
 import PrivacySettings from "./pages/PrivacySettings";
 import AccountSettings from "./pages/AccountSettings";
+import CreateEvent from "./pages/CreateEvent";
+import CreateGroup from "./pages/CreateGroup";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -92,8 +94,16 @@ function AppRoutes() {
           element={user ? <Events /> : <Navigate to="/" />}
         />
         <Route
+          path="/events/create"
+          element={user ? <CreateEvent /> : <Navigate to="/" />}
+        />
+        <Route
           path="/groups"
           element={user ? <Groups /> : <Navigate to="/" />}
+        />
+        <Route
+          path="/groups/create"
+          element={user ? <CreateGroup /> : <Navigate to="/" />}
         />
         <Route path="/chat" element={user ? <Chat /> : <Navigate to="/" />} />
         <Route

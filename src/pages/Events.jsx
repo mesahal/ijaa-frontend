@@ -183,10 +183,13 @@ const Events = () => {
               Discover and join upcoming alumni events
             </p>
           </div>
-          <button className="mt-4 sm:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2">
+          <Link
+            to="/events/create"
+            className="mt-4 sm:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2"
+          >
             <Plus className="h-5 w-5" />
             <span>Create Event</span>
-          </button>
+          </Link>
         </div>
       </div>
 
