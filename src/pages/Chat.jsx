@@ -116,7 +116,7 @@ const Chat = () => {
     <div className="min-h-screen flex flex-col">
       <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         <div
-          className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden"
+          className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden"
           style={{ height: "calc(100vh - 8rem)" }}
         >
           <div className="flex h-full">
@@ -124,22 +124,22 @@ const Chat = () => {
             <div
               className={`${
                 selectedChat ? "hidden lg:block" : "block"
-              } w-full lg:w-1/3 border-r border-gray-200 flex flex-col`}
+              } w-full lg:w-1/3 border-r border-gray-200 dark:border-gray-700 flex flex-col`}
             >
               {/* Header */}
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+              <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   Messages
                 </h2>
 
                 {/* Tabs */}
-                <div className="flex space-x-1 mb-4 bg-gray-100 rounded-lg p-1">
+                <div className="flex space-x-1 mb-4 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
                   <button
                     onClick={() => setActiveTab("all")}
                     className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                       activeTab === "all"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
                     All
@@ -148,8 +148,8 @@ const Chat = () => {
                     onClick={() => setActiveTab("direct")}
                     className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                       activeTab === "direct"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
                     Direct
@@ -158,8 +158,8 @@ const Chat = () => {
                     onClick={() => setActiveTab("groups")}
                     className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
                       activeTab === "groups"
-                        ? "bg-white text-blue-600 shadow-sm"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "bg-white dark:bg-gray-600 text-blue-600 dark:text-blue-400 shadow-sm"
+                        : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                     }`}
                   >
                     Groups
@@ -173,7 +173,7 @@ const Chat = () => {
                     placeholder="Search conversations..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -184,9 +184,9 @@ const Chat = () => {
                   <div
                     key={chat.id}
                     onClick={() => setSelectedChat(chat.id)}
-                    className={`p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors ${
+                    className={`p-4 border-b border-gray-100 dark:border-gray-700 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${
                       selectedChat === chat.id
-                        ? "bg-blue-50 border-blue-200"
+                        ? "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
                         : ""
                     }`}
                   >
@@ -209,28 +209,28 @@ const Chat = () => {
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="font-medium text-gray-900 truncate">
+                          <h3 className="font-medium text-gray-900 dark:text-white truncate">
                             {chat.name}
                           </h3>
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {chat.lastMessageTime}
                           </span>
                         </div>
 
                         {chat.type === "individual" && chat.profession && (
-                          <p className="text-xs text-gray-500 mb-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                             {chat.profession}
                           </p>
                         )}
 
                         {chat.type === "group" && (
-                          <p className="text-xs text-gray-500 mb-1">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
                             {chat.memberCount} members
                           </p>
                         )}
 
                         <div className="flex items-center justify-between">
-                          <p className="text-sm text-gray-600 truncate">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
                             {chat.lastMessage}
                           </p>
                           {chat.unreadCount > 0 && (
@@ -255,10 +255,10 @@ const Chat = () => {
               {currentChat ? (
                 <div className="h-full flex flex-col">
                   {/* Mobile Back Button */}
-                  <div className="lg:hidden p-4 border-b border-gray-200">
+                  <div className="lg:hidden p-4 border-b border-gray-200 dark:border-gray-700">
                     <button
                       onClick={handleBackToList}
-                      className="flex items-center space-x-2 text-gray-600 hover:text-gray-900"
+                      className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
                     >
                       <ArrowLeft className="h-5 w-5" />
                       <span>Back</span>
@@ -286,10 +286,10 @@ const Chat = () => {
                 <div className="flex-1 flex items-center justify-center">
                   <div className="text-center">
                     <MessageCircle className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                       Select a conversation
                     </h3>
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-300">
                       Choose a chat from the sidebar to start messaging
                     </p>
                   </div>

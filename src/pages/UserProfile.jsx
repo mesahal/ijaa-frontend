@@ -175,7 +175,7 @@ const UserProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -185,10 +185,10 @@ const UserProfile = () => {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             User Not Found
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             The user profile you're looking for doesn't exist.
           </p>
           <button
@@ -207,14 +207,14 @@ const UserProfile = () => {
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+        className="flex items-center space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white mb-6 transition-colors"
       >
         <ArrowLeft className="h-5 w-5" />
         <span>Back</span>
       </button>
 
       {/* Profile Header */}
-      <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
         {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative mb-16">
           <img
@@ -225,29 +225,31 @@ const UserProfile = () => {
         </div>
 
         {/* Profile Info */}
-        <div className="px-8 pb-8 -mt-16">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
+        <div className="px-4 sm:px-8 pb-8 relative">
+          <div className="flex flex-col items-center sm:flex-row sm:items-end sm:space-x-6 -mt-16 sm:-mt-16">
             {/* Profile Picture */}
-            <div className="relative">
+            <div className="relative mb-4 sm:mb-0">
               <img
                 src={user.avatar}
                 alt={user.name}
-                className="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover"
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
               />
             </div>
 
             {/* Basic Info */}
-            <div className="flex-1 mt-4 sm:mt-0">
+            <div className="flex-1 text-center sm:text-left">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                  <h1 className="text-3xl font-bold text-gray-900">
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                     {user.name}
                   </h1>
-                  <p className="text-lg text-gray-600 mt-1">
+                  <p className="text-lg text-gray-600 dark:text-gray-300 mt-1">
                     {user.profession}
                   </p>
-                  <p className="text-blue-600 font-medium">{user.company}</p>
-                  <div className="flex items-center space-x-4 mt-2 text-sm text-gray-500">
+                  <p className="text-blue-600 dark:text-blue-400 font-medium">
+                    {user.company}
+                  </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
                     <div className="flex items-center space-x-1">
                       <MapPin className="h-4 w-4" />
                       <span>{user.location}</span>
@@ -261,11 +263,11 @@ const UserProfile = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 mt-4 sm:mt-0">
+                <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-3 mt-4 sm:mt-0 w-full sm:w-auto">
                   {user.isConnected ? (
                     <button
                       onClick={handleMessage}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                      className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
                     >
                       <MessageCircle className="h-4 w-4" />
                       <span>Message</span>
@@ -273,7 +275,7 @@ const UserProfile = () => {
                   ) : (
                     <button
                       onClick={handleConnect}
-                      className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+                      className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
                     >
                       <UserPlus className="h-4 w-4" />
                       <span>Connect</span>
@@ -290,27 +292,39 @@ const UserProfile = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* About Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">About</h2>
-            <p className="text-gray-700 leading-relaxed">{user.bio}</p>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              About
+            </h2>
+            <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+              {user.bio}
+            </p>
           </div>
 
           {/* Experience Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
               Experience
             </h2>
             <div className="space-y-6">
               {user.experience.map((exp, index) => (
                 <div key={index} className="flex space-x-4">
-                  <div className="bg-blue-100 p-3 rounded-lg">
+                  <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-lg">
                     <Briefcase className="h-6 w-6 text-blue-600" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{exp.title}</h3>
-                    <p className="text-blue-600 font-medium">{exp.company}</p>
-                    <p className="text-sm text-gray-500 mb-2">{exp.period}</p>
-                    <p className="text-gray-700">{exp.description}</p>
+                    <h3 className="font-semibold text-gray-900 dark:text-white">
+                      {exp.title}
+                    </h3>
+                    <p className="text-blue-600 dark:text-blue-400 font-medium">
+                      {exp.company}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
+                      {exp.period}
+                    </p>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      {exp.description}
+                    </p>
                   </div>
                 </div>
               ))}
@@ -318,13 +332,15 @@ const UserProfile = () => {
           </div>
 
           {/* Skills Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Skills</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Skills
+            </h2>
             <div className="flex flex-wrap gap-2">
               {user.skills.map((skill, index) => (
                 <span
                   key={index}
-                  className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                  className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium"
                 >
                   {skill}
                 </span>
@@ -336,17 +352,19 @@ const UserProfile = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Contact Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Contact Information
             </h3>
             <div className="space-y-4">
               {/* Email */}
               <div className="flex items-start space-x-3">
-                <Mail className="h-5 w-5 text-gray-400 mt-0.5" />
+                <Mail className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Email</p>
-                  <p className="text-sm text-gray-600 break-all">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Email
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
                     {user.email}
                   </p>
                 </div>
@@ -354,21 +372,27 @@ const UserProfile = () => {
 
               {/* Phone */}
               <div className="flex items-start space-x-3">
-                <Phone className="h-5 w-5 text-gray-400 mt-0.5" />
+                <Phone className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Phone</p>
-                  <p className="text-sm text-gray-600">{user.phone}</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Phone
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
+                    {user.phone}
+                  </p>
                 </div>
               </div>
 
               {/* LinkedIn */}
               <div className="flex items-start space-x-3">
-                <Linkedin className="h-5 w-5 text-gray-400 mt-0.5" />
+                <Linkedin className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">LinkedIn</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    LinkedIn
+                  </p>
                   <a
                     href={user.linkedin}
-                    className="text-sm text-blue-600 hover:text-blue-700 break-all"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 break-all"
                   >
                     View Profile
                   </a>
@@ -377,12 +401,14 @@ const UserProfile = () => {
 
               {/* Website */}
               <div className="flex items-start space-x-3">
-                <Globe className="h-5 w-5 text-gray-400 mt-0.5" />
+                <Globe className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5" />
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Website</p>
+                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                    Website
+                  </p>
                   <a
                     href={user.website}
-                    className="text-sm text-blue-600 hover:text-blue-700 break-all"
+                    className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 break-all"
                   >
                     Visit Website
                   </a>
@@ -392,26 +418,32 @@ const UserProfile = () => {
           </div>
 
           {/* Connection Stats */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Network
             </h3>
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Connections</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Connections
+                </span>
+                <span className="font-semibold text-gray-900 dark:text-white">
                   {user.connections}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Department</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Department
+                </span>
+                <span className="font-semibold text-gray-900 dark:text-white">
                   {user.department}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600">Batch Year</span>
-                <span className="font-semibold text-gray-900">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
+                  Batch Year
+                </span>
+                <span className="font-semibold text-gray-900 dark:text-white">
                   {user.batch}
                 </span>
               </div>
@@ -422,14 +454,14 @@ const UserProfile = () => {
           <div
             className={`rounded-xl border p-6 ${
               user.isConnected
-                ? "bg-green-50 border-green-200"
-                : "bg-blue-50 border-blue-200"
+                ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                : "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800"
             }`}
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               {user.isConnected ? "Connected" : "Connect"}
             </h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
               {user.isConnected
                 ? "You are connected with this alumni member"
                 : "Send a connection request to start networking"}

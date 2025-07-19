@@ -265,14 +265,14 @@ const DirectChat = ({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-800">
       {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b border-gray-200">
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-3">
           {onBack && (
             <button
               onClick={onBack}
-              className="p-1 text-gray-400 hover:text-gray-600 rounded-lg transition-colors lg:hidden"
+              className="p-1 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg transition-colors lg:hidden"
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
@@ -290,21 +290,23 @@ const DirectChat = ({
           </div>
 
           <div>
-            <h3 className="font-semibold text-gray-900">{contactName}</h3>
-            <p className="text-sm text-gray-500">
+            <h3 className="font-semibold text-gray-900 dark:text-white">
+              {contactName}
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               {isOnline ? "Online" : "Last seen recently"}
             </p>
           </div>
         </div>
 
         <div className="flex items-center space-x-2">
-          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
             <Phone className="h-5 w-5" />
           </button>
-          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
             <Video className="h-5 w-5" />
           </button>
-          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
             <MoreVertical className="h-5 w-5" />
           </button>
         </div>
@@ -330,7 +332,7 @@ const DirectChat = ({
             <div key={message.id}>
               {showDateSeparator && (
                 <div className="flex items-center justify-center my-4">
-                  <div className="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm">
+                  <div className="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-full text-sm">
                     {formatDate(message.timestamp)}
                   </div>
                 </div>
@@ -350,7 +352,7 @@ const DirectChat = ({
                     className={`px-4 py-2 rounded-2xl ${
                       isCurrentUser
                         ? "bg-blue-500 text-white rounded-br-md"
-                        : "bg-gray-100 text-gray-900 rounded-bl-md"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white rounded-bl-md"
                     }`}
                   >
                     <p className="text-sm whitespace-pre-wrap">
@@ -364,7 +366,7 @@ const DirectChat = ({
                         isCurrentUser ? "justify-end" : "justify-start"
                       }`}
                     >
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {formatTime(message.timestamp)}
                       </p>
                       {isCurrentUser && (
@@ -382,15 +384,15 @@ const DirectChat = ({
 
         {isTyping && (
           <div className="flex justify-start">
-            <div className="bg-gray-100 px-4 py-2 rounded-2xl rounded-bl-md">
+            <div className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-2xl rounded-bl-md">
               <div className="flex space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"></div>
                 <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                   style={{ animationDelay: "0.1s" }}
                 ></div>
                 <div
-                  className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"
+                  className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full animate-bounce"
                   style={{ animationDelay: "0.2s" }}
                 ></div>
               </div>
@@ -402,9 +404,9 @@ const DirectChat = ({
       </div>
 
       {/* Message Input */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-4">
-          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
             <Paperclip className="h-5 w-5" />
           </button>
 
@@ -416,11 +418,11 @@ const DirectChat = ({
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
               rows={1}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
             />
           </div>
 
-          <button className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors">
+          <button className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
             <Smile className="h-5 w-5" />
           </button>
 

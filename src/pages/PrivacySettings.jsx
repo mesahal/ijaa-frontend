@@ -109,25 +109,31 @@ const PrivacySettings = () => {
           onClick={() => onChange(option.value)}
           className={`p-4 border-2 rounded-lg text-left transition-colors ${
             value === option.value
-              ? "border-blue-500 bg-blue-50"
-              : "border-gray-200 hover:border-gray-300"
+              ? "border-blue-500 bg-blue-50 dark:bg-blue-900/50"
+              : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
           }`}
         >
           <div className="flex items-center space-x-3 mb-2">
             <option.icon
               className={`h-5 w-5 ${
-                value === option.value ? "text-blue-600" : "text-gray-400"
+                value === option.value
+                  ? "text-blue-600"
+                  : "text-gray-400 dark:text-gray-500"
               }`}
             />
             <span
               className={`font-medium ${
-                value === option.value ? "text-blue-900" : "text-gray-900"
+                value === option.value
+                  ? "text-blue-900 dark:text-blue-100"
+                  : "text-gray-900 dark:text-white"
               }`}
             >
               {option.label}
             </span>
           </div>
-          <p className="text-sm text-gray-600">{option.description}</p>
+          <p className="text-sm text-gray-600 dark:text-gray-300">
+            {option.description}
+          </p>
         </button>
       ))}
     </div>
@@ -140,15 +146,15 @@ const PrivacySettings = () => {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-lg transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
               Privacy Settings
             </h1>
-            <p className="text-gray-600 mt-2">
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
               Control who can see your information
             </p>
           </div>
@@ -165,11 +171,13 @@ const PrivacySettings = () => {
 
       <div className="space-y-8">
         {/* Profile Visibility */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             Profile Visibility
           </h2>
-          <p className="text-gray-600 mb-6">Choose who can view your profile</p>
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
+            Choose who can view your profile
+          </p>
           <VisibilitySelector
             value={settings.profileVisibility}
             onChange={(value) =>
@@ -179,14 +187,14 @@ const PrivacySettings = () => {
         </div>
 
         {/* Contact Information */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Contact Information
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Email Address
               </label>
               <VisibilitySelector
@@ -196,7 +204,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Phone Number
               </label>
               <VisibilitySelector
@@ -206,7 +214,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Location
               </label>
               <VisibilitySelector
@@ -218,14 +226,14 @@ const PrivacySettings = () => {
         </div>
 
         {/* Professional Information */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Professional Information
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Profession & Company
               </label>
               <VisibilitySelector
@@ -235,7 +243,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Work Experience
               </label>
               <VisibilitySelector
@@ -245,7 +253,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Skills
               </label>
               <VisibilitySelector
@@ -257,14 +265,14 @@ const PrivacySettings = () => {
         </div>
 
         {/* Social Links */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Social Links
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 LinkedIn Profile
               </label>
               <VisibilitySelector
@@ -274,7 +282,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Personal Website
               </label>
               <VisibilitySelector
@@ -286,14 +294,14 @@ const PrivacySettings = () => {
         </div>
 
         {/* Activity & Connections */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Activity & Connections
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Connections List
               </label>
               <VisibilitySelector
@@ -303,7 +311,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Groups Membership
               </label>
               <VisibilitySelector
@@ -313,7 +321,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Events Attendance
               </label>
               <VisibilitySelector
@@ -325,14 +333,14 @@ const PrivacySettings = () => {
         </div>
 
         {/* Communication Preferences */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Communication Preferences
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Who can message you
               </label>
               <VisibilitySelector
@@ -345,7 +353,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Group Invitations
               </label>
               <VisibilitySelector
@@ -358,7 +366,7 @@ const PrivacySettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Event Invitations
               </label>
               <VisibilitySelector
@@ -373,18 +381,18 @@ const PrivacySettings = () => {
         </div>
 
         {/* Additional Settings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Additional Settings
           </h2>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div>
-                <h3 className="font-medium text-gray-900">
+                <h3 className="font-medium text-gray-900 dark:text-white">
                   Searchable Profile
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Allow others to find you in search results
                 </p>
               </div>
@@ -404,12 +412,12 @@ const PrivacySettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div>
-                <h3 className="font-medium text-gray-900">
+                <h3 className="font-medium text-gray-900 dark:text-white">
                   Show Online Status
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Let others see when you're online
                 </p>
               </div>
@@ -434,12 +442,12 @@ const PrivacySettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div>
-                <h3 className="font-medium text-gray-900">
+                <h3 className="font-medium text-gray-900 dark:text-white">
                   Profile View Notifications
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-gray-600 dark:text-gray-300">
                   Get notified when someone views your profile
                 </p>
               </div>

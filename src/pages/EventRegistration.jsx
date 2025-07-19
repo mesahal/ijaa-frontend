@@ -256,7 +256,7 @@ const EventRegistration = () => {
       {/* Back Button */}
       <button
         onClick={() => navigate(-1)}
-        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 mb-6 transition-colors"
+        className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white mb-6 transition-colors"
       >
         <ArrowLeft className="h-5 w-5" />
         <span>Back to Events</span>
@@ -265,7 +265,7 @@ const EventRegistration = () => {
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Event Details */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
             <img
               src={event.image}
               alt={event.title}
@@ -285,24 +285,24 @@ const EventRegistration = () => {
                 )}
               </div>
 
-              <h1 className="text-3xl font-bold text-gray-900 mb-4">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
                 {event.title}
               </h1>
 
               <div className="grid md:grid-cols-2 gap-4 mb-6">
-                <div className="flex items-center space-x-2 text-gray-600">
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                   <Calendar className="h-5 w-5" />
                   <span>{formatDate(event.date)}</span>
                 </div>
-                <div className="flex items-center space-x-2 text-gray-600">
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                   <Clock className="h-5 w-5" />
                   <span>{event.time}</span>
                 </div>
-                <div className="flex items-center space-x-2 text-gray-600">
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                   <MapPin className="h-5 w-5" />
                   <span>{event.location}</span>
                 </div>
-                <div className="flex items-center space-x-2 text-gray-600">
+                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                   <Users className="h-5 w-5" />
                   <span>
                     {event.attendees}/{event.maxAttendees} registered
@@ -310,38 +310,42 @@ const EventRegistration = () => {
                 </div>
               </div>
 
-              <p className="text-gray-700 leading-relaxed mb-6">
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed mb-6">
                 {event.description}
               </p>
 
               <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Event Agenda
                 </h3>
                 <div className="space-y-3">
                   {event.agenda.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-start space-x-3 p-3 bg-gray-50 rounded-lg"
+                      className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
                     >
                       <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm font-medium">
                         {item.time}
                       </span>
-                      <span className="text-gray-700">{item.activity}</span>
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {item.activity}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
 
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Requirements
                 </h3>
                 <ul className="space-y-2">
                   {event.requirements.map((req, index) => (
                     <li key={index} className="flex items-start space-x-2">
                       <span className="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></span>
-                      <span className="text-gray-700">{req}</span>
+                      <span className="text-gray-700 dark:text-gray-300">
+                        {req}
+                      </span>
                     </li>
                   ))}
                 </ul>
@@ -352,14 +356,14 @@ const EventRegistration = () => {
 
         {/* Registration Form */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 sticky top-8">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
               Register for Event
             </h2>
 
             <form onSubmit={handleRegistration} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Full Name
                 </label>
                 <div className="relative">
@@ -370,13 +374,13 @@ const EventRegistration = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
@@ -387,13 +391,13 @@ const EventRegistration = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Phone Number
                 </label>
                 <div className="relative">
@@ -404,13 +408,13 @@ const EventRegistration = () => {
                     value={formData.phone}
                     onChange={handleInputChange}
                     required
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Special Requests (Optional)
                 </label>
                 <textarea
@@ -418,7 +422,7 @@ const EventRegistration = () => {
                   value={formData.specialRequests}
                   onChange={handleInputChange}
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Any dietary restrictions, accessibility needs, etc."
                 />
               </div>
@@ -461,7 +465,7 @@ const EventRegistration = () => {
             </form>
 
             <div className="mt-6 pt-6 border-t border-gray-200">
-              <div className="text-sm text-gray-600">
+              <div className="text-sm text-gray-600 dark:text-gray-300">
                 <p className="mb-2">
                   <strong>Organized by:</strong> {event.organizer}
                 </p>

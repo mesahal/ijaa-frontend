@@ -177,13 +177,15 @@ const CreateGroup = () => {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => navigate(-1)}
-            className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-lg transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Create Group</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Create Group
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
               Start a new community for alumni
             </p>
           </div>
@@ -192,14 +194,14 @@ const CreateGroup = () => {
 
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* Basic Information */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Basic Information
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Group Name *
               </label>
               <input
@@ -207,8 +209,10 @@ const CreateGroup = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.name ? "border-red-300" : "border-gray-300"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                  errors.name
+                    ? "border-red-300"
+                    : "border-gray-300 dark:border-gray-600"
                 }`}
                 placeholder="Enter group name"
               />
@@ -218,7 +222,7 @@ const CreateGroup = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Group Type *
               </label>
               <div className="grid md:grid-cols-2 gap-3">
@@ -227,8 +231,8 @@ const CreateGroup = () => {
                     key={type.value}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                       formData.type === type.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/50"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                     }`}
                   >
                     <input
@@ -243,13 +247,13 @@ const CreateGroup = () => {
                       <h3
                         className={`font-medium ${
                           formData.type === type.value
-                            ? "text-blue-900"
-                            : "text-gray-900"
+                            ? "text-blue-900 dark:text-blue-100"
+                            : "text-gray-900 dark:text-white"
                         }`}
                       >
                         {type.label}
                       </h3>
-                      <p className="text-sm text-gray-600 mt-1">
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                         {type.description}
                       </p>
                     </div>
@@ -259,7 +263,7 @@ const CreateGroup = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Description *
               </label>
               <textarea
@@ -267,8 +271,10 @@ const CreateGroup = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={4}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                  errors.description ? "border-red-300" : "border-gray-300"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
+                  errors.description
+                    ? "border-red-300"
+                    : "border-gray-300 dark:border-gray-600"
                 }`}
                 placeholder="Describe your group's purpose and what members can expect..."
               />
@@ -282,14 +288,14 @@ const CreateGroup = () => {
         </div>
 
         {/* Privacy Settings */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Privacy Settings
           </h2>
 
           <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-3">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                 Group Privacy *
               </label>
               <div className="grid md:grid-cols-2 gap-4">
@@ -298,8 +304,8 @@ const CreateGroup = () => {
                     key={option.value}
                     className={`p-4 border-2 rounded-lg cursor-pointer transition-colors ${
                       formData.privacy === option.value
-                        ? "border-blue-500 bg-blue-50"
-                        : "border-gray-200 hover:border-gray-300"
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-900/50"
+                        : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                     }`}
                   >
                     <input
@@ -315,20 +321,20 @@ const CreateGroup = () => {
                         className={`h-5 w-5 ${
                           formData.privacy === option.value
                             ? "text-blue-600"
-                            : "text-gray-400"
+                            : "text-gray-400 dark:text-gray-500"
                         }`}
                       />
                       <div>
                         <h3
                           className={`font-medium ${
                             formData.privacy === option.value
-                              ? "text-blue-900"
-                              : "text-gray-900"
+                              ? "text-blue-900 dark:text-blue-100"
+                              : "text-gray-900 dark:text-white"
                           }`}
                         >
                           {option.label}
                         </h3>
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-300">
                           {option.description}
                         </p>
                       </div>
@@ -339,12 +345,12 @@ const CreateGroup = () => {
             </div>
 
             <div className="space-y-4">
-              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Require Approval to Join
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     New members need admin approval before joining
                   </p>
                 </div>
@@ -370,12 +376,12 @@ const CreateGroup = () => {
                 </button>
               </div>
 
-              <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+              <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Allow Member Invites
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Members can invite others to join the group
                   </p>
                 </div>
@@ -403,9 +409,11 @@ const CreateGroup = () => {
         </div>
 
         {/* Tags */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Tags</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Tags
+            </h2>
             <button
               type="button"
               onClick={addTag}
@@ -424,7 +432,7 @@ const CreateGroup = () => {
                   value={tag}
                   onChange={(e) => handleTagChange(index, e.target.value)}
                   placeholder="Enter tag (e.g., Technology, Sports, Career)"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {formData.tags.length > 1 && (
                   <button
@@ -438,15 +446,17 @@ const CreateGroup = () => {
               </div>
             ))}
           </div>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Tags help members find your group more easily
           </p>
         </div>
 
         {/* Group Rules */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">Group Rules</h2>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+              Group Rules
+            </h2>
             <button
               type="button"
               onClick={addRule}
@@ -460,13 +470,15 @@ const CreateGroup = () => {
           <div className="space-y-3">
             {formData.rules.map((rule, index) => (
               <div key={index} className="flex items-center space-x-3">
-                <span className="text-sm text-gray-500 w-8">{index + 1}.</span>
+                <span className="text-sm text-gray-500 dark:text-gray-400 w-8">
+                  {index + 1}.
+                </span>
                 <input
                   type="text"
                   value={rule}
                   onChange={(e) => handleRuleChange(index, e.target.value)}
                   placeholder="Enter group rule"
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {formData.rules.length > 1 && (
                   <button
@@ -480,7 +492,7 @@ const CreateGroup = () => {
               </div>
             ))}
           </div>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             Clear rules help maintain a positive community environment
           </p>
         </div>
@@ -490,7 +502,7 @@ const CreateGroup = () => {
           <button
             type="button"
             onClick={() => navigate(-1)}
-            className="border border-gray-300 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+            className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             Cancel
           </button>

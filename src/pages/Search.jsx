@@ -195,8 +195,9 @@ const Search = () => {
           Connect with fellow graduates from IIT Jahangirnagar University
         </p>
       </div>
+
       {/* Search Bar */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
@@ -206,14 +207,14 @@ const Search = () => {
                 placeholder="Search by name, profession, or company..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
 
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 transition-colors flex items-center space-x-2"
+            className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
           >
             <Filter className="h-5 w-5" />
             <span>Filters</span>
@@ -222,10 +223,10 @@ const Search = () => {
 
         {/* Advanced Filters */}
         {showFilters && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
+          <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Batch Year
                 </label>
                 <input
@@ -233,12 +234,12 @@ const Search = () => {
                   placeholder="e.g., 2020"
                   value={filters.batch}
                   onChange={(e) => handleFilterChange("batch", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Department
                 </label>
                 <select
@@ -246,7 +247,7 @@ const Search = () => {
                   onChange={(e) =>
                     handleFilterChange("department", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="">All Departments</option>
                   {departments.map((dept) => (
@@ -258,7 +259,7 @@ const Search = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Profession
                 </label>
                 <input
@@ -268,12 +269,12 @@ const Search = () => {
                   onChange={(e) =>
                     handleFilterChange("profession", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Location
                 </label>
                 <input
@@ -283,20 +284,20 @@ const Search = () => {
                   onChange={(e) =>
                     handleFilterChange("location", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
             </div>
 
             <div className="flex items-center justify-between mt-4">
               <div className="flex items-center space-x-4">
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                   Sort by:
                 </label>
                 <select
                   value={filters.sortBy}
                   onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="relevance">Relevance</option>
                   <option value="name">Name</option>
@@ -307,7 +308,7 @@ const Search = () => {
 
               <button
                 onClick={clearFilters}
-                className="text-blue-600 hover:text-blue-700 font-medium"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
               >
                 Clear Filters
               </button>
@@ -318,17 +319,18 @@ const Search = () => {
 
       {/* Results */}
       <div className="mb-6">
-        <p className="text-gray-600">
+        <p className="text-gray-600 dark:text-gray-300">
           Found {filteredAlumni.length} alumni
           {searchQuery && ` for "${searchQuery}"`}
         </p>
       </div>
+
       {/* Alumni Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredAlumni.map((person) => (
           <div
             key={person.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow cursor-pointer"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
             onClick={() => handleViewProfile(person.id)}
           >
             <div className="flex items-start space-x-4">
@@ -339,11 +341,13 @@ const Search = () => {
               />
 
               <div className="flex-1 min-w-0">
-                <h3 className="text-lg font-semibold text-gray-900 truncate">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                   {person.name}
                 </h3>
                 <p className="text-blue-600 font-medium">{person.profession}</p>
-                <p className="text-gray-600 text-sm">{person.company}</p>
+                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                  {person.company}
+                </p>
               </div>
 
               {person.isConnected && (
@@ -354,23 +358,23 @@ const Search = () => {
             </div>
 
             <div className="mt-4 space-y-2">
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                 <GraduationCap className="h-4 w-4" />
                 <span>
                   Batch {person.batch} • {person.department}
                 </span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                 <MapPin className="h-4 w-4" />
                 <span>{person.location}</span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-600">
+              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                 <Users className="h-4 w-4" />
                 <span>{person.connections} connections</span>
               </div>
             </div>
 
-            <p className="text-gray-700 text-sm mt-3 line-clamp-2">
+            <p className="text-gray-700 dark:text-gray-300 text-sm mt-3 line-clamp-2">
               {person.bio}
             </p>
 
@@ -380,13 +384,13 @@ const Search = () => {
                 {person.skills.slice(0, 3).map((skill, index) => (
                   <span
                     key={index}
-                    className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs"
+                    className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs"
                   >
                     {skill}
                   </span>
                 ))}
                 {person.skills.length > 3 && (
-                  <span className="text-gray-500 text-xs px-2 py-1">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1">
                     +{person.skills.length - 3} more
                   </span>
                 )}
@@ -420,13 +424,14 @@ const Search = () => {
           </div>
         ))}
       </div>
+
       {filteredAlumni.length === 0 && (
         <div className="text-center py-12">
           <SearchIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             No alumni found
           </h3>
-          <p className="text-gray-600">
+          <p className="text-gray-600 dark:text-gray-300">
             Try adjusting your search terms or filters to find more alumni.
           </p>
         </div>

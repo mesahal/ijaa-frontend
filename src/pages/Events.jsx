@@ -233,7 +233,7 @@ const Events = () => {
       ) : (
         <>
           {/* Search and Filters */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               {/* Search */}
               <div className="md:col-span-2">
@@ -244,7 +244,7 @@ const Events = () => {
                     placeholder="Search events..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
@@ -254,7 +254,7 @@ const Events = () => {
                 <select
                   value={filterType}
                   onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Types</option>
                   <option value="reunion">Reunion</option>
@@ -271,7 +271,7 @@ const Events = () => {
                 <select
                   value={filterLocation}
                   onChange={(e) => setFilterLocation(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="all">All Locations</option>
                   <option value="physical">In-Person</option>
@@ -283,7 +283,7 @@ const Events = () => {
 
           {/* Featured Events */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Featured Events
             </h2>
             <div className="grid md:grid-cols-2 gap-6">
@@ -292,7 +292,7 @@ const Events = () => {
                 .map((event) => (
                   <div
                     key={event.id}
-                    className="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-shadow"
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow"
                   >
                     <div className="relative">
                       <img
@@ -329,27 +329,27 @@ const Events = () => {
                         )}
                       </div>
 
-                      <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
                         {event.title}
                       </h3>
-                      <p className="text-gray-600 mb-4 line-clamp-2">
+                      <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
                         {event.description}
                       </p>
 
                       <div className="space-y-2 mb-4">
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                           <Calendar className="h-4 w-4" />
                           <span>{formatDate(event.date)}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                           <Clock className="h-4 w-4" />
                           <span>{event.time}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                           <MapPin className="h-4 w-4" />
                           <span>{event.location}</span>
                         </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600">
+                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                           <Users className="h-4 w-4" />
                           <span>
                             {event.attendees}/{event.maxAttendees} registered
@@ -358,7 +358,7 @@ const Events = () => {
                       </div>
 
                       <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
                           by {event.organizer}
                         </span>
                         {event.registered ? (
@@ -382,7 +382,7 @@ const Events = () => {
 
           {/* All Events */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               All Events
             </h2>
             <div className="grid lg:grid-cols-2 gap-6">
@@ -391,7 +391,7 @@ const Events = () => {
                 .map((event) => (
                   <div
                     key={event.id}
-                    className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
                   >
                     <div className="flex">
                       <div className="w-32 h-32 flex-shrink-0">
@@ -422,11 +422,11 @@ const Events = () => {
                           )}
                         </div>
 
-                        <h3 className="font-semibold text-gray-900 mb-2">
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                           {event.title}
                         </h3>
 
-                        <div className="space-y-1 mb-3 text-xs text-gray-600">
+                        <div className="space-y-1 mb-3 text-xs text-gray-600 dark:text-gray-300">
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-3 w-3" />
                             <span>
@@ -446,7 +446,7 @@ const Events = () => {
                         </div>
 
                         <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             by {event.organizer}
                           </span>
                           {event.registered ? (
@@ -472,10 +472,10 @@ const Events = () => {
           {filteredEvents.length === 0 && (
             <div className="text-center py-12">
               <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 No events found
               </h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-300">
                 Try adjusting your search or filters to find more events.
               </p>
             </div>

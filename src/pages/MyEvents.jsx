@@ -162,7 +162,7 @@ const MyEvents = () => {
   return (
     <div>
       {/* Search and Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-8">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {/* Search */}
           <div className="md:col-span-2">
@@ -173,7 +173,7 @@ const MyEvents = () => {
                 placeholder="Search events..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -183,7 +183,7 @@ const MyEvents = () => {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Status</option>
               <option value="confirmed">Confirmed</option>
@@ -198,7 +198,7 @@ const MyEvents = () => {
             <select
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
               <option value="all">All Types</option>
               <option value="reunion">Reunion</option>
@@ -217,7 +217,7 @@ const MyEvents = () => {
         {filteredEvents.map((event) => (
           <div
             key={event.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
           >
             <div className="flex flex-col lg:flex-row">
               <div className="lg:w-64 h-48 lg:h-auto">
@@ -244,31 +244,31 @@ const MyEvents = () => {
                   )}
                 </div>
 
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
                   {event.title}
                 </h3>
 
                 <div className="grid md:grid-cols-2 gap-4 mb-4">
-                  <div className="flex items-center space-x-2 text-gray-600">
+                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                     <Calendar className="h-4 w-4" />
                     <span>{formatDate(event.date)}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
+                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                     <Clock className="h-4 w-4" />
                     <span>{event.time}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
+                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                     <MapPin className="h-4 w-4" />
                     <span>{event.location}</span>
                   </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
+                  <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-300">
                     <Users className="h-4 w-4" />
                     <span>by {event.organizer}</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-500">
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
                     Registered on{" "}
                     {new Date(event.registrationDate).toLocaleDateString()}
                   </div>
@@ -300,10 +300,10 @@ const MyEvents = () => {
       {filteredEvents.length === 0 && (
         <div className="text-center py-12">
           <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             No events found
           </h3>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             {searchQuery || filterStatus !== "all" || filterType !== "all"
               ? "Try adjusting your search or filters to find more events."
               : "You haven't registered for any events yet."}

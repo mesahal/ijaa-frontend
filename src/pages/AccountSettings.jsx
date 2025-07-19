@@ -99,13 +99,15 @@ const AccountSettings = () => {
       <div className="flex items-center space-x-4 mb-8">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
+          className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 rounded-lg transition-colors"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Account Settings</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            Account Settings
+          </h1>
+          <p className="text-gray-600 dark:text-gray-300 mt-2">
             Manage your account security and preferences
           </p>
         </div>
@@ -113,14 +115,14 @@ const AccountSettings = () => {
 
       <div className="space-y-8">
         {/* Change Password */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
             Change Password
           </h2>
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Current Password
               </label>
               <div className="relative">
@@ -131,7 +133,7 @@ const AccountSettings = () => {
                   value={passwordData.currentPassword}
                   onChange={handlePasswordChange}
                   required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter current password"
                 />
                 <button
@@ -149,7 +151,7 @@ const AccountSettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 New Password
               </label>
               <div className="relative">
@@ -160,7 +162,7 @@ const AccountSettings = () => {
                   value={passwordData.newPassword}
                   onChange={handlePasswordChange}
                   required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter new password"
                 />
                 <button
@@ -178,7 +180,7 @@ const AccountSettings = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Confirm New Password
               </label>
               <div className="relative">
@@ -189,7 +191,7 @@ const AccountSettings = () => {
                   value={passwordData.confirmPassword}
                   onChange={handlePasswordChange}
                   required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Confirm new password"
                 />
                 <button
@@ -218,9 +220,9 @@ const AccountSettings = () => {
         </div>
 
         {/* Notification Preferences */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
               Notification Preferences
             </h2>
             <button
@@ -234,14 +236,14 @@ const AccountSettings = () => {
           </div>
 
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Email Notifications
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Receive notifications via email
                   </p>
                 </div>
@@ -264,14 +266,14 @@ const AccountSettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">
                 <Bell className="h-5 w-5 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Push Notifications
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Receive push notifications in browser
                   </p>
                 </div>
@@ -294,14 +296,14 @@ const AccountSettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">
                 <MessageCircle className="h-5 w-5 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Message Notifications
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Get notified about new messages
                   </p>
                 </div>
@@ -324,14 +326,14 @@ const AccountSettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">
                 <Calendar className="h-5 w-5 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Event Notifications
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Get notified about upcoming events
                   </p>
                 </div>
@@ -354,14 +356,14 @@ const AccountSettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">
                 <Users className="h-5 w-5 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Group Notifications
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Get notified about group activities
                   </p>
                 </div>
@@ -384,14 +386,14 @@ const AccountSettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">
                 <Users className="h-5 w-5 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Connection Notifications
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Get notified about new connections
                   </p>
                 </div>
@@ -416,12 +418,14 @@ const AccountSettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900">Weekly Digest</h3>
-                  <p className="text-sm text-gray-600">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
+                    Weekly Digest
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Receive weekly summary of activities
                   </p>
                 </div>
@@ -442,14 +446,14 @@ const AccountSettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
+            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-gray-400" />
                 <div>
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     Marketing Emails
                   </h3>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     Receive promotional emails and updates
                   </p>
                 </div>
@@ -473,12 +477,12 @@ const AccountSettings = () => {
         </div>
 
         {/* Danger Zone */}
-        <div className="bg-white rounded-xl shadow-sm border border-red-200 p-6">
-          <h2 className="text-xl font-semibold text-red-900 mb-4 flex items-center space-x-2">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-red-200 dark:border-red-800 p-6">
+          <h2 className="text-xl font-semibold text-red-900 dark:text-red-400 mb-4 flex items-center space-x-2">
             <AlertTriangle className="h-5 w-5" />
             <span>Danger Zone</span>
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             Once you delete your account, there is no going back. Please be
             certain.
           </p>
@@ -496,17 +500,17 @@ const AccountSettings = () => {
       {/* Delete Account Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
             <div className="flex items-center space-x-3 mb-4">
               <div className="bg-red-100 p-2 rounded-full">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Delete Account
               </h3>
             </div>
 
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
               Are you sure you want to delete your account? This action cannot
               be undone and you will lose all your data, connections, and
               messages.
@@ -515,7 +519,7 @@ const AccountSettings = () => {
             <div className="flex space-x-3">
               <button
                 onClick={() => setShowDeleteModal(false)}
-                className="flex-1 border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>
