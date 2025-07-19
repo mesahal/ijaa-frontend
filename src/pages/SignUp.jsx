@@ -103,7 +103,9 @@ const SignUp = () => {
             <h2 className="text-3xl font-bold text-gray-900">
               Join Our Community
             </h2>
-            <p className="mt-2 text-gray-600">Create your alumni account</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
+              Create your alumni account
+            </p>
           </div>
 
           {/* Error Alert */}

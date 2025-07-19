@@ -178,8 +178,10 @@ const Events = () => {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Alumni Events</h1>
-            <p className="text-gray-600 mt-2">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Alumni Events
+            </h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
               Discover and join upcoming alumni events
             </p>
           </div>

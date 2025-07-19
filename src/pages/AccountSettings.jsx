@@ -133,7 +133,7 @@ const AccountSettings = () => {
                   value={passwordData.currentPassword}
                   onChange={handlePasswordChange}
                   required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter current password"
                 />
                 <button
@@ -162,7 +162,7 @@ const AccountSettings = () => {
                   value={passwordData.newPassword}
                   onChange={handlePasswordChange}
                   required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Enter new password"
                 />
                 <button
@@ -191,7 +191,7 @@ const AccountSettings = () => {
                   value={passwordData.confirmPassword}
                   onChange={handlePasswordChange}
                   required
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   placeholder="Confirm new password"
                 />
                 <button

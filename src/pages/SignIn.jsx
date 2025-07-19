@@ -70,7 +70,9 @@ const SignIn = () => {
               </div>
             </div>
             <h2 className="text-3xl font-bold text-gray-900">Welcome Back</h2>
-            <p className="mt-2 text-gray-600">Sign in to your alumni account</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
+              Sign in to your alumni account
+            </p>
           </div>
 
           {/* Error Alert */}
@@ -147,7 +149,9 @@ const SignIn = () => {
                   type="checkbox"
                   className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
-                <span className="ml-2 text-sm text-gray-600">Remember me</span>
+                <span className="ml-2 text-sm text-gray-600 dark:text-gray-300">
+                  Remember me
+                </span>
               </label>
               <Link
                 to="/forgot-password"

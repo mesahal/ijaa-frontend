@@ -209,10 +209,8 @@ const CreateGroup = () => {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                  errors.name
-                    ? "border-red-300"
-                    : "border-gray-300 dark:border-gray-600"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.name ? "border-red-300" : "border-gray-300"
                 }`}
                 placeholder="Enter group name"
               />
@@ -271,10 +269,8 @@ const CreateGroup = () => {
                 value={formData.description}
                 onChange={handleInputChange}
                 rows={4}
-                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white ${
-                  errors.description
-                    ? "border-red-300"
-                    : "border-gray-300 dark:border-gray-600"
+                className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  errors.description ? "border-red-300" : "border-gray-300"
                 }`}
                 placeholder="Describe your group's purpose and what members can expect..."
               />
@@ -432,7 +428,7 @@ const CreateGroup = () => {
                   value={tag}
                   onChange={(e) => handleTagChange(index, e.target.value)}
                   placeholder="Enter tag (e.g., Technology, Sports, Career)"
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {formData.tags.length > 1 && (
                   <button
@@ -478,7 +474,7 @@ const CreateGroup = () => {
                   value={rule}
                   onChange={(e) => handleRuleChange(index, e.target.value)}
                   placeholder="Enter group rule"
-                  className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {formData.rules.length > 1 && (
                   <button

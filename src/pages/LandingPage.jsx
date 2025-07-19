@@ -62,9 +62,9 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-white dark:bg-gray-900">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm">
+      <nav className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -72,10 +72,10 @@ const LandingPage = () => {
                 <GraduationCap className="h-6 w-6" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">
                   IIT JU Alumni
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Jahangirnagar University
                 </p>
               </div>
@@ -84,7 +84,7 @@ const LandingPage = () => {
             <div className="flex items-center space-x-4">
               <Link
                 to="/signin"
-                className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
               >
                 Sign In
               </Link>
@@ -100,18 +100,18 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-blue-50 to-emerald-50 py-20">
+      <section className="bg-gradient-to-br from-blue-50 to-emerald-50 dark:from-gray-800 dark:to-gray-700 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white leading-tight">
                 Connect with{" "}
                 <span className="bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
                   IIT JU Alumni
                 </span>{" "}
                 Worldwide
               </h1>
-              <p className="text-xl text-gray-600 mt-6 leading-relaxed">
+              <p className="text-xl text-gray-600 dark:text-gray-300 mt-6 leading-relaxed">
                 Join the largest network of IIT Jahangirnagar University alumni.
                 Connect, collaborate, and create lasting professional
                 relationships with graduates from around the world.
@@ -126,7 +126,7 @@ const LandingPage = () => {
                 </Link>
                 <Link
                   to="/signin"
-                  className="border-2 border-gray-300 text-gray-700 px-8 py-4 rounded-lg font-semibold hover:border-gray-400 hover:bg-gray-50 transition-all text-center"
+                  className="border-2 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-8 py-4 rounded-lg font-semibold hover:border-gray-400 dark:hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all text-center"
                 >
                   Already a Member?
                 </Link>
@@ -134,17 +134,19 @@ const LandingPage = () => {
             </div>
 
             <div className="relative">
-              <div className="bg-white rounded-2xl shadow-xl p-8">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700">
                 <div className="grid grid-cols-2 gap-4">
                   {stats.map((stat, index) => (
                     <div
                       key={index}
-                      className="text-center p-4 bg-gradient-to-br from-blue-50 to-emerald-50 rounded-lg"
+                      className="text-center p-4 bg-gradient-to-br from-blue-50 to-emerald-50 dark:from-blue-900/20 dark:to-emerald-900/20 rounded-lg"
                     >
-                      <div className="text-2xl font-bold text-gray-900">
+                      <div className="text-2xl font-bold text-gray-900 dark:text-white">
                         {stat.number}
                       </div>
-                      <div className="text-sm text-gray-600">{stat.label}</div>
+                      <div className="text-sm text-gray-600 dark:text-gray-300">
+                        {stat.label}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -163,13 +165,13 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-white">
+      <section className="py-20 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
               Everything You Need to Stay Connected
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Our platform provides all the tools you need to maintain and grow
               your professional network with fellow IIT JU alumni.
             </p>
@@ -179,15 +181,15 @@ const LandingPage = () => {
             {features.map((feature, index) => (
               <div
                 key={index}
-                className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow group"
+                className="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-shadow group"
               >
                 <div className="bg-gradient-to-r from-blue-600 to-emerald-600 w-12 h-12 rounded-lg flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                   <feature.icon className="h-6 w-6 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                   {feature.description}
                 </p>
               </div>
@@ -221,7 +223,7 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white py-12">
+      <footer className="bg-gray-900 dark:bg-gray-950 text-white py-12 border-t border-gray-800 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
@@ -230,14 +232,16 @@ const LandingPage = () => {
               </div>
               <div>
                 <h3 className="text-xl font-bold">IIT JU Alumni Network</h3>
-                <p className="text-gray-400">Jahangirnagar University</p>
+                <p className="text-gray-400 dark:text-gray-500">
+                  Jahangirnagar University
+                </p>
               </div>
             </div>
-            <p className="text-gray-400 mb-4">
+            <p className="text-gray-400 dark:text-gray-500 mb-4">
               Connecting graduates, fostering innovation, and building the
               future together.
             </p>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-gray-500 dark:text-gray-600">
               © 2025 IIT Jahangirnagar University Alumni Association. All rights
               reserved.
             </p>

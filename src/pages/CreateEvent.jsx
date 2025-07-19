@@ -201,7 +201,7 @@ const CreateEvent = () => {
                 name="type"
                 value={formData.type}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 {eventTypes.map((type) => (
                   <option key={type.value} value={type.value}>
