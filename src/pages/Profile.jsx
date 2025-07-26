@@ -14,6 +14,8 @@ import {
   Eye,
   EyeOff,
   X,
+  Plus,
+  Trash2,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -26,6 +28,14 @@ const Profile = () => {
 
   const [profileData, setProfileData] = useState({});
   const [visibility, setVisibility] = useState({});
+  const [experiences, setExperiences] = useState([]);
+  const [newExperience, setNewExperience] = useState({
+    title: "",
+    company: "",
+    period: "",
+    description: "",
+  });
+  const [showAddExperience, setShowAddExperience] = useState(false);
 
   const [errors, setErrors] = useState({});
 
@@ -56,11 +66,25 @@ const Profile = () => {
         showPhone: profile.showPhone,
         showLinkedIn: profile.showLinkedIn,
         showWebsite: profile.showWebsite,
+        showEmail: profile.showEmail,
       });
     } catch (err) {
       console.error("Failed to fetch profile", err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchExperiences = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/experiences`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+      setExperiences(response.data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch experiences", err);
     }
   };
 
@@ -78,11 +102,46 @@ const Profile = () => {
         showPhone: updatedProfile.showPhone,
         showLinkedIn: updatedProfile.showLinkedIn,
         showWebsite: updatedProfile.showWebsite,
+        showEmail: updatedProfile.showEmail,
       });
 
       setIsEditing(false);
     } catch (err) {
       console.error(`Failed to update ${sectionName}`, err);
+    }
+  };
+
+  const addExperience = async () => {
+    if (!newExperience.title || !newExperience.company) {
+      alert("Title and Company are required");
+      return;
+    }
+
+    try {
+      await axios.post(`${API_BASE}/experiences`, newExperience, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+
+      setNewExperience({ title: "", company: "", period: "", description: "" });
+      setShowAddExperience(false);
+      fetchExperiences();
+    } catch (err) {
+      console.error("Failed to add experience", err);
+    }
+  };
+
+  const deleteExperience = async (id) => {
+    try {
+      await axios.delete(`${API_BASE}/experiences/${id}`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+      fetchExperiences();
+    } catch (err) {
+      console.error("Failed to delete experience", err);
     }
   };
 
@@ -93,6 +152,11 @@ const Profile = () => {
     if (errors[name]) {
       setErrors({ ...errors, [name]: "" });
     }
+  };
+
+  const handleExperienceChange = (e) => {
+    const { name, value } = e.target;
+    setNewExperience({ ...newExperience, [name]: value });
   };
 
   const handleSave = async () => {
@@ -110,6 +174,8 @@ const Profile = () => {
   const handleCancel = () => {
     setIsEditing(false);
     setErrors({});
+    setShowAddExperience(false);
+    setNewExperience({ title: "", company: "", period: "", description: "" });
     // Reset to original data
     fetchProfile();
   };
@@ -125,6 +191,7 @@ const Profile = () => {
 
   useEffect(() => {
     fetchProfile();
+    fetchExperiences();
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -139,7 +206,9 @@ const Profile = () => {
     const value = profileData[name];
     const showVisibilityToggle =
       visibilityKey &&
-      ["showPhone", "showLinkedIn", "showWebsite"].includes(visibilityKey);
+      ["showPhone", "showLinkedIn", "showWebsite", "showEmail"].includes(
+        visibilityKey
+      );
     console.log(label, name, value, isEditing, visibilityKey, visibility);
     if (!value && !isEditing) return null;
 
@@ -300,13 +369,68 @@ const Profile = () => {
                     )
                   )}
 
-                  {profileData.batch && (
+                  {/* Batch field - now editable */}
+                  {/* {isEditing ? (
                     <div className="flex items-center gap-1">
                       <GraduationCap className="h-4 w-4" />
-                      <span>
-                        Batch {profileData.batch} • {profileData.department}
-                      </span>
+                      <input
+                        type="text"
+                        name="batch"
+                        value={profileData.batch || ""}
+                        onChange={handleInputChange}
+                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
+                        placeholder="Batch (e.g., 2020)"
+                      />
+                      <span className="mx-1">•</span>
+                      <input
+                        type="text"
+                        name="department"
+                        value={profileData.department || ""}
+                        onChange={handleInputChange}
+                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
+                        placeholder="Department"
+                      />
                     </div>
+                  ) : (
+                    (profileData.batch || profileData.department) && (
+                      <div className="flex items-center gap-1">
+                        <GraduationCap className="h-4 w-4" />
+                        <span>
+                          {profileData.batch && `Batch ${profileData.batch}`}
+                          {profileData.batch && profileData.department && " • "}
+                          {profileData.department}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div> */}
+                  {/* Batch field - now editable */}
+                  {isEditing ? (
+                    <div className="flex items-center gap-1">
+                      <GraduationCap className="h-4 w-4" />
+                      <select
+                        name="batch"
+                        value={profileData.batch || ""}
+                        onChange={handleInputChange}
+                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
+                      >
+                        <option value="">Select Batch</option>
+                        {Array.from({ length: 16 }, (_, i) => i + 1).map(
+                          (batch) => (
+                            <option key={batch} value={batch}>
+                              {batch}
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </div>
+                  ) : (
+                    profileData.batch && (
+                      <div className="flex items-center gap-1">
+                        <GraduationCap className="h-4 w-4" />
+                        <span>Batch {profileData.batch}</span>
+                      </div>
+                    )
                   )}
                 </div>
               </div>
@@ -380,15 +504,125 @@ const Profile = () => {
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Experience
               </h2>
-              {isEditing && (
-                <button className="text-blue-600 hover:text-blue-700 font-medium">
-                  + Add Experience
-                </button>
-              )}
+              <button
+                onClick={() => setShowAddExperience(true)}
+                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Add Experience
+              </button>
             </div>
-            <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No experience added yet
-            </div>
+
+            {/* Add Experience Form */}
+            {showAddExperience && (
+              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Add New Experience
+                </h3>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="title"
+                      value={newExperience.title}
+                      onChange={handleExperienceChange}
+                      placeholder="Job Title"
+                      className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                    />
+                    <input
+                      type="text"
+                      name="company"
+                      value={newExperience.company}
+                      onChange={handleExperienceChange}
+                      placeholder="Company Name"
+                      className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                    />
+                  </div>
+                  <input
+                    type="text"
+                    name="period"
+                    value={newExperience.period}
+                    onChange={handleExperienceChange}
+                    placeholder="Time Period (e.g., Jan 2020 - Present)"
+                    className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                  />
+                  <textarea
+                    name="description"
+                    value={newExperience.description}
+                    onChange={handleExperienceChange}
+                    rows={3}
+                    placeholder="Job Description"
+                    className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={addExperience}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                    >
+                      Add Experience
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddExperience(false);
+                        setNewExperience({
+                          title: "",
+                          company: "",
+                          period: "",
+                          description: "",
+                        });
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Experience List */}
+            {experiences.length > 0 ? (
+              <div className="space-y-4">
+                {experiences.map((exp, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
+                  >
+                    <div className="flex items-start gap-3">
+                      <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-1" />
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                          {exp.title}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          {exp.company}
+                        </p>
+                        {exp.period && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {exp.period}
+                          </p>
+                        )}
+                        {exp.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                            {exp.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => deleteExperience(exp.id)}
+                      className="text-red-600 hover:text-red-700 p-1"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+                No experience added yet
+              </div>
+            )}
           </div>
 
           {/* Skills Section */}
@@ -417,7 +651,7 @@ const Profile = () => {
               Contact Information
             </h3>
             <div className="space-y-4">
-              {renderField("Email", "email", Mail)}
+              {renderField("Email", "email", Mail, false, "showEmail")}
               {renderField("Phone", "phone", Phone, false, "showPhone")}
               {renderField(
                 "LinkedIn",
