@@ -24,40 +24,68 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const signIn = async (email, password) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    try {
+      const response = await fetch(
+        "http://localhost:8000/ijaa/api/v1/user/signin",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: email, password }),
+        }
+      );
 
-    const mockUser = {
-      id: 1,
-      name: "John Doe",
-      email: email,
-      batch: "2020",
-      department: "Computer Science & Engineering",
-      profession: "Software Engineer",
-      location: "Dhaka, Bangladesh",
-      avatar:
-        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1",
-    };
+      const data = await response.json();
 
-    setUser(mockUser);
-    localStorage.setItem("alumni_user", JSON.stringify(mockUser));
-    return mockUser;
+      if (!response.ok) {
+        throw new Error(data.message || "Sign-in failed");
+      }
+
+      const user = {
+        email: email,
+        token: data.data.token,
+        // Add other user fields from backend if available
+      };
+
+      setUser(user);
+      localStorage.setItem("alumni_user", JSON.stringify(user));
+      return user;
+    } catch (err) {
+      throw new Error(err.message || "Sign-in failed");
+    }
   };
 
-  const signUp = async (userData) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  const signUp = async ({ email, password }) => {
+    try {
+      const response = await fetch(
+        "http://localhost:8000/ijaa/api/v1/user/signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username: email, password }),
+        }
+      );
 
-    const mockUser = {
-      id: Date.now(),
-      ...userData,
-      avatar:
-        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1",
-    };
+      const data = await response.json();
 
-    setUser(mockUser);
-    localStorage.setItem("alumni_user", JSON.stringify(mockUser));
-    return mockUser;
+      if (!response.ok) {
+        // Handle specific error codes from backend
+        if (data.code === "409") {
+          throw new Error("User already exists");
+        }
+        throw new Error(data.message || "Registration failed");
+      }
+
+      const user = {
+        email: email,
+        token: data.data.token,
+      };
+
+      setUser(user);
+      localStorage.setItem("alumni_user", JSON.stringify(user));
+      return user;
+    } catch (err) {
+      throw new Error(err.message || "Registration failed");
+    }
   };
 
   const signOut = () => {

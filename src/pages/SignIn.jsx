@@ -38,7 +38,12 @@ const SignIn = () => {
       await signIn(formData.email, formData.password);
       navigate("/dashboard");
     } catch (err) {
-      setError("Invalid email or password");
+      // Handle specific error messages
+      if (err.message.includes("credentials")) {
+        setError("Invalid email or password");
+      } else {
+        setError(err.message || "Sign-in failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }

@@ -1,161 +1,248 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 import {
   Camera,
   Edit3,
   MapPin,
   Briefcase,
-  Calendar,
   GraduationCap,
   Mail,
   Phone,
   Linkedin,
   Globe,
   Save,
-  X,
   Eye,
   EyeOff,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const Profile = () => {
+  const API_BASE = process.env.REACT_APP_API_BASE_URL;
+
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
-  const [profileData, setProfileData] = useState({
-    name: user?.name || "",
-    profession: user?.profession || "",
-    location: user?.location || "",
-    bio: "Passionate software engineer with 5+ years of experience in full-stack development. Alumni of IIT Jahangirnagar University, actively contributing to the tech community.",
-    phone: "+880 1712-345678",
-    linkedin: "https://linkedin.com/in/johndoe",
-    website: "https://johndoe.dev",
-    skills: ["JavaScript", "React", "Node.js", "Python", "AWS"],
-    experience: [
-      {
-        title: "Senior Software Engineer",
-        company: "TechCorp Ltd.",
-        period: "2022 - Present",
-        description:
-          "Leading a team of 5 developers in building scalable web applications.",
-      },
-      {
-        title: "Software Engineer",
-        company: "StartupXYZ",
-        period: "2020 - 2022",
-        description:
-          "Developed full-stack applications using React and Node.js.",
-      },
-    ],
-  });
-  const [visibility, setVisibility] = useState({
-    email: true,
-    phone: false,
-    linkedin: true,
-    website: true,
-  });
+  const [loading, setLoading] = useState(true);
+
+  const [profileData, setProfileData] = useState({});
+  const [visibility, setVisibility] = useState({});
+
+  const [errors, setErrors] = useState({});
+
+  const validateFields = () => {
+    const requiredFields = ["name", "profession", "location", "bio"];
+    const newErrors = {};
+    requiredFields.forEach((field) => {
+      if (!profileData[field] || profileData[field].trim() === "") {
+        newErrors[field] = "This field is required";
+      }
+    });
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const fetchProfile = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/profile`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+
+      const profile = response.data.data;
+      setProfileData(profile);
+      setVisibility({
+        showPhone: profile.showPhone,
+        showLinkedIn: profile.showLinkedIn,
+        showWebsite: profile.showWebsite,
+      });
+    } catch (err) {
+      console.error("Failed to fetch profile", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateSection = async (sectionName, payload) => {
+    try {
+      const response = await axios.put(
+        `${API_BASE}/profile/${sectionName}`,
+        payload,
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
+
+      const updatedProfile = response.data.data;
+      setProfileData(updatedProfile);
+      setVisibility({
+        showPhone: updatedProfile.showPhone,
+        showLinkedIn: updatedProfile.showLinkedIn,
+        showWebsite: updatedProfile.showWebsite,
+      });
+
+      setIsEditing(false);
+    } catch (err) {
+      console.error(`Failed to update ${sectionName}`, err);
+    }
+  };
 
   const handleInputChange = (e) => {
-    setProfileData({
-      ...profileData,
-      [e.target.name]: e.target.value,
-    });
+    setProfileData({ ...profileData, [e.target.name]: e.target.value });
   };
 
-  const handleSave = () => {
-    // Save profile data logic here
-    setIsEditing(false);
+  const handleSave = async () => {
+    if (!validateFields()) return;
+    await updateSection("basic", profileData);
   };
 
-  const toggleVisibility = (field) => {
-    setVisibility({
-      ...visibility,
-      [field]: !visibility[field],
-    });
+  const toggleVisibility = async (field) => {
+    const updated = { ...visibility, [field]: !visibility[field] };
+    setVisibility(updated);
+    await updateSection("visibility", updated);
+  };
+
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  if (loading) return <div>Loading...</div>;
+
+  const renderField = (label, name, Icon, isLink = false) => {
+    const value = profileData[name];
+    if (!value && !isEditing) return null;
+
+    return (
+      <div className="flex items-start justify-between">
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
+              {label}
+            </p>
+            {isEditing ? (
+              <input
+                type="text"
+                name={name}
+                value={value || ""}
+                onChange={handleInputChange}
+                className="text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
+              />
+            ) : isLink ? (
+              <a
+                href={value}
+                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate block"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {label === "Website" ? "Visit Website" : "View Profile"}
+              </a>
+            ) : (
+              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+                {value}
+              </p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={() => toggleVisibility(name)}
+          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
+        >
+          {visibility[name] ? (
+            <Eye className="h-4 w-4" />
+          ) : (
+            <EyeOff className="h-4 w-4" />
+          )}
+        </button>
+      </div>
+    );
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Profile Header */}
+    <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
-        {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
-          <button className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm text-white p-2 rounded-lg hover:bg-white/30 transition-colors">
+          <button className="absolute top-4 right-4 bg-white/20 text-white p-2 rounded-lg">
             <Camera className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Profile Info */}
         <div className="px-4 sm:px-8 pb-8 relative">
-          <div className="flex flex-col items-center sm:flex-row sm:items-end sm:space-x-6 -mt-16 sm:-mt-16">
+          <div className="flex flex-col sm:flex-row sm:items-end gap-6 -mt-16">
             {/* Profile Picture */}
-            <div className="relative mb-4 sm:mb-0">
+            <div className="relative">
               <img
-                src={user?.avatar}
-                alt={user?.name}
+                src={user?.avatar || "/dp.jpg"}
+                alt={profileData.name}
                 className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
               />
-              <button className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 transition-colors">
+              <button className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full">
                 <Camera className="h-4 w-4" />
               </button>
             </div>
 
-            {/* Basic Info */}
-            <div className="flex-1 text-center sm:text-left">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                <div>
+            <div className="flex-1">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-2">
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    {user?.name}
+                    {profileData.name}
                   </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-300 mt-1">
+                  <p className="text-lg text-gray-600 dark:text-gray-300">
                     {profileData.profession}
                   </p>
                   <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="h-4 w-4" />
-                      <span>{profileData.location}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <GraduationCap className="h-4 w-4" />
-                      <span>
-                        Batch {user?.batch} • {user?.department}
-                      </span>
-                    </div>
+                    {profileData.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        <span>{profileData.location}</span>
+                      </div>
+                    )}
+                    {profileData.batch && (
+                      <div className="flex items-center gap-1">
+                        <GraduationCap className="h-4 w-4" />
+                        <span>
+                          Batch {profileData.batch} • {profileData.department}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
-
                 <button
                   onClick={() => setIsEditing(!isEditing)}
                   className="mt-4 sm:mt-0 bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
                 >
                   <Edit3 className="h-4 w-4" />
-                  <span>Edit Profile</span>
+                  Edit Profile
                 </button>
               </div>
             </div>
           </div>
         </div>
       </div>
-
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* About Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border p-6 mb-8">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               About
             </h2>
             {isEditing ? (
               <textarea
                 name="bio"
-                value={profileData.bio}
+                value={profileData.bio || ""}
                 onChange={handleInputChange}
                 rows={4}
-                className="w-full border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg p-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="Tell us about yourself..."
+                className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white"
               />
             ) : (
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
                 {profileData.bio}
               </p>
+            )}
+            {errors.bio && (
+              <p className="text-sm text-red-500 mt-2">{errors.bio}</p>
             )}
           </div>
 
@@ -164,7 +251,7 @@ const Profile = () => {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
               Experience
             </h2>
-            <div className="space-y-6">
+            {/* <div className="space-y-6">
               {profileData.experience.map((exp, index) => (
                 <div key={index} className="flex space-x-4">
                   <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-lg">
@@ -184,7 +271,7 @@ const Profile = () => {
                   </div>
                 </div>
               ))}
-            </div>
+            </div> */}
           </div>
 
           {/* Skills Section */}
@@ -192,7 +279,7 @@ const Profile = () => {
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Skills
             </h2>
-            <div className="flex flex-wrap gap-2">
+            {/* <div className="flex flex-wrap gap-2">
               {profileData.skills.map((skill, index) => (
                 <span
                   key={index}
@@ -201,162 +288,30 @@ const Profile = () => {
                   {skill}
                 </span>
               ))}
-            </div>
+            </div> */}
           </div>
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Contact Information */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl border p-6 mb-8">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Contact Information
+              Contact
             </h3>
             <div className="space-y-4">
-              {/* Email */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3 flex-1 min-w-0">
-                  <Mail className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Email
-                    </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-300 break-all">
-                      {user?.email}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => toggleVisibility("email")}
-                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
-                >
-                  {visibility.email ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-
-              {/* Phone */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3 flex-1 min-w-0">
-                  <Phone className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Phone
-                    </p>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        name="phone"
-                        value={profileData.phone}
-                        onChange={handleInputChange}
-                        className="text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                      />
-                    ) : (
-                      <p className="text-sm text-gray-600 dark:text-gray-300">
-                        {profileData.phone}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => toggleVisibility("phone")}
-                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
-                >
-                  {visibility.phone ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-
-              {/* LinkedIn */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3 flex-1 min-w-0">
-                  <Linkedin className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      LinkedIn
-                    </p>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        name="linkedin"
-                        value={profileData.linkedin}
-                        onChange={handleInputChange}
-                        className="text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                      />
-                    ) : (
-                      <a
-                        href={profileData.linkedin}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 break-all"
-                      >
-                        View Profile
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => toggleVisibility("linkedin")}
-                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
-                >
-                  {visibility.linkedin ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
-
-              {/* Website */}
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-3 flex-1 min-w-0">
-                  <Globe className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      Website
-                    </p>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        name="website"
-                        value={profileData.website}
-                        onChange={handleInputChange}
-                        className="text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                      />
-                    ) : (
-                      <a
-                        href={profileData.website}
-                        className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 break-all"
-                      >
-                        Visit Website
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => toggleVisibility("website")}
-                  className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
-                >
-                  {visibility.website ? (
-                    <Eye className="h-4 w-4" />
-                  ) : (
-                    <EyeOff className="h-4 w-4" />
-                  )}
-                </button>
-              </div>
+              {renderField("Email", "email", Mail)}
+              {renderField("Phone", "phone", Phone)}
+              {renderField("LinkedIn", "linkedin", Linkedin, true)}
+              {renderField("Website", "website", Globe, true)}
             </div>
-
             {isEditing && (
               <button
                 onClick={handleSave}
-                className="w-full mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2"
+                className="w-full mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2"
               >
                 <Save className="h-4 w-4" />
-                <span>Save Changes</span>
+                Save Changes
               </button>
             )}
           </div>
