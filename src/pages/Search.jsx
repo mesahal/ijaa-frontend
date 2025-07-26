@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search as SearchIcon,
@@ -11,11 +11,22 @@ import {
   Users,
   Calendar,
   Star,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import axios from "axios";
 
 const Search = () => {
-  const [searchQuery, setSearchQuery] = useState("");
+  const API_BASE = process.env.REACT_APP_API_BASE_URL;
+  const { user } = useAuth();
   const navigate = useNavigate();
+
+  // State variables
+  const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     batch: "",
     department: "",
@@ -24,99 +35,15 @@ const Search = () => {
     sortBy: "relevance",
   });
   const [showFilters, setShowFilters] = useState(false);
-
-  const alumni = [
-    {
-      id: 1,
-      name: "Sarah Ahmed",
-      batch: "2019",
-      department: "Computer Science & Engineering",
-      profession: "Data Scientist",
-      company: "Google",
-      location: "San Francisco, USA",
-      avatar:
-        "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1",
-      bio: "Passionate about machine learning and AI. Love connecting with fellow alumni.",
-      connections: 156,
-      isConnected: false,
-      skills: ["Python", "Machine Learning", "Data Analysis"],
-    },
-    {
-      id: 2,
-      name: "Rakib Hassan",
-      batch: "2018",
-      department: "Electrical & Electronic Engineering",
-      profession: "Hardware Engineer",
-      company: "Intel",
-      location: "Dhaka, Bangladesh",
-      avatar:
-        "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1",
-      bio: "Working on next-generation processors. Always excited to help fellow engineers.",
-      connections: 89,
-      isConnected: true,
-      skills: ["VLSI Design", "Digital Circuits", "Embedded Systems"],
-    },
-    {
-      id: 3,
-      name: "Fatima Khan",
-      batch: "2020",
-      department: "Mechanical Engineering",
-      profession: "Product Manager",
-      company: "Tesla",
-      location: "Austin, USA",
-      avatar:
-        "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1",
-      bio: "Leading product development for sustainable transportation solutions.",
-      connections: 234,
-      isConnected: false,
-      skills: ["Product Strategy", "Automotive", "Sustainability"],
-    },
-    {
-      id: 4,
-      name: "Ahmed Rahman",
-      batch: "2017",
-      department: "Civil Engineering",
-      profession: "Structural Engineer",
-      company: "AECOM",
-      location: "Dubai, UAE",
-      avatar:
-        "https://images.pexels.com/photos/2182970/pexels-photo-2182970.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1",
-      bio: "Designing sustainable infrastructure for smart cities.",
-      connections: 112,
-      isConnected: false,
-      skills: ["Structural Design", "AutoCAD", "Project Management"],
-    },
-    {
-      id: 5,
-      name: "Nadia Islam",
-      batch: "2019",
-      department: "Chemical Engineering",
-      profession: "Research Scientist",
-      company: "Pfizer",
-      location: "New York, USA",
-      avatar:
-        "https://images.pexels.com/photos/1181263/pexels-photo-1181263.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1",
-      bio: "Developing innovative pharmaceutical solutions for global health challenges.",
-      connections: 178,
-      isConnected: false,
-      skills: ["Drug Development", "Research", "Biochemistry"],
-    },
-    {
-      id: 6,
-      name: "Karim Uddin",
-      batch: "2021",
-      department: "Computer Science & Engineering",
-      profession: "Software Engineer",
-      company: "Microsoft",
-      location: "Seattle, USA",
-      avatar:
-        "https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1",
-      bio: "Building cloud solutions and passionate about open source development.",
-      connections: 67,
-      isConnected: false,
-      skills: ["Cloud Computing", "JavaScript", "Azure"],
-    },
-  ];
+  const [alumni, setAlumni] = useState([]);
+  const [pagination, setPagination] = useState({
+    page: 0,
+    size: 12,
+    totalElements: 0,
+    totalPages: 0,
+    first: true,
+    last: true,
+  });
 
   const departments = [
     "Computer Science & Engineering",
@@ -129,42 +56,113 @@ const Search = () => {
     "Biomedical Engineering",
   ];
 
-  const filteredAlumni = alumni.filter((person) => {
-    const matchesSearch =
-      person.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      person.profession.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      person.company.toLowerCase().includes(searchQuery.toLowerCase());
+  // Search alumni function
+  const searchAlumni = async (page = 0) => {
+    setLoading(true);
+    setError(null);
 
-    const matchesBatch = !filters.batch || person.batch === filters.batch;
-    const matchesDepartment =
-      !filters.department || person.department === filters.department;
-    const matchesProfession =
-      !filters.profession ||
-      person.profession
-        .toLowerCase()
-        .includes(filters.profession.toLowerCase());
-    const matchesLocation =
-      !filters.location ||
-      person.location.toLowerCase().includes(filters.location.toLowerCase());
+    try {
+      const requestBody = {
+        searchQuery: searchQuery?.trim() || null,
+        batch: filters.batch || null,
+        department: filters.department || null,
+        profession: filters.profession?.trim() || null,
+        location: filters.location?.trim() || null,
+        sortBy: filters.sortBy || "relevance",
+        page: page,
+        size: pagination.size,
+      };
 
-    return (
-      matchesSearch &&
-      matchesBatch &&
-      matchesDepartment &&
-      matchesProfession &&
-      matchesLocation
-    );
-  });
+      const response = await axios.post(
+        `${API_BASE}/alumni/search`,
+        requestBody,
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
 
-  const handleFilterChange = (key, value) => {
-    setFilters({
-      ...filters,
-      [key]: value,
-    });
+      const result = response.data;
+      console.log("Search result:", result);
+
+      if ((result.code === "200" || result.code === 200) && result.data) {
+        setAlumni(result.data.content || []);
+        setPagination({
+          page: result.data.page,
+          size: result.data.size,
+          totalElements: result.data.totalElements,
+          totalPages: result.data.totalPages,
+          first: result.data.first,
+          last: result.data.last,
+        });
+      } else {
+        throw new Error(result.message || "Failed to fetch alumni data");
+      }
+    } catch (err) {
+      console.error("Error searching alumni:", err);
+
+      if (err.response) {
+        setError(
+          `Server error: ${err.response.status} - ${
+            err.response.data?.message || "Unknown error"
+          }`
+        );
+      } else if (err.request) {
+        setError("Network error: Unable to reach the server");
+      } else {
+        setError(err.message || "Failed to search alumni. Please try again.");
+      }
+
+      setAlumni([]);
+      setPagination({
+        page: 0,
+        size: 12,
+        totalElements: 0,
+        totalPages: 0,
+        first: true,
+        last: true,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleConnect = (alumniId) => {
-    console.log("Connecting with alumni:", alumniId);
+  // Initial load - load all alumni on component mount
+  useEffect(() => {
+    searchAlumni(0);
+  }, []); // Only run on mount
+
+  // Handle search button click
+  const handleSearch = () => {
+    searchAlumni(0); // Reset to first page when searching
+  };
+
+  // Handle filter changes (just update state, don't search automatically)
+  const handleFilterChange = (key, value) => {
+    setFilters((prev) => ({
+      ...prev,
+      [key]: value,
+    }));
+  };
+
+  const handlePageChange = (newPage) => {
+    if (newPage >= 0 && newPage < pagination.totalPages) {
+      searchAlumni(newPage);
+    }
+  };
+
+  const handleConnect = async (alumniId) => {
+    try {
+      console.log("Connecting with alumni:", alumniId);
+      setAlumni((prev) =>
+        prev.map((person) =>
+          person.id === alumniId ? { ...person, isConnected: true } : person
+        )
+      );
+    } catch (err) {
+      console.error("Error connecting with alumni:", err);
+    }
   };
 
   const handleMessage = (alumniId) => {
@@ -184,6 +182,74 @@ const Search = () => {
       location: "",
       sortBy: "relevance",
     });
+    setSearchQuery("");
+    // Don't search automatically, user needs to click search button
+  };
+
+  // Handle Enter key press in search input
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
+  // Pagination component
+  const Pagination = () => {
+    if (pagination.totalPages <= 1) return null;
+
+    const pages = [];
+    const maxVisiblePages = 5;
+    let startPage = Math.max(
+      0,
+      pagination.page - Math.floor(maxVisiblePages / 2)
+    );
+    let endPage = Math.min(
+      pagination.totalPages - 1,
+      startPage + maxVisiblePages - 1
+    );
+
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(0, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(i);
+    }
+
+    return (
+      <div className="flex items-center justify-center space-x-2 mt-8">
+        <button
+          onClick={() => handlePageChange(pagination.page - 1)}
+          disabled={pagination.first || loading}
+          className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </button>
+
+        {pages.map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageChange(page)}
+            disabled={loading}
+            className={`px-3 py-2 rounded-lg border ${
+              page === pagination.page
+                ? "bg-blue-600 text-white border-blue-600"
+                : "border-gray-300 hover:bg-gray-50"
+            }`}
+          >
+            {page + 1}
+          </button>
+        ))}
+
+        <button
+          onClick={() => handlePageChange(pagination.page + 1)}
+          disabled={pagination.last || loading}
+          className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+        >
+          <ChevronRight className="h-5 w-5" />
+        </button>
+      </div>
+    );
   };
 
   return (
@@ -209,18 +275,32 @@ const Search = () => {
                 placeholder="Search by name, profession, or company..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
                 className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={loading}
               />
             </div>
           </div>
 
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
-          >
-            <Filter className="h-5 w-5" />
-            <span>Filters</span>
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={handleSearch}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center space-x-2"
+              disabled={loading}
+            >
+              <SearchIcon className="h-5 w-5" />
+              <span>Search</span>
+            </button>
+
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors flex items-center space-x-2"
+              disabled={loading}
+            >
+              <Filter className="h-5 w-5" />
+              <span>Filters</span>
+            </button>
+          </div>
         </div>
 
         {/* Advanced Filters */}
@@ -237,6 +317,7 @@ const Search = () => {
                   value={filters.batch}
                   onChange={(e) => handleFilterChange("batch", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
                 />
               </div>
 
@@ -250,6 +331,7 @@ const Search = () => {
                     handleFilterChange("department", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
                 >
                   <option value="">All Departments</option>
                   {departments.map((dept) => (
@@ -272,6 +354,7 @@ const Search = () => {
                     handleFilterChange("profession", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
                 />
               </div>
 
@@ -287,6 +370,7 @@ const Search = () => {
                     handleFilterChange("location", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -300,6 +384,7 @@ const Search = () => {
                   value={filters.sortBy}
                   onChange={(e) => handleFilterChange("sortBy", e.target.value)}
                   className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  disabled={loading}
                 >
                   <option value="relevance">Relevance</option>
                   <option value="name">Name</option>
@@ -308,28 +393,60 @@ const Search = () => {
                 </select>
               </div>
 
-              <button
-                onClick={clearFilters}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
-              >
-                Clear Filters
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={clearFilters}
+                  className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium"
+                  disabled={loading}
+                >
+                  Clear Filters
+                </button>
+                <button
+                  onClick={handleSearch}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                  disabled={loading}
+                >
+                  Apply Filters
+                </button>
+              </div>
             </div>
           </div>
         )}
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+          <p className="text-red-800">{error}</p>
+        </div>
+      )}
+
       {/* Results */}
-      <div className="mb-6">
+      <div className="mb-6 flex items-center justify-between">
         <p className="text-gray-600 dark:text-gray-300">
-          Found {filteredAlumni.length} alumni
-          {searchQuery && ` for "${searchQuery}"`}
+          {loading ? (
+            <span className="flex items-center space-x-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Searching...</span>
+            </span>
+          ) : (
+            <>
+              Found {pagination.totalElements} alumni
+              {searchQuery && ` for "${searchQuery}"`}
+            </>
+          )}
         </p>
+
+        {pagination.totalElements > 0 && (
+          <p className="text-gray-500 text-sm">
+            Page {pagination.page + 1} of {pagination.totalPages}
+          </p>
+        )}
       </div>
 
       {/* Alumni Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredAlumni.map((person) => (
+        {alumni.map((person) => (
           <div
             key={person.id}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
@@ -337,18 +454,27 @@ const Search = () => {
           >
             <div className="flex items-start space-x-4">
               <img
-                src={person.avatar}
+                src={
+                  person.avatar ||
+                  "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1"
+                }
                 alt={person.name}
                 className="w-16 h-16 rounded-full object-cover"
+                onError={(e) => {
+                  e.target.src =
+                    "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1";
+                }}
               />
 
               <div className="flex-1 min-w-0">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                  {person.name}
+                  {person.name || "Unknown"}
                 </h3>
-                <p className="text-blue-600 font-medium">{person.profession}</p>
+                <p className="text-blue-600 font-medium">
+                  {person.profession || "Not specified"}
+                </p>
                 <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  {person.company}
+                  {person.company || "No company specified"}
                 </p>
               </div>
 
@@ -363,63 +489,87 @@ const Search = () => {
               <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                 <GraduationCap className="h-4 w-4" />
                 <span>
-                  Batch {person.batch} • {person.department}
+                  {person.batch
+                    ? `Batch ${person.batch}`
+                    : "Batch not specified"}
+                  {person.department && ` • ${person.department}`}
                 </span>
               </div>
-              <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                <MapPin className="h-4 w-4" />
-                <span>{person.location}</span>
-              </div>
+              {person.location && (
+                <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+                  <MapPin className="h-4 w-4" />
+                  <span>{person.location}</span>
+                </div>
+              )}
               <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                 <Users className="h-4 w-4" />
-                <span>{person.connections} connections</span>
+                <span>{person.connections || 0} connections</span>
               </div>
             </div>
 
-            <p className="text-gray-700 dark:text-gray-300 text-sm mt-3 line-clamp-2">
-              {person.bio}
-            </p>
+            {person.bio && (
+              <p className="text-gray-700 dark:text-gray-300 text-sm mt-3 line-clamp-2">
+                {person.bio}
+              </p>
+            )}
 
             {/* Skills */}
-            <div className="mt-3">
-              <div className="flex flex-wrap gap-1">
-                {person.skills.slice(0, 3).map((skill, index) => (
-                  <span
-                    key={index}
-                    className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs"
-                  >
-                    {skill}
-                  </span>
-                ))}
-                {person.skills.length > 3 && (
-                  <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1">
-                    +{person.skills.length - 3} more
-                  </span>
-                )}
+            {person.skills && person.skills.length > 0 && (
+              <div className="mt-3">
+                <div className="flex flex-wrap gap-1">
+                  {person.skills.slice(0, 3).map((skill, index) => (
+                    <span
+                      key={index}
+                      className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                  {person.skills.length > 3 && (
+                    <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1">
+                      +{person.skills.length - 3} more
+                    </span>
+                  )}
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Action Buttons */}
             <div className="mt-6 flex space-x-3">
               {person.isConnected ? (
                 <button
-                  onClick={() => handleMessage(person.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMessage(person.id);
+                  }}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+                  disabled={loading}
                 >
                   <MessageCircle className="h-4 w-4" />
                   <span>Message</span>
                 </button>
               ) : (
                 <button
-                  onClick={() => handleConnect(person.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleConnect(person.id);
+                  }}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
+                  disabled={loading}
                 >
                   <UserPlus className="h-4 w-4" />
                   <span>Connect</span>
                 </button>
               )}
 
-              <button className="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleViewProfile(person.id);
+                }}
+                className="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                disabled={loading}
+              >
                 View Profile
               </button>
             </div>
@@ -427,7 +577,21 @@ const Search = () => {
         ))}
       </div>
 
-      {filteredAlumni.length === 0 && (
+      {/* Loading State */}
+      {loading && alumni.length === 0 && (
+        <div className="text-center py-12">
+          <Loader2 className="h-16 w-16 text-blue-600 mx-auto mb-4 animate-spin" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Searching Alumni...
+          </h3>
+          <p className="text-gray-600 dark:text-gray-300">
+            Please wait while we find alumni matching your criteria.
+          </p>
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!loading && alumni.length === 0 && !error && (
         <div className="text-center py-12">
           <SearchIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -438,6 +602,9 @@ const Search = () => {
           </p>
         </div>
       )}
+
+      {/* Pagination */}
+      <Pagination />
     </div>
   );
 };
