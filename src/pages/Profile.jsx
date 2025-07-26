@@ -13,6 +13,7 @@ import {
   Save,
   Eye,
   EyeOff,
+  X,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -49,6 +50,7 @@ const Profile = () => {
       });
 
       const profile = response.data.data;
+      console.log("Fetched Profile:", profile);
       setProfileData(profile);
       setVisibility({
         showPhone: profile.showPhone,
@@ -85,18 +87,40 @@ const Profile = () => {
   };
 
   const handleInputChange = (e) => {
-    setProfileData({ ...profileData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setProfileData({ ...profileData, [name]: value });
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors({ ...errors, [name]: "" });
+    }
   };
 
   const handleSave = async () => {
     if (!validateFields()) return;
-    await updateSection("basic", profileData);
+
+    // Combine profile data with visibility settings
+    const payload = {
+      ...profileData,
+      ...visibility,
+    };
+
+    await updateSection("basic", payload);
+  };
+
+  const handleCancel = () => {
+    setIsEditing(false);
+    setErrors({});
+    // Reset to original data
+    fetchProfile();
   };
 
   const toggleVisibility = async (field) => {
     const updated = { ...visibility, [field]: !visibility[field] };
     setVisibility(updated);
-    await updateSection("visibility", updated);
+
+    if (!isEditing) {
+      await updateSection("visibility", updated);
+    }
   };
 
   useEffect(() => {
@@ -105,26 +129,41 @@ const Profile = () => {
 
   if (loading) return <div>Loading...</div>;
 
-  const renderField = (label, name, Icon, isLink = false) => {
+  const renderField = (
+    label,
+    name,
+    Icon,
+    isLink = false,
+    visibilityKey = null
+  ) => {
     const value = profileData[name];
+    const showVisibilityToggle =
+      visibilityKey &&
+      ["showPhone", "showLinkedIn", "showWebsite"].includes(visibilityKey);
+    console.log(label, name, value, isEditing, visibilityKey, visibility);
     if (!value && !isEditing) return null;
 
     return (
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium text-gray-900 dark:text-white">
               {label}
             </p>
             {isEditing ? (
-              <input
-                type="text"
-                name={name}
-                value={value || ""}
-                onChange={handleInputChange}
-                className="text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-              />
+              <div>
+                <input
+                  type="text"
+                  name={name}
+                  value={value || ""}
+                  onChange={handleInputChange}
+                  className="text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
+                />
+                {errors[name] && (
+                  <p className="text-xs text-red-500 mt-1">{errors[name]}</p>
+                )}
+              </div>
             ) : isLink ? (
               <a
                 href={value}
@@ -141,16 +180,18 @@ const Profile = () => {
             )}
           </div>
         </div>
-        <button
-          onClick={() => toggleVisibility(name)}
-          className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
-        >
-          {visibility[name] ? (
-            <Eye className="h-4 w-4" />
-          ) : (
-            <EyeOff className="h-4 w-4" />
-          )}
-        </button>
+        {showVisibilityToggle && (
+          <button
+            onClick={() => toggleVisibility(visibilityKey)}
+            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
+          >
+            {visibility[visibilityKey] ? (
+              <Eye className="h-4 w-4" />
+            ) : (
+              <EyeOff className="h-4 w-4" />
+            )}
+          </button>
+        )}
       </div>
     );
   };
@@ -160,7 +201,6 @@ const Profile = () => {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
         {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
-          {/* You can replace this with an actual image */}
           <img
             src="/cover-image.jpg"
             alt="Cover"
@@ -172,7 +212,7 @@ const Profile = () => {
         </div>
 
         <div className="px-4 sm:px-8 pb-8 relative">
-          {/* Profile Picture - positioned to overlap cover */}
+          {/* Profile Picture */}
           <div className="absolute -top-16 left-4 sm:left-8">
             <img
               src={user?.avatar || "/dp.jpg"}
@@ -184,23 +224,82 @@ const Profile = () => {
             </button>
           </div>
 
-          {/* Content - positioned below cover with proper spacing */}
+          {/* Header Content */}
           <div className="pt-12 sm:pt-20">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-2">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                  {profileData.name}
-                </h1>
-                <p className="text-lg text-gray-600 dark:text-gray-300">
-                  {profileData.profession}
-                </p>
+              <div className="space-y-2 flex-1">
+                {/* Name */}
+                {isEditing ? (
+                  <div>
+                    <input
+                      type="text"
+                      name="name"
+                      value={profileData.name || ""}
+                      onChange={handleInputChange}
+                      className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
+                      placeholder="Your Name"
+                    />
+                    {errors.name && (
+                      <p className="text-sm text-red-500 mt-1">{errors.name}</p>
+                    )}
+                  </div>
+                ) : (
+                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                    {profileData.name}
+                  </h1>
+                )}
+
+                {/* Profession */}
+                {isEditing ? (
+                  <div>
+                    <input
+                      type="text"
+                      name="profession"
+                      value={profileData.profession || ""}
+                      onChange={handleInputChange}
+                      className="text-lg text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
+                      placeholder="Your Profession"
+                    />
+                    {errors.profession && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {errors.profession}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-lg text-gray-600 dark:text-gray-300">
+                    {profileData.profession}
+                  </p>
+                )}
+
+                {/* Location and Batch */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
-                  {profileData.location && (
+                  {isEditing ? (
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      <span>{profileData.location}</span>
+                      <input
+                        type="text"
+                        name="location"
+                        value={profileData.location || ""}
+                        onChange={handleInputChange}
+                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
+                        placeholder="Location"
+                      />
+                      {errors.location && (
+                        <p className="text-xs text-red-500 ml-2">
+                          {errors.location}
+                        </p>
+                      )}
                     </div>
+                  ) : (
+                    profileData.location && (
+                      <div className="flex items-center gap-1">
+                        <MapPin className="h-4 w-4" />
+                        <span>{profileData.location}</span>
+                      </div>
+                    )
                   )}
+
                   {profileData.batch && (
                     <div className="flex items-center gap-1">
                       <GraduationCap className="h-4 w-4" />
@@ -211,17 +310,41 @@ const Profile = () => {
                   )}
                 </div>
               </div>
-              <button
-                onClick={() => setIsEditing(!isEditing)}
-                className="mt-4 sm:mt-0 bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
-              >
-                <Edit3 className="h-4 w-4" />
-                Edit Profile
-              </button>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                {isEditing ? (
+                  <>
+                    <button
+                      onClick={handleSave}
+                      className="bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <Save className="h-4 w-4" />
+                      <span>Save</span>
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
+                    >
+                      <X className="h-4 w-4" />
+                      <span>Cancel</span>
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                    <span>Edit Profile</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
       </div>
+
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
@@ -231,66 +354,58 @@ const Profile = () => {
               About
             </h2>
             {isEditing ? (
-              <textarea
-                name="bio"
-                value={profileData.bio || ""}
-                onChange={handleInputChange}
-                rows={4}
-                className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white"
-              />
+              <div>
+                <textarea
+                  name="bio"
+                  value={profileData.bio || ""}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                  placeholder="Tell us about yourself..."
+                />
+                {errors.bio && (
+                  <p className="text-sm text-red-500 mt-2">{errors.bio}</p>
+                )}
+              </div>
             ) : (
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {profileData.bio}
+                {profileData.bio || "No bio available"}
               </p>
-            )}
-            {errors.bio && (
-              <p className="text-sm text-red-500 mt-2">{errors.bio}</p>
             )}
           </div>
 
           {/* Experience Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-              Experience
-            </h2>
-            {/* <div className="space-y-6">
-              {profileData.experience.map((exp, index) => (
-                <div key={index} className="flex space-x-4">
-                  <div className="bg-blue-100 dark:bg-blue-900/50 p-3 rounded-lg">
-                    <Briefcase className="h-6 w-6 text-blue-600" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900 dark:text-white">
-                      {exp.title}
-                    </h3>
-                    <p className="text-blue-600 font-medium">{exp.company}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-                      {exp.period}
-                    </p>
-                    <p className="text-gray-700 dark:text-gray-300">
-                      {exp.description}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div> */}
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Experience
+              </h2>
+              {isEditing && (
+                <button className="text-blue-600 hover:text-blue-700 font-medium">
+                  + Add Experience
+                </button>
+              )}
+            </div>
+            <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+              No experience added yet
+            </div>
           </div>
 
           {/* Skills Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              Skills
-            </h2>
-            {/* <div className="flex flex-wrap gap-2">
-              {profileData.skills.map((skill, index) => (
-                <span
-                  key={index}
-                  className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm font-medium"
-                >
-                  {skill}
-                </span>
-              ))}
-            </div> */}
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Skills
+              </h2>
+              {isEditing && (
+                <button className="text-blue-600 hover:text-blue-700 font-medium">
+                  + Add Skills
+                </button>
+              )}
+            </div>
+            <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+              No skills added yet
+            </div>
           </div>
         </div>
 
@@ -299,26 +414,23 @@ const Profile = () => {
           {/* Contact Information */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Contact
+              Contact Information
             </h3>
             <div className="space-y-4">
               {renderField("Email", "email", Mail)}
-              {renderField("Phone", "phone", Phone)}
-              {renderField("LinkedIn", "linkedin", Linkedin, true)}
-              {renderField("Website", "website", Globe, true)}
+              {renderField("Phone", "phone", Phone, false, "showPhone")}
+              {renderField(
+                "LinkedIn",
+                "linkedIn",
+                Linkedin,
+                true,
+                "showLinkedIn"
+              )}
+              {renderField("Website", "website", Globe, true, "showWebsite")}
             </div>
-            {isEditing && (
-              <button
-                onClick={handleSave}
-                className="w-full mt-6 bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center justify-center gap-2"
-              >
-                <Save className="h-4 w-4" />
-                Save Changes
-              </button>
-            )}
           </div>
 
-          {/* Profile Stats */}
+          {/* Profile Stats - NOT EDITABLE */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Profile Stats
@@ -359,7 +471,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Profile Completion */}
+          {/* Profile Completion - NOT EDITABLE */}
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               Profile Completion
