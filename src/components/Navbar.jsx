@@ -113,7 +113,7 @@ const Navbar = () => {
                 className="flex items-center space-x-3 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <img
-                  src={user?.avatar}
+                  src={user?.avatar || "/dp.jpg"}
                   alt={user?.name}
                   className="h-8 w-8 rounded-full object-cover"
                 />

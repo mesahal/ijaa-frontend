@@ -64,15 +64,11 @@ const Profile = () => {
 
   const updateSection = async (sectionName, payload) => {
     try {
-      const response = await axios.put(
-        `${API_BASE}/profile/${sectionName}`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      const response = await axios.put(`${API_BASE}/${sectionName}`, payload, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
 
       const updatedProfile = response.data.data;
       setProfileData(updatedProfile);
@@ -162,60 +158,66 @@ const Profile = () => {
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
+        {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
+          {/* You can replace this with an actual image */}
+          <img
+            src="/cover-image.jpg"
+            alt="Cover"
+            className="w-full h-full object-cover"
+          />
           <button className="absolute top-4 right-4 bg-white/20 text-white p-2 rounded-lg">
             <Camera className="h-5 w-5" />
           </button>
         </div>
 
         <div className="px-4 sm:px-8 pb-8 relative">
-          <div className="flex flex-col sm:flex-row sm:items-end gap-6 -mt-16">
-            {/* Profile Picture */}
-            <div className="relative">
-              <img
-                src={user?.avatar || "/dp.jpg"}
-                alt={profileData.name}
-                className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
-              />
-              <button className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full">
-                <Camera className="h-4 w-4" />
-              </button>
-            </div>
+          {/* Profile Picture - positioned to overlap cover */}
+          <div className="absolute -top-16 left-4 sm:left-8">
+            <img
+              src={user?.avatar || "/dp.jpg"}
+              alt={profileData.name}
+              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
+            />
+            <button className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full">
+              <Camera className="h-4 w-4" />
+            </button>
+          </div>
 
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-2">
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    {profileData.name}
-                  </h1>
-                  <p className="text-lg text-gray-600 dark:text-gray-300">
-                    {profileData.profession}
-                  </p>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
-                    {profileData.location && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{profileData.location}</span>
-                      </div>
-                    )}
-                    {profileData.batch && (
-                      <div className="flex items-center gap-1">
-                        <GraduationCap className="h-4 w-4" />
-                        <span>
-                          Batch {profileData.batch} • {profileData.department}
-                        </span>
-                      </div>
-                    )}
-                  </div>
+          {/* Content - positioned below cover with proper spacing */}
+          <div className="pt-12 sm:pt-20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-2">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                  {profileData.name}
+                </h1>
+                <p className="text-lg text-gray-600 dark:text-gray-300">
+                  {profileData.profession}
+                </p>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
+                  {profileData.location && (
+                    <div className="flex items-center gap-1">
+                      <MapPin className="h-4 w-4" />
+                      <span>{profileData.location}</span>
+                    </div>
+                  )}
+                  {profileData.batch && (
+                    <div className="flex items-center gap-1">
+                      <GraduationCap className="h-4 w-4" />
+                      <span>
+                        Batch {profileData.batch} • {profileData.department}
+                      </span>
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={() => setIsEditing(!isEditing)}
-                  className="mt-4 sm:mt-0 bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
-                >
-                  <Edit3 className="h-4 w-4" />
-                  Edit Profile
-                </button>
               </div>
+              <button
+                onClick={() => setIsEditing(!isEditing)}
+                className="mt-4 sm:mt-0 bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
+              >
+                <Edit3 className="h-4 w-4" />
+                Edit Profile
+              </button>
             </div>
           </div>
         </div>
@@ -224,7 +226,7 @@ const Profile = () => {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* About Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border p-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               About
             </h2>
@@ -295,7 +297,7 @@ const Profile = () => {
         {/* Sidebar */}
         <div className="space-y-6">
           {/* Contact Information */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl border p-6 mb-8">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Contact
             </h3>
