@@ -16,6 +16,7 @@ import {
   X,
   Plus,
   Trash2,
+  Facebook,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
@@ -29,6 +30,8 @@ const Profile = () => {
   const [profileData, setProfileData] = useState({});
   const [visibility, setVisibility] = useState({});
   const [experiences, setExperiences] = useState([]);
+  const [interests, setInterests] = useState([]);
+  const [newInterest, setNewInterest] = useState("");
   const [newExperience, setNewExperience] = useState({
     title: "",
     company: "",
@@ -36,6 +39,7 @@ const Profile = () => {
     description: "",
   });
   const [showAddExperience, setShowAddExperience] = useState(false);
+  const [showAddInterest, setShowAddInterest] = useState(false);
 
   const [errors, setErrors] = useState({});
 
@@ -67,6 +71,7 @@ const Profile = () => {
         showLinkedIn: profile.showLinkedIn,
         showWebsite: profile.showWebsite,
         showEmail: profile.showEmail,
+        showFacebook: profile.showFacebook,
       });
     } catch (err) {
       console.error("Failed to fetch profile", err);
@@ -88,6 +93,19 @@ const Profile = () => {
     }
   };
 
+  const fetchInterests = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/interests`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+      });
+      setInterests(response.data.data || []);
+    } catch (err) {
+      console.error("Failed to fetch interests", err);
+    }
+  };
+
   const updateSection = async (sectionName, payload) => {
     try {
       const response = await axios.put(`${API_BASE}/${sectionName}`, payload, {
@@ -103,6 +121,7 @@ const Profile = () => {
         showLinkedIn: updatedProfile.showLinkedIn,
         showWebsite: updatedProfile.showWebsite,
         showEmail: updatedProfile.showEmail,
+        showFacebook: updatedProfile.showFacebook,
       });
 
       setIsEditing(false);
@@ -145,6 +164,49 @@ const Profile = () => {
     }
   };
 
+  const addInterest = async () => {
+    if (!newInterest.trim()) {
+      alert("Interest cannot be empty");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${API_BASE}/interests`,
+        { interest: newInterest.trim() },
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
+
+      setInterests(response.data.data);
+      setNewInterest("");
+      setShowAddInterest(false);
+    } catch (err) {
+      console.error("Failed to add interest", err);
+      if (err.response?.status === 400) {
+        alert("Interest already exists or is invalid");
+      }
+    }
+  };
+
+  const deleteInterest = async (interestToDelete) => {
+    try {
+      const response = await axios.delete(`${API_BASE}/interests`, {
+        headers: {
+          Authorization: `Bearer ${user?.token}`,
+        },
+        data: { interest: interestToDelete },
+      });
+
+      setInterests(response.data.data);
+    } catch (err) {
+      console.error("Failed to delete interest", err);
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setProfileData({ ...profileData, [name]: value });
@@ -175,7 +237,9 @@ const Profile = () => {
     setIsEditing(false);
     setErrors({});
     setShowAddExperience(false);
+    setShowAddInterest(false);
     setNewExperience({ title: "", company: "", period: "", description: "" });
+    setNewInterest("");
     // Reset to original data
     fetchProfile();
   };
@@ -192,6 +256,7 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
     fetchExperiences();
+    fetchInterests();
   }, []);
 
   if (loading) return <div>Loading...</div>;
@@ -206,9 +271,13 @@ const Profile = () => {
     const value = profileData[name];
     const showVisibilityToggle =
       visibilityKey &&
-      ["showPhone", "showLinkedIn", "showWebsite", "showEmail"].includes(
-        visibilityKey
-      );
+      [
+        "showPhone",
+        "showLinkedIn",
+        "showWebsite",
+        "showEmail",
+        "showFacebook",
+      ].includes(visibilityKey);
     console.log(label, name, value, isEditing, visibilityKey, visibility);
     if (!value && !isEditing) return null;
 
@@ -240,7 +309,11 @@ const Profile = () => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                {label === "Website" ? "Visit Website" : "View Profile"}
+                {label === "Website"
+                  ? "Visit Website"
+                  : label === "Facebook"
+                  ? "View Profile"
+                  : "View Profile"}
               </a>
             ) : (
               <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
@@ -369,41 +442,6 @@ const Profile = () => {
                     )
                   )}
 
-                  {/* Batch field - now editable */}
-                  {/* {isEditing ? (
-                    <div className="flex items-center gap-1">
-                      <GraduationCap className="h-4 w-4" />
-                      <input
-                        type="text"
-                        name="batch"
-                        value={profileData.batch || ""}
-                        onChange={handleInputChange}
-                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
-                        placeholder="Batch (e.g., 2020)"
-                      />
-                      <span className="mx-1">•</span>
-                      <input
-                        type="text"
-                        name="department"
-                        value={profileData.department || ""}
-                        onChange={handleInputChange}
-                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
-                        placeholder="Department"
-                      />
-                    </div>
-                  ) : (
-                    (profileData.batch || profileData.department) && (
-                      <div className="flex items-center gap-1">
-                        <GraduationCap className="h-4 w-4" />
-                        <span>
-                          {profileData.batch && `Batch ${profileData.batch}`}
-                          {profileData.batch && profileData.department && " • "}
-                          {profileData.department}
-                        </span>
-                      </div>
-                    )
-                  )}
-                </div> */}
                   {/* Batch field - now editable */}
                   {isEditing ? (
                     <div className="flex items-center gap-1">
@@ -625,21 +663,84 @@ const Profile = () => {
             )}
           </div>
 
-          {/* Skills Section */}
+          {/* Interests Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex justify-between items-center mb-4">
+            <div className="flex justify-between items-center mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Skills
+                Interests
               </h2>
-              {isEditing && (
-                <button className="text-blue-600 hover:text-blue-700 font-medium">
-                  + Add Skills
-                </button>
-              )}
+              <button
+                onClick={() => setShowAddInterest(true)}
+                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+              >
+                <Plus className="h-4 w-4" />
+                Add Interest
+              </button>
             </div>
-            <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-              No skills added yet
-            </div>
+
+            {/* Add Interest Form */}
+            {showAddInterest && (
+              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+                  Add New Interest
+                </h3>
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    value={newInterest}
+                    onChange={(e) => setNewInterest(e.target.value)}
+                    placeholder="Enter interest (e.g., Java, React, Machine Learning)"
+                    className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                    onKeyPress={(e) => {
+                      if (e.key === "Enter") {
+                        addInterest();
+                      }
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={addInterest}
+                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                    >
+                      Add Interest
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddInterest(false);
+                        setNewInterest("");
+                      }}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Interests List */}
+            {interests.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {interests.map((interest, index) => (
+                  <div
+                    key={index}
+                    className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+                  >
+                    <span>{interest}</span>
+                    <button
+                      onClick={() => deleteInterest(interest)}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+                No interests added yet
+              </div>
+            )}
           </div>
         </div>
 
@@ -660,11 +761,18 @@ const Profile = () => {
                 true,
                 "showLinkedIn"
               )}
+              {renderField(
+                "Facebook",
+                "facebook",
+                Facebook,
+                true,
+                "showFacebook"
+              )}
               {renderField("Website", "website", Globe, true, "showWebsite")}
             </div>
           </div>
 
-          {/* Profile Stats - NOT EDITABLE */}
+          {/* Profile Stats */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Profile Stats
@@ -683,7 +791,7 @@ const Profile = () => {
                   Connections
                 </span>
                 <span className="font-semibold text-gray-900 dark:text-white">
-                  124
+                  {profileData.connections || 0}
                 </span>
               </div>
               <div className="flex justify-between items-center">
@@ -705,7 +813,7 @@ const Profile = () => {
             </div>
           </div>
 
-          {/* Profile Completion - NOT EDITABLE */}
+          {/* Profile Completion */}
           <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
               Profile Completion
