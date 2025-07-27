@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  Tag,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import axios from "axios";
@@ -29,7 +30,6 @@ const Search = () => {
   const [error, setError] = useState(null);
   const [filters, setFilters] = useState({
     batch: "",
-    department: "",
     profession: "",
     location: "",
     sortBy: "relevance",
@@ -45,16 +45,8 @@ const Search = () => {
     last: true,
   });
 
-  const departments = [
-    "Computer Science & Engineering",
-    "Electrical & Electronic Engineering",
-    "Mechanical Engineering",
-    "Civil Engineering",
-    "Chemical Engineering",
-    "Industrial & Production Engineering",
-    "Materials & Metallurgical Engineering",
-    "Biomedical Engineering",
-  ];
+  // Batch years from 1 to 16
+  const batchYears = Array.from({ length: 16 }, (_, i) => i + 1);
 
   // Search alumni function
   const searchAlumni = async (page = 0) => {
@@ -65,7 +57,6 @@ const Search = () => {
       const requestBody = {
         searchQuery: searchQuery?.trim() || null,
         batch: filters.batch || null,
-        department: filters.department || null,
         profession: filters.profession?.trim() || null,
         location: filters.location?.trim() || null,
         sortBy: filters.sortBy || "relevance",
@@ -177,7 +168,6 @@ const Search = () => {
   const clearFilters = () => {
     setFilters({
       batch: "",
-      department: "",
       profession: "",
       location: "",
       sortBy: "relevance",
@@ -272,7 +262,7 @@ const Search = () => {
               <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
               <input
                 type="text"
-                placeholder="Search by name, profession, or company..."
+                placeholder="Search by name, profession, or bio..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
@@ -306,37 +296,21 @@ const Search = () => {
         {/* Advanced Filters */}
         {showFilters && (
           <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Batch Year
+                  Batch
                 </label>
-                <input
-                  type="number"
-                  placeholder="e.g., 2020"
+                <select
                   value={filters.batch}
                   onChange={(e) => handleFilterChange("batch", e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   disabled={loading}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Department
-                </label>
-                <select
-                  value={filters.department}
-                  onChange={(e) =>
-                    handleFilterChange("department", e.target.value)
-                  }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  disabled={loading}
                 >
-                  <option value="">All Departments</option>
-                  {departments.map((dept) => (
-                    <option key={dept} value={dept}>
-                      {dept}
+                  <option value="">All Batches</option>
+                  {batchYears.map((batch) => (
+                    <option key={batch} value={batch}>
+                      Batch {batch}
                     </option>
                   ))}
                 </select>
@@ -388,7 +362,7 @@ const Search = () => {
                 >
                   <option value="relevance">Relevance</option>
                   <option value="name">Name</option>
-                  <option value="batch">Batch Year</option>
+                  <option value="batch">Batch</option>
                   <option value="connections">Connections</option>
                 </select>
               </div>
@@ -473,9 +447,6 @@ const Search = () => {
                 <p className="text-blue-600 font-medium">
                   {person.profession || "Not specified"}
                 </p>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">
-                  {person.company || "No company specified"}
-                </p>
               </div>
 
               {person.isConnected && (
@@ -492,7 +463,6 @@ const Search = () => {
                   {person.batch
                     ? `Batch ${person.batch}`
                     : "Batch not specified"}
-                  {person.department && ` • ${person.department}`}
                 </span>
               </div>
               {person.location && (
@@ -513,21 +483,22 @@ const Search = () => {
               </p>
             )}
 
-            {/* Skills */}
-            {person.skills && person.skills.length > 0 && (
+            {/* Interests (replaced skills) */}
+            {person.interests && person.interests.length > 0 && (
               <div className="mt-3">
                 <div className="flex flex-wrap gap-1">
-                  {person.skills.slice(0, 3).map((skill, index) => (
+                  {person.interests.slice(0, 3).map((interest, index) => (
                     <span
                       key={index}
-                      className="bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs"
+                      className="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-2 py-1 rounded text-xs flex items-center space-x-1"
                     >
-                      {skill}
+                      <Tag className="h-3 w-3" />
+                      <span>{interest}</span>
                     </span>
                   ))}
-                  {person.skills.length > 3 && (
+                  {person.interests.length > 3 && (
                     <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1">
-                      +{person.skills.length - 3} more
+                      +{person.interests.length - 3} more
                     </span>
                   )}
                 </div>
