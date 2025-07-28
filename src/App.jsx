@@ -6,7 +6,7 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import UserProfile from "./pages/UserProfile";
+import ViewProfile from "./pages/ViewProfile";
 import EventRegistration from "./pages/EventRegistration";
 import Events from "./pages/Events";
 import MyEvents from "./pages/MyEvents";
@@ -80,7 +80,7 @@ function AppRoutes() {
         />
         <Route
           path="/profile/:userId"
-          element={user ? <UserProfile /> : <Navigate to="/" />}
+          element={user ? <ViewProfile /> : <Navigate to="/" />}
         />
         <Route
           path="/events/:eventId/register"

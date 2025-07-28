@@ -21,7 +21,9 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const Profile = () => {
-  const API_BASE = process.env.REACT_APP_API_BASE_URL;
+  const API_BASE =
+    process.env.REACT_APP_API_BASE_URL ||
+    "http://localhost:8000/ijaa/api/v1/user";
 
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
@@ -57,7 +59,7 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/profile`, {
+      const response = await axios.get(`${API_BASE}/profile/${user?.userId}`, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
         },
@@ -82,11 +84,14 @@ const Profile = () => {
 
   const fetchExperiences = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/experiences`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await axios.get(
+        `${API_BASE}/experiences/${user?.userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
       setExperiences(response.data.data || []);
     } catch (err) {
       console.error("Failed to fetch experiences", err);
@@ -95,11 +100,14 @@ const Profile = () => {
 
   const fetchInterests = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/interests`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await axios.get(
+        `${API_BASE}/interests/${user?.userId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
       setInterests(response.data.data || []);
     } catch (err) {
       console.error("Failed to fetch interests", err);
@@ -108,11 +116,21 @@ const Profile = () => {
 
   const updateSection = async (sectionName, payload) => {
     try {
-      const response = await axios.put(`${API_BASE}/${sectionName}`, payload, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      // Add userId to payload for backend
+      const payloadWithUserId = {
+        ...payload,
+        userId: user?.userId,
+      };
+
+      const response = await axios.put(
+        `${API_BASE}/${sectionName}`,
+        payloadWithUserId,
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
+      );
 
       const updatedProfile = response.data.data;
       setProfileData(updatedProfile);
@@ -137,7 +155,13 @@ const Profile = () => {
     }
 
     try {
-      await axios.post(`${API_BASE}/experiences`, newExperience, {
+      // Add userId to experience data
+      const experienceWithUserId = {
+        ...newExperience,
+        userId: user?.userId,
+      };
+
+      await axios.post(`${API_BASE}/experiences`, experienceWithUserId, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
         },
@@ -148,12 +172,14 @@ const Profile = () => {
       fetchExperiences();
     } catch (err) {
       console.error("Failed to add experience", err);
+      alert("Failed to add experience. Please try again.");
     }
   };
 
-  const deleteExperience = async (id) => {
+  const deleteExperience = async (experienceId) => {
     try {
-      await axios.delete(`${API_BASE}/experiences/${id}`, {
+      // Backend expects userId in URL path: /experiences/{userId}
+      await axios.delete(`${API_BASE}/experiences/${experienceId}`, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
         },
@@ -161,6 +187,7 @@ const Profile = () => {
       fetchExperiences();
     } catch (err) {
       console.error("Failed to delete experience", err);
+      alert("Failed to delete experience. Please try again.");
     }
   };
 
@@ -171,7 +198,8 @@ const Profile = () => {
     }
 
     try {
-      const response = await axios.post(
+      // Backend expects { interest: "value" } in request body
+      await axios.post(
         `${API_BASE}/interests`,
         { interest: newInterest.trim() },
         {
@@ -181,29 +209,33 @@ const Profile = () => {
         }
       );
 
-      setInterests(response.data.data);
+      // Refresh the interests list
+      fetchInterests();
       setNewInterest("");
       setShowAddInterest(false);
     } catch (err) {
       console.error("Failed to add interest", err);
       if (err.response?.status === 400) {
         alert("Interest already exists or is invalid");
+      } else {
+        alert("Failed to add interest. Please try again.");
       }
     }
   };
 
-  const deleteInterest = async (interestToDelete) => {
+  const deleteInterest = async (interestId) => {
     try {
-      const response = await axios.delete(`${API_BASE}/interests`, {
+      // Backend expects userId in URL path: /interests/{userId}
+      await axios.delete(`${API_BASE}/interests/${interestId}`, {
         headers: {
           Authorization: `Bearer ${user?.token}`,
         },
-        data: { interest: interestToDelete },
       });
 
-      setInterests(response.data.data);
+      fetchInterests();
     } catch (err) {
       console.error("Failed to delete interest", err);
+      alert("Failed to delete interest. Please try again.");
     }
   };
 
@@ -254,12 +286,19 @@ const Profile = () => {
   };
 
   useEffect(() => {
-    fetchProfile();
-    fetchExperiences();
-    fetchInterests();
-  }, []);
+    if (user?.userId && user?.token) {
+      fetchProfile();
+      fetchExperiences();
+      fetchInterests();
+    }
+  }, [user?.userId, user?.token]);
 
-  if (loading) return <div>Loading...</div>;
+  if (loading)
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      </div>
+    );
 
   const renderField = (
     label,
@@ -278,7 +317,7 @@ const Profile = () => {
         "showEmail",
         "showFacebook",
       ].includes(visibilityKey);
-    console.log(label, name, value, isEditing, visibilityKey, visibility);
+
     if (!value && !isEditing) return null;
 
     return (
@@ -387,7 +426,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    {profileData.name}
+                    {profileData.name || "Your Name"}
                   </h1>
                 )}
 
@@ -410,7 +449,7 @@ const Profile = () => {
                   </div>
                 ) : (
                   <p className="text-lg text-gray-600 dark:text-gray-300">
-                    {profileData.profession}
+                    {profileData.profession || "Your Profession"}
                   </p>
                 )}
 
@@ -455,7 +494,7 @@ const Profile = () => {
                         <option value="">Select Batch</option>
                         {Array.from({ length: 16 }, (_, i) => i + 1).map(
                           (batch) => (
-                            <option key={batch} value={batch}>
+                            <option key={batch} value={batch.toString()}>
                               {batch}
                             </option>
                           )
@@ -623,7 +662,7 @@ const Profile = () => {
               <div className="space-y-4">
                 {experiences.map((exp, index) => (
                   <div
-                    key={index}
+                    key={exp.id || index}
                     className="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
                   >
                     <div className="flex items-start gap-3">
@@ -723,12 +762,20 @@ const Profile = () => {
               <div className="flex flex-wrap gap-2">
                 {interests.map((interest, index) => (
                   <div
-                    key={index}
+                    key={interest.id || index}
                     className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-1"
                   >
-                    <span>{interest}</span>
+                    <span>
+                      {typeof interest === "string"
+                        ? interest
+                        : interest.interest}
+                    </span>
                     <button
-                      onClick={() => deleteInterest(interest)}
+                      onClick={() =>
+                        deleteInterest(
+                          typeof interest === "string" ? interest : interest.id
+                        )
+                      }
                       className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
                     >
                       <X className="h-3 w-3" />

@@ -145,24 +145,40 @@ const Search = () => {
 
   const handleConnect = async (alumniId) => {
     try {
-      console.log("Connecting with alumni:", alumniId);
-      setAlumni((prev) =>
-        prev.map((person) =>
-          person.id === alumniId ? { ...person, isConnected: true } : person
-        )
+      const response = await axios.post(
+        `${API_BASE}/connections/request`,
+        { recipientUsername: alumniId },
+        {
+          headers: {
+            Authorization: `Bearer ${user?.token}`,
+          },
+        }
       );
+
+      if (response.data.code === "200" || response.data.code === 200) {
+        console.log("Connection request sent successfully");
+        setAlumni((prev) =>
+          prev.map((person) =>
+            person.userId === alumniId
+              ? { ...person, isConnected: true }
+              : person
+          )
+        );
+      }
     } catch (err) {
       console.error("Error connecting with alumni:", err);
+      alert("Failed to send connection request. Please try again.");
     }
   };
 
-  const handleMessage = (alumniId) => {
-    console.log("Messaging alumni:", alumniId);
-    navigate(`/chat/${alumniId}`);
+  const handleMessage = (userId) => {
+    console.log("Messaging alumni:", userId);
+    navigate(`/chat/${userId}`);
   };
 
-  const handleViewProfile = (alumniId) => {
-    navigate(`/profile/${alumniId}`);
+  const handleViewProfile = (userId) => {
+    console.log("Viewing profile of alumni:", userId);
+    navigate(`/profile/${userId}`);
   };
 
   const clearFilters = () => {
@@ -422,9 +438,9 @@ const Search = () => {
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
         {alumni.map((person) => (
           <div
-            key={person.id}
+            key={person.userId}
             className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
-            onClick={() => handleViewProfile(person.id)}
+            onClick={() => handleViewProfile(person.userId)}
           >
             <div className="flex items-start space-x-4">
               <img
@@ -483,7 +499,7 @@ const Search = () => {
               </p>
             )}
 
-            {/* Interests (replaced skills) */}
+            {/* Interests */}
             {person.interests && person.interests.length > 0 && (
               <div className="mt-3">
                 <div className="flex flex-wrap gap-1">
@@ -511,7 +527,7 @@ const Search = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleMessage(person.id);
+                    handleMessage(person.userId);
                   }}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
                   disabled={loading}
@@ -523,7 +539,7 @@ const Search = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleConnect(person.id);
+                    handleConnect(person.userId);
                   }}
                   className="flex-1 bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-1"
                   disabled={loading}
@@ -536,7 +552,7 @@ const Search = () => {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleViewProfile(person.id);
+                  handleViewProfile(person.userId);
                 }}
                 className="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                 disabled={loading}

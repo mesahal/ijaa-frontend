@@ -14,8 +14,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Get API base URL from environment or use default
+  const API_BASE =
+    process.env.REACT_APP_API_BASE_URL ||
+    "http://localhost:8000/ijaa/api/v1/user";
+
   useEffect(() => {
-    // Simulate checking for existing session
+    // Check for existing session
     const savedUser = localStorage.getItem("alumni_user");
     if (savedUser) {
       setUser(JSON.parse(savedUser));
@@ -25,14 +30,16 @@ export const AuthProvider = ({ children }) => {
 
   const signIn = async (email, password) => {
     try {
-      const response = await fetch(
-        "http://localhost:8000/ijaa/api/v1/user/signin",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: email, password }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/signin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: email,
+          password,
+        }),
+      });
 
       const data = await response.json();
 
@@ -40,15 +47,16 @@ export const AuthProvider = ({ children }) => {
         throw new Error(data.message || "Sign-in failed");
       }
 
-      const user = {
+      // Backend returns { message, code, data: { token, userId } }
+      const userData = {
         email: email,
         token: data.data.token,
-        // Add other user fields from backend if available
+        userId: data.data.userId,
       };
 
-      setUser(user);
-      localStorage.setItem("alumni_user", JSON.stringify(user));
-      return user;
+      setUser(userData);
+      localStorage.setItem("alumni_user", JSON.stringify(userData));
+      return userData;
     } catch (err) {
       throw new Error(err.message || "Sign-in failed");
     }
@@ -56,33 +64,40 @@ export const AuthProvider = ({ children }) => {
 
   const signUp = async ({ email, password }) => {
     try {
-      const response = await fetch(
-        "http://localhost:8000/ijaa/api/v1/user/signup",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ username: email, password }),
-        }
-      );
+      const response = await fetch(`${API_BASE}/signup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: email,
+          password,
+        }),
+      });
 
       const data = await response.json();
 
       if (!response.ok) {
         // Handle specific error codes from backend
-        if (data.code === "409") {
+        if (
+          response.status === 409 ||
+          data.message?.includes("already exists")
+        ) {
           throw new Error("User already exists");
         }
         throw new Error(data.message || "Registration failed");
       }
 
-      const user = {
+      // Backend returns { message, code, data: { token, userId } }
+      const userData = {
         email: email,
         token: data.data.token,
+        userId: data.data.userId,
       };
 
-      setUser(user);
-      localStorage.setItem("alumni_user", JSON.stringify(user));
-      return user;
+      setUser(userData);
+      localStorage.setItem("alumni_user", JSON.stringify(userData));
+      return userData;
     } catch (err) {
       throw new Error(err.message || "Registration failed");
     }
