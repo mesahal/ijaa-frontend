@@ -227,7 +227,7 @@ const Search = () => {
         <button
           onClick={() => handlePageChange(pagination.page - 1)}
           disabled={pagination.first || loading}
-          className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -240,7 +240,7 @@ const Search = () => {
             className={`px-3 py-2 rounded-lg border ${
               page === pagination.page
                 ? "bg-blue-600 text-white border-blue-600"
-                : "border-gray-300 hover:bg-gray-50"
+                : "border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
             }`}
           >
             {page + 1}
@@ -250,7 +250,7 @@ const Search = () => {
         <button
           onClick={() => handlePageChange(pagination.page + 1)}
           disabled={pagination.last || loading}
-          className="p-2 rounded-lg border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+          className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 dark:hover:bg-gray-700"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
@@ -282,7 +282,7 @@ const Search = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyPress={handleKeyPress}
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 disabled={loading}
               />
             </div>
@@ -320,7 +320,7 @@ const Search = () => {
                 <select
                   value={filters.batch}
                   onChange={(e) => handleFilterChange("batch", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   disabled={loading}
                 >
                   <option value="">All Batches</option>
@@ -343,7 +343,7 @@ const Search = () => {
                   onChange={(e) =>
                     handleFilterChange("profession", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   disabled={loading}
                 />
               </div>
@@ -359,7 +359,7 @@ const Search = () => {
                   onChange={(e) =>
                     handleFilterChange("location", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                   disabled={loading}
                 />
               </div>
@@ -373,7 +373,7 @@ const Search = () => {
                 <select
                   value={filters.sortBy}
                   onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   disabled={loading}
                 >
                   <option value="relevance">Relevance</option>
@@ -439,17 +439,18 @@ const Search = () => {
         {alumni.map((person) => (
           <div
             key={person.userId}
-            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer"
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full"
             onClick={() => handleViewProfile(person.userId)}
           >
-            <div className="flex items-start space-x-4">
+            {/* Header Section - Fixed Height */}
+            <div className="flex items-start space-x-4 mb-4">
               <img
                 src={
                   person.avatar ||
                   "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1"
                 }
                 alt={person.name}
-                className="w-16 h-16 rounded-full object-cover"
+                className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                 onError={(e) => {
                   e.target.src =
                     "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1";
@@ -460,22 +461,23 @@ const Search = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                   {person.name || "Unknown"}
                 </h3>
-                <p className="text-blue-600 font-medium">
+                <p className="text-blue-600 font-medium truncate">
                   {person.profession || "Not specified"}
                 </p>
               </div>
 
               {person.isConnected && (
-                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium flex-shrink-0">
                   Connected
                 </span>
               )}
             </div>
 
-            <div className="mt-4 space-y-2">
+            {/* Info Section - Fixed Height */}
+            <div className="space-y-2 mb-4">
               <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                <GraduationCap className="h-4 w-4" />
-                <span>
+                <GraduationCap className="h-4 w-4 flex-shrink-0" />
+                <span className="truncate">
                   {person.batch
                     ? `Batch ${person.batch}`
                     : "Batch not specified"}
@@ -483,46 +485,49 @@ const Search = () => {
               </div>
               {person.location && (
                 <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                  <MapPin className="h-4 w-4" />
-                  <span>{person.location}</span>
+                  <MapPin className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">{person.location}</span>
                 </div>
               )}
               <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                <Users className="h-4 w-4" />
+                <Users className="h-4 w-4 flex-shrink-0" />
                 <span>{person.connections || 0} connections</span>
               </div>
             </div>
 
-            {person.bio && (
-              <p className="text-gray-700 dark:text-gray-300 text-sm mt-3 line-clamp-2">
-                {person.bio}
-              </p>
-            )}
+            {/* Bio Section - Flexible but constrained height */}
+            <div className="flex-1 mb-4">
+              {person.bio && (
+                <p className="text-gray-700 dark:text-gray-300 text-sm line-clamp-3 leading-relaxed">
+                  {person.bio}
+                </p>
+              )}
+            </div>
 
-            {/* Interests */}
-            {person.interests && person.interests.length > 0 && (
-              <div className="mt-3">
+            {/* Interests Section - Fixed Height */}
+            <div className="mb-6 h-8 flex items-start">
+              {person.interests && person.interests.length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {person.interests.slice(0, 3).map((interest, index) => (
+                  {person.interests.slice(0, 2).map((interest, index) => (
                     <span
                       key={index}
-                      className="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-2 py-1 rounded text-xs flex items-center space-x-1"
+                      className="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-2 py-1 rounded text-xs flex items-center space-x-1 max-w-20 truncate"
                     >
-                      <Tag className="h-3 w-3" />
-                      <span>{interest}</span>
+                      <Tag className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{interest}</span>
                     </span>
                   ))}
-                  {person.interests.length > 3 && (
-                    <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1">
-                      +{person.interests.length - 3} more
+                  {person.interests.length > 2 && (
+                    <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1 flex items-center">
+                      +{person.interests.length - 2}
                     </span>
                   )}
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
-            {/* Action Buttons */}
-            <div className="mt-6 flex space-x-3">
+            {/* Action Buttons - Fixed at bottom */}
+            <div className="flex space-x-3 mt-auto">
               {person.isConnected ? (
                 <button
                   onClick={(e) => {
@@ -549,16 +554,16 @@ const Search = () => {
                 </button>
               )}
 
-              <button
+              {/* <button
                 onClick={(e) => {
                   e.stopPropagation();
                   handleViewProfile(person.userId);
                 }}
-                className="border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 disabled={loading}
               >
                 View Profile
-              </button>
+              </button> */}
             </div>
           </div>
         ))}

@@ -335,7 +335,7 @@ const Profile = () => {
                   name={name}
                   value={value || ""}
                   onChange={handleInputChange}
-                  className="text-sm text-gray-600 dark:text-gray-300 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
+                  className="text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
                 />
                 {errors[name] && (
                   <p className="text-xs text-red-500 mt-1">{errors[name]}</p>
@@ -489,7 +489,7 @@ const Profile = () => {
                         name="batch"
                         value={profileData.batch || ""}
                         onChange={handleInputChange}
-                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
+                        className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
                       >
                         <option value="">Select Batch</option>
                         {Array.from({ length: 16 }, (_, i) => i + 1).map(
@@ -561,7 +561,7 @@ const Profile = () => {
                   value={profileData.bio || ""}
                   onChange={handleInputChange}
                   rows={4}
-                  className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
                   placeholder="Tell us about yourself..."
                 />
                 {errors.bio && (
@@ -604,7 +604,7 @@ const Profile = () => {
                       value={newExperience.title}
                       onChange={handleExperienceChange}
                       placeholder="Job Title"
-                      className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
                     />
                     <input
                       type="text"
@@ -612,7 +612,7 @@ const Profile = () => {
                       value={newExperience.company}
                       onChange={handleExperienceChange}
                       placeholder="Company Name"
-                      className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
                     />
                   </div>
                   <input
@@ -621,7 +621,7 @@ const Profile = () => {
                     value={newExperience.period}
                     onChange={handleExperienceChange}
                     placeholder="Time Period (e.g., Jan 2020 - Present)"
-                    className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
                   />
                   <textarea
                     name="description"
@@ -629,7 +629,7 @@ const Profile = () => {
                     onChange={handleExperienceChange}
                     rows={3}
                     placeholder="Job Description"
-                    className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
                   />
                   <div className="flex gap-2">
                     <button
@@ -729,7 +729,7 @@ const Profile = () => {
                     value={newInterest}
                     onChange={(e) => setNewInterest(e.target.value)}
                     placeholder="Enter interest (e.g., Java, React, Machine Learning)"
-                    className="w-full border rounded-lg p-3 dark:bg-gray-700 dark:text-white focus:border-blue-500 outline-none"
+                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
                     onKeyPress={(e) => {
                       if (e.key === "Enter") {
                         addInterest();

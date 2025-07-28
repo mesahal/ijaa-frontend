@@ -266,8 +266,8 @@ const ViewProfile = () => {
                   )}
 
                   <div className="flex items-center gap-1">
-                    <Eye className="h-4 w-4" />
-                    <span>{profileData.profileViews || 0} profile views</span>
+                    <Users className="h-4 w-4" />
+                    <span>{profileData.connections || 0} connections</span>
                   </div>
                 </div>
               </div>
@@ -442,79 +442,6 @@ const ViewProfile = () => {
                   Contact information is private
                 </div>
               )}
-          </div>
-
-          {/* Profile Stats */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Profile Stats
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Connections
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {profileData.connections || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Profile Views
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {profileData.profileViews || 0}
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Member Since
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {profileData.memberSince
-                    ? new Date(profileData.memberSince).getFullYear()
-                    : "2024"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl border border-blue-200 dark:border-blue-800 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Quick Actions
-            </h3>
-            <div className="space-y-3">
-              {!isConnected ? (
-                <button
-                  onClick={handleConnect}
-                  disabled={connectionLoading}
-                  className="w-full bg-blue-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50"
-                >
-                  <UserPlus className="h-4 w-4" />
-                  <span>
-                    {connectionLoading
-                      ? "Connecting..."
-                      : "Send Connection Request"}
-                  </span>
-                </button>
-              ) : (
-                <button
-                  onClick={handleMessage}
-                  className="w-full bg-green-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                >
-                  <MessageCircle className="h-4 w-4" />
-                  <span>Send Message</span>
-                </button>
-              )}
-
-              <button
-                onClick={() => window.history.back()}
-                className="w-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 py-2 px-4 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                Back to Search
-              </button>
-            </div>
           </div>
         </div>
       </div>
