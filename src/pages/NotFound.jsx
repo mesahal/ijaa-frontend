@@ -67,24 +67,8 @@ const NotFound = () => {
             Looking for something specific?
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
-            <Link
-              to="/events"
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Events
-            </Link>
-            <Link
-              to="/groups"
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Groups
-            </Link>
-            <Link
-              to="/chat"
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Messages
-            </Link>
+
+
             <Link
               to="/profile"
               className="text-blue-600 hover:text-blue-700 font-medium"

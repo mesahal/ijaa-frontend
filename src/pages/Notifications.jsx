@@ -6,7 +6,7 @@ import {
   Check,
   X,
   Users,
-  Calendar,
+
   MessageCircle,
   UserPlus,
   Settings,
@@ -40,15 +40,7 @@ const Notifications = () => {
         "https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=1",
       actionable: false,
     },
-    {
-      id: 3,
-      type: "event",
-      title: "Event Reminder",
-      message: "Annual Alumni Reunion 2025 is tomorrow at 10:00 AM",
-      time: "1 hour ago",
-      read: false,
-      actionable: false,
-    },
+
     {
       id: 4,
       type: "group",
@@ -69,16 +61,7 @@ const Notifications = () => {
         "https://images.pexels.com/photos/1181686/pexels-photo-1181686.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=1",
       actionable: false,
     },
-    {
-      id: 6,
-      type: "event",
-      title: "Event Registration Confirmed",
-      message:
-        'Your registration for "Career Development Workshop" has been confirmed',
-      time: "1 day ago",
-      read: true,
-      actionable: false,
-    },
+
     {
       id: 7,
       type: "message",
@@ -103,7 +86,7 @@ const Notifications = () => {
     const iconMap = {
       connection: UserPlus,
       message: MessageCircle,
-      event: Calendar,
+
       group: Users,
       system: Settings,
     };
@@ -116,7 +99,7 @@ const Notifications = () => {
     const colorMap = {
       connection: "text-blue-600 bg-blue-100",
       message: "text-green-600 bg-green-100",
-      event: "text-purple-600 bg-purple-100",
+
       group: "text-orange-600 bg-orange-100",
       system: "text-gray-600 bg-gray-100",
     };
@@ -204,11 +187,7 @@ const Notifications = () => {
               label: "Messages",
               count: notifications.filter((n) => n.type === "message").length,
             },
-            {
-              value: "event",
-              label: "Events",
-              count: notifications.filter((n) => n.type === "event").length,
-            },
+
             {
               value: "group",
               label: "Groups",

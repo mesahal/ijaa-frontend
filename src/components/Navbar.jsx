@@ -3,9 +3,6 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
   User,
-  Calendar,
-  Users,
-  MessageCircle,
   Search,
   Bell,
   Menu,
@@ -14,6 +11,7 @@ import {
   Settings,
   Moon,
   Sun,
+  Calendar,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -34,8 +32,6 @@ const Navbar = () => {
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
     { path: "/events", icon: Calendar, label: "Events" },
-    { path: "/groups", icon: Users, label: "Groups" },
-    { path: "/chat", icon: MessageCircle, label: "Chat" },
     { path: "/search", icon: Search, label: "Search" },
   ];
 
@@ -47,7 +43,7 @@ const Navbar = () => {
           <div className="flex items-center">
             <Link to="/dashboard" className="flex items-center space-x-3">
               <div className="bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-lg p-2">
-                <Users className="h-6 w-6" />
+                <User className="h-6 w-6" />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -113,7 +109,7 @@ const Navbar = () => {
                 className="flex items-center space-x-3 p-1 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
               >
                 <img
-                  src={user?.avatar || "/dp.jpg"}
+                  src={user?.avatar || "/dp.png"}
                   alt={user?.name}
                   className="h-8 w-8 rounded-full object-cover"
                 />

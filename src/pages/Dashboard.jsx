@@ -1,5 +1,5 @@
 import React from "react";
-import { BarChart3, Users, Calendar, TrendingUp } from "lucide-react";
+import { BarChart3, Users, TrendingUp } from "lucide-react";
 
 const Dashboard = () => {
   return (
@@ -27,21 +27,7 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 dark:bg-green-900/50 rounded-lg">
-                <Calendar className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                  Events
-                </p>
-                <p className="text-2xl font-semibold text-gray-900 dark:text-white">
-                  56
-                </p>
-              </div>
-            </div>
-          </div>
+
 
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
             <div className="flex items-center">
@@ -92,15 +78,7 @@ const Dashboard = () => {
                   2 minutes ago
                 </span>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <p className="text-gray-700 dark:text-gray-300">
-                  Event created
-                </p>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  1 hour ago
-                </span>
-              </div>
+
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
                 <p className="text-gray-700 dark:text-gray-300">
@@ -118,12 +96,7 @@ const Dashboard = () => {
               Quick Actions
             </h2>
             <div className="grid grid-cols-2 gap-4">
-              <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors">
-                <Calendar className="h-8 w-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
-                <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Create Event
-                </p>
-              </button>
+
               <button className="p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 transition-colors">
                 <Users className="h-8 w-8 text-gray-400 dark:text-gray-500 mx-auto mb-2" />
                 <p className="text-sm text-gray-600 dark:text-gray-400">

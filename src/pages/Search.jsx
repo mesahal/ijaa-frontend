@@ -17,10 +17,9 @@ import {
   Tag,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
-import axios from "axios";
+import apiClient from "../utils/apiClient";
 
 const Search = () => {
-  const API_BASE = process.env.REACT_APP_API_BASE_URL;
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -64,15 +63,7 @@ const Search = () => {
         size: pagination.size,
       };
 
-      const response = await axios.post(
-        `${API_BASE}/alumni/search`,
-        requestBody,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      const response = await apiClient.post(`/alumni/search`, requestBody);
 
       const result = response.data;
       console.log("Search result:", result);
@@ -145,15 +136,9 @@ const Search = () => {
 
   const handleConnect = async (alumniId) => {
     try {
-      const response = await axios.post(
-        `${API_BASE}/connections/request`,
-        { recipientUsername: alumniId },
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      const response = await apiClient.post(`/connections/request`, {
+        recipientUsername: alumniId,
+      });
 
       if (response.data.code === "200" || response.data.code === 200) {
         console.log("Connection request sent successfully");
@@ -172,8 +157,8 @@ const Search = () => {
   };
 
   const handleMessage = (userId) => {
-    console.log("Messaging alumni:", userId);
-    navigate(`/chat/${userId}`);
+    // Chat functionality removed
+    alert("Chat feature has been removed from this application.");
   };
 
   const handleViewProfile = (userId) => {
@@ -445,15 +430,11 @@ const Search = () => {
             {/* Header Section - Fixed Height */}
             <div className="flex items-start space-x-4 mb-4">
               <img
-                src={
-                  person.avatar ||
-                  "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1"
-                }
+                src={person.avatar || "/dp.png"}
                 alt={person.name}
                 className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                 onError={(e) => {
-                  e.target.src =
-                    "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1";
+                  e.target.src = "/dp.png"; // Fallback image if avatar fails to load
                 }}
               />
 

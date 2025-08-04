@@ -29,8 +29,8 @@ const ContactSupport = () => {
     { value: "general", label: "General Inquiry" },
     { value: "technical", label: "Technical Issue" },
     { value: "account", label: "Account Problem" },
-    { value: "events", label: "Events & Registration" },
-    { value: "groups", label: "Groups & Communities" },
+
+
     { value: "privacy", label: "Privacy & Security" },
     { value: "billing", label: "Billing & Payments" },
     { value: "feedback", label: "Feedback & Suggestions" },
@@ -70,15 +70,9 @@ const ContactSupport = () => {
       answer:
         'Navigate to your profile page and click the "Edit Profile" button. You can update your personal information, professional details, and privacy settings.',
     },
+
     {
-      question: "How do I join alumni groups?",
-      answer:
-        'Visit the Groups page, browse available groups, and click "Join Group" on any group you\'re interested in. Some groups may require approval from administrators.',
-    },
-    {
-      question: "Can I cancel my event registration?",
-      answer:
-        'Yes, you can cancel most event registrations from your "My Events" page. Some events may have cancellation deadlines or fees.',
+      
     },
   ];
 

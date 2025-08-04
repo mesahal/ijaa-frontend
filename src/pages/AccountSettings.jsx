@@ -11,7 +11,7 @@ import {
   Bell,
   Mail,
   MessageCircle,
-  Calendar,
+
   Users,
 } from "lucide-react";
 
@@ -33,8 +33,8 @@ const AccountSettings = () => {
     emailNotifications: true,
     pushNotifications: true,
     messageNotifications: true,
-    eventNotifications: true,
-    groupNotifications: true,
+
+
     connectionNotifications: true,
     weeklyDigest: true,
     marketingEmails: false,
@@ -326,65 +326,9 @@ const AccountSettings = () => {
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Calendar className="h-5 w-5 text-gray-400" />
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    Event Notifications
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Get notified about upcoming events
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleNotificationChange("eventNotifications")}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notifications.eventNotifications
-                    ? "bg-blue-600"
-                    : "bg-gray-200"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    notifications.eventNotifications
-                      ? "translate-x-6"
-                      : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
 
-            <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-              <div className="flex items-center space-x-3">
-                <Users className="h-5 w-5 text-gray-400" />
-                <div>
-                  <h3 className="font-medium text-gray-900 dark:text-white">
-                    Group Notifications
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Get notified about group activities
-                  </p>
-                </div>
-              </div>
-              <button
-                onClick={() => handleNotificationChange("groupNotifications")}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  notifications.groupNotifications
-                    ? "bg-blue-600"
-                    : "bg-gray-200"
-                }`}
-              >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    notifications.groupNotifications
-                      ? "translate-x-6"
-                      : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
+
+
 
             <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
               <div className="flex items-center space-x-3">

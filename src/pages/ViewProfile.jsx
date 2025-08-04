@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../utils/apiClient";
 import {
   ArrowLeft,
   MapPin,
@@ -22,7 +22,6 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const ViewProfile = () => {
-  const API_BASE = process.env.REACT_APP_API_BASE_URL;
   const { userId } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -36,11 +35,7 @@ const ViewProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/profile/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await apiClient.get(`/profile/${userId}`);
 
       const profile = response.data.data;
       console.log("Fetched Profile:", profile);
@@ -58,11 +53,7 @@ const ViewProfile = () => {
 
   const fetchExperiences = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/experiences/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await apiClient.get(`/experiences/${userId}`);
 
       // Handle both array and object response
       const experiencesData = response.data.data || [];
@@ -75,11 +66,7 @@ const ViewProfile = () => {
 
   const fetchInterests = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/interests/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await apiClient.get(`/interests/${userId}`);
 
       // Handle both array and object response, and extract interest strings
       const interestsData = response.data.data || [];
@@ -100,15 +87,9 @@ const ViewProfile = () => {
 
     setConnectionLoading(true);
     try {
-      const response = await axios.post(
-        `${API_BASE}/connections/request`,
-        { recipientUsername: userId }, // Use username instead of recipientId
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      const response = await apiClient.post(`/connections/request`, {
+        recipientUsername: userId,
+      });
 
       if (response.data.code === "200" || response.data.code === 200) {
         setIsConnected(true);
@@ -127,7 +108,8 @@ const ViewProfile = () => {
   };
 
   const handleMessage = () => {
-    navigate(`/chat/${userId}`);
+    // Chat functionality removed
+    alert("Chat feature has been removed from this application.");
   };
 
   const handleGoBack = () => {
@@ -222,15 +204,11 @@ const ViewProfile = () => {
           {/* Profile Picture */}
           <div className="absolute -top-16 left-4 sm:left-8">
             <img
-              src={
-                profileData.avatar ||
-                "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1"
-              }
+              src={profileData.avatar || "/dp.png"}
               alt={profileData.name}
               className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
               onError={(e) => {
-                e.target.src =
-                  "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1";
+                e.target.src = "/dp.png"; // Fallback image if avatar fails to load
               }}
             />
           </div>

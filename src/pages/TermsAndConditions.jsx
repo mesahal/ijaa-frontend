@@ -259,29 +259,7 @@ const TermsAndConditions = () => {
             </div>
           </section>
 
-          {/* Events and Payments */}
-          <section>
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              7. Events and Payments
-            </h3>
-            <div className="space-y-3 text-gray-600">
-              <p>
-                <strong>Event Registration:</strong> When you register for paid
-                events, you agree to pay the specified fees. Registration fees
-                are generally non-refundable unless otherwise stated.
-              </p>
-              <p>
-                <strong>Cancellation Policy:</strong> Event cancellation
-                policies vary by event. Please review the specific cancellation
-                terms before registering.
-              </p>
-              <p>
-                <strong>Payment Processing:</strong> Payments are processed
-                securely through third-party payment processors. We do not store
-                your payment information.
-              </p>
-            </div>
-          </section>
+
 
           {/* Termination */}
           <section>

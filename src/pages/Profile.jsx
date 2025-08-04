@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import apiClient from "../utils/apiClient";
 import {
   Camera,
   Edit3,
@@ -21,10 +21,6 @@ import {
 import { useAuth } from "../context/AuthContext";
 
 const Profile = () => {
-  const API_BASE =
-    process.env.REACT_APP_API_BASE_URL ||
-    "http://localhost:8000/ijaa/api/v1/user";
-
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -59,11 +55,7 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/profile/${user?.userId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await apiClient.get(`/profile/${user?.userId}`);
 
       const profile = response.data.data;
       console.log("Fetched Profile:", profile);
@@ -84,14 +76,7 @@ const Profile = () => {
 
   const fetchExperiences = async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE}/experiences/${user?.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      const response = await apiClient.get(`/experiences/${user?.userId}`);
       setExperiences(response.data.data || []);
     } catch (err) {
       console.error("Failed to fetch experiences", err);
@@ -100,14 +85,7 @@ const Profile = () => {
 
   const fetchInterests = async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE}/interests/${user?.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      const response = await apiClient.get(`/interests/${user?.userId}`);
       setInterests(response.data.data || []);
     } catch (err) {
       console.error("Failed to fetch interests", err);
@@ -122,14 +100,9 @@ const Profile = () => {
         userId: user?.userId,
       };
 
-      const response = await axios.put(
-        `${API_BASE}/${sectionName}`,
-        payloadWithUserId,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
+      const response = await apiClient.put(
+        `/${sectionName}`,
+        payloadWithUserId
       );
 
       const updatedProfile = response.data.data;
@@ -161,11 +134,7 @@ const Profile = () => {
         userId: user?.userId,
       };
 
-      await axios.post(`${API_BASE}/experiences`, experienceWithUserId, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      await apiClient.post(`/experiences`, experienceWithUserId);
 
       setNewExperience({ title: "", company: "", period: "", description: "" });
       setShowAddExperience(false);
@@ -179,11 +148,7 @@ const Profile = () => {
   const deleteExperience = async (experienceId) => {
     try {
       // Backend expects userId in URL path: /experiences/{userId}
-      await axios.delete(`${API_BASE}/experiences/${experienceId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      await apiClient.delete(`/experiences/${experienceId}`);
       fetchExperiences();
     } catch (err) {
       console.error("Failed to delete experience", err);
@@ -199,15 +164,7 @@ const Profile = () => {
 
     try {
       // Backend expects { interest: "value" } in request body
-      await axios.post(
-        `${API_BASE}/interests`,
-        { interest: newInterest.trim() },
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      await apiClient.post(`/interests`, { interest: newInterest.trim() });
 
       // Refresh the interests list
       fetchInterests();
@@ -226,11 +183,7 @@ const Profile = () => {
   const deleteInterest = async (interestId) => {
     try {
       // Backend expects userId in URL path: /interests/{userId}
-      await axios.delete(`${API_BASE}/interests/${interestId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      await apiClient.delete(`/interests/${interestId}`);
 
       fetchInterests();
     } catch (err) {
@@ -396,7 +349,7 @@ const Profile = () => {
           {/* Profile Picture */}
           <div className="absolute -top-16 left-4 sm:left-8">
             <img
-              src={user?.avatar || "/dp.jpg"}
+              src={user?.avatar || "/dp.png"}
               alt={profileData.name}
               className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
             />
@@ -841,22 +794,8 @@ const Profile = () => {
                   {profileData.connections || 0}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Groups Joined
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  8
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Events Attended
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  12
-                </span>
-              </div>
+
+
             </div>
           </div>
 

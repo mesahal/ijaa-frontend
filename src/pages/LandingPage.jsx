@@ -22,18 +22,8 @@ const LandingPage = () => {
       description:
         "Find and connect with fellow graduates from your batch and department",
     },
-    {
-      icon: Calendar,
-      title: "Alumni Events",
-      description:
-        "Stay updated with reunions, seminars, and networking events",
-    },
-    {
-      icon: MessageCircle,
-      title: "Real-time Chat",
-      description:
-        "Chat with individual alumni or participate in group discussions",
-    },
+
+
     {
       icon: Video,
       title: "Video Calls",
@@ -57,7 +47,6 @@ const LandingPage = () => {
   const stats = [
     { number: "5000+", label: "Active Alumni" },
     { number: "50+", label: "Countries" },
-    { number: "200+", label: "Events Hosted" },
     { number: "15+", label: "Years of Excellence" },
   ];
 

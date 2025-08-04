@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "react-toastify";
+import sessionManager from "../utils/sessionManager";
 
 const AuthContext = createContext();
 
@@ -19,14 +21,76 @@ export const AuthProvider = ({ children }) => {
     process.env.REACT_APP_API_BASE_URL ||
     "http://localhost:8000/ijaa/api/v1/user";
 
-  useEffect(() => {
-    // Check for existing session
-    const savedUser = localStorage.getItem("alumni_user");
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
+  // Handle automatic logout from token expiry
+  const handleAutoLogout = (event) => {
+    const { reason } = event.detail;
+    
+    // Clear user state
+    setUser(null);
+    
+    // Show appropriate message
+    if (reason === 'token_expired') {
+      toast.info("Session expired. Please log in again.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
     }
-    setLoading(false);
+  };
+
+  useEffect(() => {
+    const initializeSession = async () => {
+      try {
+        // Clean up old session variables
+        sessionManager.cleanupOldVariables();
+        
+        // Check for existing user session using session manager
+        const userSession = sessionManager.getUserSession();
+        if (userSession && userSession.data) {
+          const userData = userSession.data;
+          // Validate that the user data has required fields
+          if (userData && userData.token && userData.email) {
+            setUser(userData);
+          } else {
+            // Clear invalid user data
+            sessionManager.clearUser();
+          }
+        }
+      } catch (error) {
+        console.error("Error loading user session:", error);
+        // Clear corrupted user data
+        sessionManager.clearUser();
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeSession();
+
+    // Listen for automatic logout events
+    window.addEventListener('auth:logout', handleAutoLogout);
+
+    // Listen for storage changes (cross-tab synchronization)
+    const unsubscribe = sessionManager.onStorageChange((session) => {
+      if (session.type === 'user') {
+        setUser(session.data);
+      } else {
+        setUser(null);
+      }
+    });
+
+    // Cleanup event listeners
+    return () => {
+      window.removeEventListener('auth:logout', handleAutoLogout);
+      unsubscribe();
+    };
   }, []);
+
+  // Ensure loading is false when user state is set
+  useEffect(() => {
+    if (user && loading) {
+      setLoading(false);
+    }
+  }, [user, loading]);
 
   const signIn = async (email, password) => {
     try {
@@ -54,8 +118,14 @@ export const AuthProvider = ({ children }) => {
         userId: data.data.userId,
       };
 
+      // Handle session conflict and set user session
+      sessionManager.handleSessionConflict('user');
+      sessionManager.setUser(userData);
       setUser(userData);
-      localStorage.setItem("alumni_user", JSON.stringify(userData));
+      
+      // Ensure loading is false after successful login
+      setLoading(false);
+      
       return userData;
     } catch (err) {
       throw new Error(err.message || "Sign-in failed");
@@ -95,8 +165,14 @@ export const AuthProvider = ({ children }) => {
         userId: data.data.userId,
       };
 
+      // Handle session conflict and set user session
+      sessionManager.handleSessionConflict('user');
+      sessionManager.setUser(userData);
       setUser(userData);
-      localStorage.setItem("alumni_user", JSON.stringify(userData));
+      
+      // Ensure loading is false after successful signup
+      setLoading(false);
+      
       return userData;
     } catch (err) {
       throw new Error(err.message || "Registration failed");
@@ -105,7 +181,13 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = () => {
     setUser(null);
-    localStorage.removeItem("alumni_user");
+    sessionManager.clearUser();
+    
+    // Show logout message
+    toast.success("Logged out successfully", {
+      position: "top-right",
+      autoClose: 2000,
+    });
   };
 
   const value = {

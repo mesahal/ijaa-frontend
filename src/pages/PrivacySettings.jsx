@@ -28,12 +28,10 @@ const PrivacySettings = () => {
     education: "alumni",
     skills: "public",
     connections: "alumni",
-    groups: "public",
-    events: "alumni",
+
     searchable: true,
     allowMessages: "alumni", // everyone, alumni, connections
-    allowGroupInvites: "alumni",
-    allowEventInvites: "alumni",
+
     showOnlineStatus: true,
     allowProfileViews: true,
   });
@@ -310,25 +308,9 @@ const PrivacySettings = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Groups Membership
-              </label>
-              <VisibilitySelector
-                value={settings.groups}
-                onChange={(value) => handleSettingChange("groups", value)}
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Events Attendance
-              </label>
-              <VisibilitySelector
-                value={settings.events}
-                onChange={(value) => handleSettingChange("events", value)}
-              />
-            </div>
+
+
           </div>
         </div>
 
@@ -352,31 +334,9 @@ const PrivacySettings = () => {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Group Invitations
-              </label>
-              <VisibilitySelector
-                value={settings.allowGroupInvites}
-                onChange={(value) =>
-                  handleSettingChange("allowGroupInvites", value)
-                }
-                options={messageOptions}
-              />
-            </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Event Invitations
-              </label>
-              <VisibilitySelector
-                value={settings.allowEventInvites}
-                onChange={(value) =>
-                  handleSettingChange("allowEventInvites", value)
-                }
-                options={messageOptions}
-              />
-            </div>
+
+
           </div>
         </div>
 

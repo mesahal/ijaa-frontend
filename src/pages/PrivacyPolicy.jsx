@@ -147,9 +147,9 @@ const PrivacyPolicy = () => {
                 <ul className="space-y-1 text-gray-600 text-sm">
                   <li>• Create and manage your account</li>
                   <li>• Provide platform features and functionality</li>
-                  <li>• Process event registrations and payments</li>
+  
                   <li>• Facilitate connections between alumni</li>
-                  <li>• Enable group participation and messaging</li>
+  
                 </ul>
               </div>
 
@@ -161,7 +161,7 @@ const PrivacyPolicy = () => {
                   <li>• Send important service notifications</li>
                   <li>• Provide customer support</li>
                   <li>• Share alumni news and updates</li>
-                  <li>• Send event invitations and reminders</li>
+  
                   <li>• Deliver weekly digest emails (if opted in)</li>
                 </ul>
               </div>
@@ -225,9 +225,9 @@ const PrivacyPolicy = () => {
                 </h4>
                 <ul className="space-y-1 text-gray-600 ml-4">
                   <li>• Profile information you choose to make visible</li>
-                  <li>• Posts and comments in groups and events</li>
+  
                   <li>• Messages you send directly to other users</li>
-                  <li>• Your participation in events and groups</li>
+  
                 </ul>
               </div>
 
@@ -236,7 +236,7 @@ const PrivacyPolicy = () => {
                   With Service Providers
                 </h4>
                 <ul className="space-y-1 text-gray-600 ml-4">
-                  <li>• Payment processors for event registration fees</li>
+  
                   <li>• Email service providers for notifications</li>
                   <li>• Cloud hosting providers for data storage</li>
                   <li>• Analytics providers for platform improvement</li>
@@ -286,7 +286,7 @@ const PrivacyPolicy = () => {
                 <ul className="space-y-2 text-blue-800 text-sm">
                   <li>• Choose who can see your information</li>
                   <li>• Control who can message you</li>
-                  <li>• Manage group and event visibility</li>
+  
                   <li>• Set search preferences</li>
                   <li>• Control online status visibility</li>
                 </ul>
