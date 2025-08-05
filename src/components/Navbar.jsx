@@ -129,22 +129,6 @@ const Navbar = () => {
                     <span>View Profile</span>
                   </Link>
                   <Link
-                    to="/profile/edit"
-                    className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    onClick={() => setShowProfileMenu(false)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Edit Profile</span>
-                  </Link>
-                  <Link
-                    to="/settings/privacy"
-                    className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                    onClick={() => setShowProfileMenu(false)}
-                  >
-                    <Settings className="h-4 w-4" />
-                    <span>Privacy Settings</span>
-                  </Link>
-                  <Link
                     to="/settings/account"
                     className="flex items-center space-x-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
                     onClick={() => setShowProfileMenu(false)}

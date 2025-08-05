@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -11,8 +11,6 @@ import Profile from "./pages/Profile";
 import ViewProfile from "./pages/ViewProfile";
 import Search from "./pages/Search";
 import Events from "./pages/Events";
-import EditProfile from "./pages/EditProfile";
-import PrivacySettings from "./pages/PrivacySettings";
 import AccountSettings from "./pages/AccountSettings";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -138,14 +136,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/profile/edit"
-          element={
-            <ProtectedRoute>
-              <EditProfile />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/profile/:userId"
           element={
@@ -170,14 +161,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/settings/privacy"
-          element={
-            <ProtectedRoute>
-              <PrivacySettings />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/settings/account"
           element={
