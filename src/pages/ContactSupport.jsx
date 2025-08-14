@@ -10,7 +10,10 @@ import {
   Clock,
   CheckCircle,
   HelpCircle,
+  AlertCircle,
+  Info,
 } from "lucide-react";
+import { Button, Input, Card, Badge } from "../components/ui";
 
 const ContactSupport = () => {
   const navigate = useNavigate();
@@ -29,8 +32,6 @@ const ContactSupport = () => {
     { value: "general", label: "General Inquiry" },
     { value: "technical", label: "Technical Issue" },
     { value: "account", label: "Account Problem" },
-
-
     { value: "privacy", label: "Privacy & Security" },
     { value: "billing", label: "Billing & Payments" },
     { value: "feedback", label: "Feedback & Suggestions" },
@@ -41,21 +42,25 @@ const ContactSupport = () => {
       value: "low",
       label: "Low",
       description: "General questions, non-urgent",
+      color: "success"
     },
     {
       value: "medium",
       label: "Medium",
       description: "Standard support request",
+      color: "warning"
     },
     {
       value: "high",
       label: "High",
       description: "Urgent issue affecting usage",
+      color: "error"
     },
     {
       value: "critical",
       label: "Critical",
       description: "System down, security issue",
+      color: "error"
     },
   ];
 
@@ -70,9 +75,15 @@ const ContactSupport = () => {
       answer:
         'Navigate to your profile page and click the "Edit Profile" button. You can update your personal information, professional details, and privacy settings.',
     },
-
     {
-      
+      question: "How do I connect with other alumni?",
+      answer:
+        "Use the search feature to find alumni by name, location, or profession. You can send connection requests and message other alumni directly.",
+    },
+    {
+      question: "What should I do if I can't access my account?",
+      answer:
+        "First, try resetting your password. If that doesn't work, contact our support team with your email address and we'll help you regain access.",
     },
   ];
 
@@ -96,302 +107,284 @@ const ContactSupport = () => {
 
   if (submitted) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-          <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="h-10 w-10 text-green-600" />
-          </div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Card className="p-8 text-center">
+            <div className="bg-success-100 dark:bg-success-900/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle className="h-10 w-10 text-success-600 dark:text-success-400" />
+            </div>
 
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            Message Sent Successfully!
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Thank you for contacting us. We've received your message and will
-            get back to you within 24 hours.
-          </p>
-
-          <div className="bg-blue-50 rounded-lg p-4 mb-6">
-            <p className="text-sm text-blue-700">
-              <strong>Ticket ID:</strong> #SUP-{Date.now().toString().slice(-6)}
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+              Message Sent Successfully!
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Thank you for contacting us. We've received your message and will
+              get back to you within 24 hours.
             </p>
-            <p className="text-sm text-blue-600 mt-1">
-              Save this ID for future reference
-            </p>
-          </div>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <button
-              onClick={() => {
-                setSubmitted(false);
-                setFormData({
-                  name: "",
-                  email: "",
-                  subject: "",
-                  category: "general",
-                  message: "",
-                  priority: "medium",
-                });
-              }}
-              className="border border-gray-300 text-gray-700 px-6 py-2 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-            >
-              Send Another Message
-            </button>
-            <button
-              onClick={() => navigate("/dashboard")}
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              Back to Dashboard
-            </button>
-          </div>
+            <Card className="mb-6 border-primary-200 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/10">
+              <div className="p-4">
+                <p className="text-sm text-primary-800 dark:text-primary-200">
+                  <strong>Ticket ID:</strong> #SUP-{Date.now().toString().slice(-6)}
+                </p>
+                <p className="text-sm text-primary-700 dark:text-primary-300 mt-1">
+                  Save this ID for future reference
+                </p>
+              </div>
+            </Card>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setSubmitted(false);
+                  setFormData({
+                    name: "",
+                    email: "",
+                    subject: "",
+                    category: "general",
+                    message: "",
+                    priority: "medium",
+                  });
+                }}
+              >
+                Send Another Message
+              </Button>
+              <Button
+                variant="primary"
+                onClick={() => navigate("/dashboard")}
+              >
+                Back to Dashboard
+              </Button>
+            </div>
+          </Card>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="flex items-center space-x-4 mb-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </button>
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Contact Support</h1>
-          <p className="text-gray-600 mt-2">
-            Get help with your account or technical issues
-          </p>
-        </div>
-      </div>
-
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Contact Form */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-6">
-              Send us a message
-            </h2>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Your full name"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="your.email@example.com"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Subject
-                </label>
-                <input
-                  type="text"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Brief description of your issue"
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Category
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {categories.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Priority
-                  </label>
-                  <select
-                    name="priority"
-                    value={formData.priority}
-                    onChange={handleInputChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    {priorities.map((priority) => (
-                      <option key={priority.value} value={priority.value}>
-                        {priority.label} - {priority.description}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Message
-                </label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  required
-                  rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Please provide detailed information about your issue or question..."
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-              >
-                {loading ? (
-                  <>
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                    <span>Sending...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-5 w-5" />
-                    <span>Send Message</span>
-                  </>
-                )}
-              </button>
-            </form>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="flex items-center space-x-4 mb-8">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate(-1)}
+            icon={<ArrowLeft className="h-5 w-5" />}
+          />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Contact Support</h1>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
+              Get help with your account or technical issues
+            </p>
           </div>
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Contact Information */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Other Ways to Reach Us
-            </h3>
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Contact Form */}
+          <div className="lg:col-span-2">
+            <Card>
+              <div className="p-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                  Send us a message
+                </h2>
 
-            <div className="space-y-4">
-              <div className="flex items-start space-x-3">
-                <Mail className="h-5 w-5 text-blue-600 mt-1" />
-                <div>
-                  <p className="font-medium text-gray-900">Email</p>
-                  <p className="text-sm text-gray-600">
-                    support@iitju-alumni.org
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Response within 24 hours
-                  </p>
-                </div>
-              </div>
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <Input
+                      label="Full Name"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleInputChange}
+                      placeholder="Your full name"
+                      required
+                    />
 
-              <div className="flex items-start space-x-3">
-                <Phone className="h-5 w-5 text-blue-600 mt-1" />
-                <div>
-                  <p className="font-medium text-gray-900">Phone</p>
-                  <p className="text-sm text-gray-600">+880 1712-345678</p>
-                  <p className="text-xs text-gray-500">
-                    Mon-Fri, 9 AM - 6 PM (GMT+6)
-                  </p>
-                </div>
-              </div>
+                    <Input
+                      label="Email Address"
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      placeholder="your.email@example.com"
+                      required
+                    />
+                  </div>
 
-              <div className="flex items-start space-x-3">
-                <MessageCircle className="h-5 w-5 text-blue-600 mt-1" />
-                <div>
-                  <p className="font-medium text-gray-900">Live Chat</p>
-                  <p className="text-sm text-gray-600">Available on website</p>
-                  <p className="text-xs text-gray-500">
-                    Mon-Fri, 10 AM - 5 PM (GMT+6)
-                  </p>
-                </div>
+                  <Input
+                    label="Subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleInputChange}
+                    placeholder="Brief description of your issue"
+                    required
+                  />
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Category
+                      </label>
+                      <select
+                        name="category"
+                        value={formData.category}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      >
+                        {categories.map((category) => (
+                          <option key={category.value} value={category.value}>
+                            {category.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Priority
+                      </label>
+                      <select
+                        name="priority"
+                        value={formData.priority}
+                        onChange={handleInputChange}
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"
+                      >
+                        {priorities.map((priority) => (
+                          <option key={priority.value} value={priority.value}>
+                            {priority.label} - {priority.description}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Message
+                    </label>
+                    <textarea
+                      name="message"
+                      value={formData.message}
+                      onChange={handleInputChange}
+                      required
+                      rows={6}
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400"
+                      placeholder="Please provide detailed information about your issue or question..."
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    fullWidth
+                    loading={loading}
+                    icon={<Send className="h-5 w-5" />}
+                    iconPosition="left"
+                  >
+                    {loading ? "Sending..." : "Send Message"}
+                  </Button>
+                </form>
               </div>
-            </div>
+            </Card>
           </div>
 
-          {/* Response Times */}
-          <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Clock className="h-5 w-5 text-blue-600" />
-              <h3 className="font-semibold text-blue-900">
-                Expected Response Times
-              </h3>
-            </div>
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Contact Information */}
+            <Card>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Other Ways to Reach Us
+                </h3>
 
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-blue-700">Critical:</span>
-                <span className="font-medium text-blue-900">2-4 hours</span>
+                <div className="space-y-4">
+                  {[
+                    {
+                      icon: Mail,
+                      title: "Email",
+                      value: "support@iitju-alumni.org",
+                      subtitle: "Response within 24 hours"
+                    },
+                    {
+                      icon: Phone,
+                      title: "Phone",
+                      value: "+880 1712-345678",
+                      subtitle: "Mon-Fri, 9 AM - 6 PM (GMT+6)"
+                    },
+                    {
+                      icon: MessageCircle,
+                      title: "Live Chat",
+                      value: "Available on website",
+                      subtitle: "Mon-Fri, 10 AM - 5 PM (GMT+6)"
+                    }
+                  ].map((contact, index) => (
+                    <div key={index} className="flex items-start space-x-3">
+                      <contact.icon className="h-5 w-5 text-primary-600 dark:text-primary-400 mt-1" />
+                      <div>
+                        <p className="font-medium text-gray-900 dark:text-white">{contact.title}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{contact.value}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">{contact.subtitle}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">High:</span>
-                <span className="font-medium text-blue-900">4-8 hours</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Medium:</span>
-                <span className="font-medium text-blue-900">24 hours</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-blue-700">Low:</span>
-                <span className="font-medium text-blue-900">48 hours</span>
-              </div>
-            </div>
-          </div>
+            </Card>
 
-          {/* FAQ */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <HelpCircle className="h-5 w-5 text-gray-600" />
-              <h3 className="font-semibold text-gray-900">
-                Frequently Asked Questions
-              </h3>
-            </div>
+            {/* Response Times */}
+            <Card className="border-primary-200 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/10">
+              <div className="p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Clock className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                  <h3 className="font-semibold text-primary-900 dark:text-primary-100">
+                    Expected Response Times
+                  </h3>
+                </div>
 
-            <div className="space-y-4">
-              {faqs.map((faq, index) => (
-                <details key={index} className="group">
-                  <summary className="cursor-pointer text-sm font-medium text-gray-900 hover:text-blue-600 transition-colors">
-                    {faq.question}
-                  </summary>
-                  <p className="mt-2 text-sm text-gray-600 pl-4 border-l-2 border-gray-200">
-                    {faq.answer}
-                  </p>
-                </details>
-              ))}
-            </div>
+                <div className="space-y-3">
+                  {[
+                    { priority: "Critical", time: "2-4 hours", color: "error" },
+                    { priority: "High", time: "4-8 hours", color: "error" },
+                    { priority: "Medium", time: "24 hours", color: "warning" },
+                    { priority: "Low", time: "48 hours", color: "success" }
+                  ].map((item, index) => (
+                    <div key={index} className="flex justify-between items-center">
+                      <Badge variant={item.color} size="sm">{item.priority}</Badge>
+                      <span className="font-medium text-primary-900 dark:text-primary-100">{item.time}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Card>
+
+            {/* FAQ */}
+            <Card>
+              <div className="p-6">
+                <div className="flex items-center space-x-2 mb-4">
+                  <HelpCircle className="h-5 w-5 text-gray-600 dark:text-gray-400" />
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                    Frequently Asked Questions
+                  </h3>
+                </div>
+
+                <div className="space-y-4">
+                  {faqs.map((faq, index) => (
+                    <details key={index} className="group">
+                      <summary className="cursor-pointer text-sm font-medium text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors flex items-center space-x-2">
+                        <Info className="h-4 w-4" />
+                        <span>{faq.question}</span>
+                      </summary>
+                      <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 pl-6 border-l-2 border-gray-200 dark:border-gray-700">
+                        {faq.answer}
+                      </p>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            </Card>
           </div>
         </div>
       </div>

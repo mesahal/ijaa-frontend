@@ -17,8 +17,20 @@ import {
   Plus,
   Trash2,
   Facebook,
+  Calendar,
+  User,
+  Award,
+  MessageCircle,
+  Share2,
+  MoreHorizontal,
+  Bookmark,
+  Heart,
+  Star,
+  CheckCircle,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { Card, Button, Avatar, Badge, Input } from "../components/ui";
 
 const Profile = () => {
   const { user } = useAuth();
@@ -201,624 +213,455 @@ const Profile = () => {
     }
   };
 
-  const handleExperienceChange = (e) => {
-    const { name, value } = e.target;
-    setNewExperience({ ...newExperience, [name]: value });
-  };
-
   const handleSave = async () => {
-    if (!validateFields()) return;
-
-    // Combine profile data with visibility settings
-    const payload = {
-      ...profileData,
-      ...visibility,
-    };
-
-    await updateSection("basic", payload);
-  };
-
-  const handleCancel = () => {
-    setIsEditing(false);
-    setErrors({});
-    setShowAddExperience(false);
-    setShowAddInterest(false);
-    setNewExperience({ title: "", company: "", period: "", description: "" });
-    setNewInterest("");
-    // Reset to original data
-    fetchProfile();
-  };
-
-  const toggleVisibility = async (field) => {
-    const updated = { ...visibility, [field]: !visibility[field] };
-    setVisibility(updated);
-
-    if (!isEditing) {
-      await updateSection("visibility", updated);
+    if (!validateFields()) {
+      return;
     }
+
+    await updateSection("profile", profileData);
   };
 
   useEffect(() => {
-    if (user?.userId && user?.token) {
+    if (user?.userId) {
       fetchProfile();
       fetchExperiences();
       fetchInterests();
     }
-  }, [user?.userId, user?.token]);
+  }, [user?.userId]);
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
       </div>
     );
-
-  const renderField = (
-    label,
-    name,
-    Icon,
-    isLink = false,
-    visibilityKey = null
-  ) => {
-    const value = profileData[name];
-    const showVisibilityToggle =
-      visibilityKey &&
-      [
-        "showPhone",
-        "showLinkedIn",
-        "showWebsite",
-        "showEmail",
-        "showFacebook",
-      ].includes(visibilityKey);
-
-    if (!value && !isEditing) return null;
-
-    return (
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {label}
-            </p>
-            {isEditing ? (
-              <div>
-                <input
-                  type="text"
-                  name={name}
-                  value={value || ""}
-                  onChange={handleInputChange}
-                  className="text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                />
-                {errors[name] && (
-                  <p className="text-xs text-red-500 mt-1">{errors[name]}</p>
-                )}
-              </div>
-            ) : isLink ? (
-              <a
-                href={value}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate block"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {label === "Website"
-                  ? "Visit Website"
-                  : label === "Facebook"
-                  ? "View Profile"
-                  : "View Profile"}
-              </a>
-            ) : (
-              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                {value}
-              </p>
-            )}
-          </div>
-        </div>
-        {showVisibilityToggle && (
-          <button
-            onClick={() => toggleVisibility(visibilityKey)}
-            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
-          >
-            {visibility[visibilityKey] ? (
-              <Eye className="h-4 w-4" />
-            ) : (
-              <EyeOff className="h-4 w-4" />
-            )}
-          </button>
-        )}
-      </div>
-    );
-  };
+  }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
-        {/* Cover Photo */}
-        <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
-          <img
-            src="/cover-image.jpg"
-            alt="Cover"
-            className="w-full h-full object-cover"
-          />
-          <button className="absolute top-4 right-4 bg-white/20 text-white p-2 rounded-lg">
-            <Camera className="h-5 w-5" />
-          </button>
-        </div>
-
-        <div className="px-4 sm:px-8 pb-8 relative">
-          {/* Profile Picture */}
-          <div className="absolute -top-16 left-4 sm:left-8">
-            <img
-              src={user?.avatar || "/dp.png"}
-              alt={profileData.name}
-              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
-            />
-            <button className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full">
-              <Camera className="h-4 w-4" />
-            </button>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Hero Section */}
+      <div className="relative bg-gradient-to-r from-primary-600 to-primary-800 h-64">
+        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-end pb-8">
+          <div className="flex items-end space-x-6">
+            <div className="relative">
+              <Avatar 
+                size="3xl" 
+                src={profileData.profilePicture || "/dp.png"} 
+                alt={profileData.name || "Profile"} 
+                className="border-4 border-white dark:border-gray-800 shadow-xl"
+              />
+              {isEditing && (
+                <Button
+                  size="sm"
+                  className="absolute bottom-0 right-0 rounded-full p-2"
+                  aria-label="Change photo"
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            <div className="mb-4">
+              <h1 className="text-3xl font-bold text-white mb-2">
+                {profileData.name || "Your Name"}
+              </h1>
+              <p className="text-xl text-white/90 mb-2">
+                {profileData.profession || "Your Profession"}
+              </p>
+              <div className="flex items-center space-x-4 text-white/80">
+                {profileData.location && (
+                  <div className="flex items-center space-x-1">
+                    <MapPin className="h-4 w-4" />
+                    <span>{profileData.location}</span>
+                  </div>
+                )}
+                {profileData.company && (
+                  <div className="flex items-center space-x-1">
+                    <Briefcase className="h-4 w-4" />
+                    <span>{profileData.company}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
+        </div>
+      </div>
 
-          {/* Header Content */}
-          <div className="pt-12 sm:pt-20">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div className="space-y-2 flex-1">
-                {/* Name */}
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Left Column - Main Profile Info */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* About Section */}
+            <Card>
+              <Card.Header>
+                <div className="flex items-center justify-between">
+                  <Card.Title>About</Card.Title>
+                  {!isEditing && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                      icon={<Edit3 className="h-4 w-4" />}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                </div>
+              </Card.Header>
+              <Card.Content>
                 {isEditing ? (
-                  <div>
-                    <input
-                      type="text"
+                  <div className="space-y-4">
+                    <Input
+                      label="Full Name"
                       name="name"
                       value={profileData.name || ""}
                       onChange={handleInputChange}
-                      className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                      placeholder="Your Name"
+                      error={errors.name}
+                      required
                     />
-                    {errors.name && (
-                      <p className="text-sm text-red-500 mt-1">{errors.name}</p>
-                    )}
-                  </div>
-                ) : (
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    {profileData.name || "Your Name"}
-                  </h1>
-                )}
-
-                {/* Profession */}
-                {isEditing ? (
-                  <div>
-                    <input
-                      type="text"
+                    <Input
+                      label="Profession"
                       name="profession"
                       value={profileData.profession || ""}
                       onChange={handleInputChange}
-                      className="text-lg text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                      placeholder="Your Profession"
+                      error={errors.profession}
+                      required
                     />
-                    {errors.profession && (
-                      <p className="text-sm text-red-500 mt-1">
-                        {errors.profession}
-                      </p>
-                    )}
+                    <Input
+                      label="Location"
+                      name="location"
+                      value={profileData.location || ""}
+                      onChange={handleInputChange}
+                      error={errors.location}
+                      leftIcon={<MapPin className="h-4 w-4" />}
+                      required
+                    />
+                    <Input
+                      label="Company"
+                      name="company"
+                      value={profileData.company || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Briefcase className="h-4 w-4" />}
+                    />
+                    <div>
+                      <label className="form-label">Bio</label>
+                      <textarea
+                        name="bio"
+                        value={profileData.bio || ""}
+                        onChange={handleInputChange}
+                        rows={4}
+                        className="input"
+                        placeholder="Tell us about yourself..."
+                      />
+                      {errors.bio && <p className="form-error">{errors.bio}</p>}
+                    </div>
+                    <div className="flex space-x-3">
+                      <Button onClick={handleSave} icon={<Save className="h-4 w-4" />}>
+                        Save
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setIsEditing(false)}
+                        icon={<X className="h-4 w-4" />}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
                 ) : (
-                  <p className="text-lg text-gray-600 dark:text-gray-300">
-                    {profileData.profession || "Your Profession"}
-                  </p>
-                )}
-
-                {/* Location and Batch */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
-                  {isEditing ? (
-                    <div className="flex items-center gap-1">
-                      <MapPin className="h-4 w-4" />
-                      <input
-                        type="text"
-                        name="location"
-                        value={profileData.location || ""}
-                        onChange={handleInputChange}
-                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
-                        placeholder="Location"
-                      />
-                      {errors.location && (
-                        <p className="text-xs text-red-500 ml-2">
-                          {errors.location}
-                        </p>
+                  <div className="space-y-4">
+                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                      {profileData.bio || "No bio available. Click edit to add your bio."}
+                    </p>
+                    
+                    {/* Contact Information */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                      {visibility.showEmail && profileData.email && (
+                        <div className="flex items-center space-x-3">
+                          <Mail className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {profileData.email}
+                          </span>
+                        </div>
+                      )}
+                      {visibility.showPhone && profileData.phone && (
+                        <div className="flex items-center space-x-3">
+                          <Phone className="h-4 w-4 text-gray-400" />
+                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                            {profileData.phone}
+                          </span>
+                        </div>
+                      )}
+                      {visibility.showLinkedIn && profileData.linkedin && (
+                        <div className="flex items-center space-x-3">
+                          <Linkedin className="h-4 w-4 text-gray-400" />
+                          <a
+                            href={profileData.linkedin}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1"
+                          >
+                            <span>LinkedIn Profile</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                      {visibility.showWebsite && profileData.website && (
+                        <div className="flex items-center space-x-3">
+                          <Globe className="h-4 w-4 text-gray-400" />
+                          <a
+                            href={profileData.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1"
+                          >
+                            <span>Website</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
                       )}
                     </div>
-                  ) : (
-                    profileData.location && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{profileData.location}</span>
-                      </div>
-                    )
-                  )}
-
-                  {/* Batch field - now editable */}
-                  {isEditing ? (
-                    <div className="flex items-center gap-1">
-                      <GraduationCap className="h-4 w-4" />
-                      <select
-                        name="batch"
-                        value={profileData.batch || ""}
-                        onChange={handleInputChange}
-                        className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
-                      >
-                        <option value="">Select Batch</option>
-                        {Array.from({ length: 16 }, (_, i) => i + 1).map(
-                          (batch) => (
-                            <option key={batch} value={batch.toString()}>
-                              {batch}
-                            </option>
-                          )
-                        )}
-                      </select>
-                    </div>
-                  ) : (
-                    profileData.batch && (
-                      <div className="flex items-center gap-1">
-                        <GraduationCap className="h-4 w-4" />
-                        <span>Batch {profileData.batch}</span>
-                      </div>
-                    )
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-2">
-                {isEditing ? (
-                  <>
-                    <button
-                      onClick={handleSave}
-                      className="bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      <span>Save</span>
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <X className="h-4 w-4" />
-                      <span>Cancel</span>
-                    </button>
-                  </>
-                ) : (
-                  <button
-                    onClick={() => setIsEditing(true)}
-                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
-                  >
-                    <Edit3 className="h-4 w-4" />
-                    <span>Edit Profile</span>
-                  </button>
+                  </div>
                 )}
-              </div>
-            </div>
+              </Card.Content>
+            </Card>
+
+            {/* Experience Section */}
+            <Card>
+              <Card.Header>
+                <div className="flex items-center justify-between">
+                  <Card.Title>Experience</Card.Title>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAddExperience(true)}
+                    icon={<Plus className="h-4 w-4" />}
+                  >
+                    Add Experience
+                  </Button>
+                </div>
+              </Card.Header>
+              <Card.Content>
+                {experiences.length > 0 ? (
+                  <div className="space-y-6">
+                    {experiences.map((exp) => (
+                      <div key={exp.id} className="flex items-start space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
+                        <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg">
+                          <Briefcase className="h-5 w-5 text-primary-600" />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-gray-900 dark:text-white">
+                            {exp.title}
+                          </h4>
+                          <p className="text-primary-600 dark:text-primary-400 font-medium">
+                            {exp.company}
+                          </p>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {exp.period}
+                          </p>
+                          {exp.description && (
+                            <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
+                              {exp.description}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => deleteExperience(exp.id)}
+                          icon={<Trash2 className="h-4 w-4" />}
+                          className="text-error-600 hover:text-error-700"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                    No experience added yet. Click "Add Experience" to get started.
+                  </p>
+                )}
+              </Card.Content>
+            </Card>
+
+            {/* Interests Section */}
+            <Card>
+              <Card.Header>
+                <div className="flex items-center justify-between">
+                  <Card.Title>Interests</Card.Title>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowAddInterest(true)}
+                    icon={<Plus className="h-4 w-4" />}
+                  >
+                    Add Interest
+                  </Button>
+                </div>
+              </Card.Header>
+              <Card.Content>
+                {interests.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {interests.map((interest) => (
+                      <Badge
+                        key={interest.id}
+                        variant="outline"
+                        removable
+                        onRemove={() => deleteInterest(interest.id)}
+                      >
+                        {interest.interest}
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+                    No interests added yet. Click "Add Interest" to get started.
+                  </p>
+                )}
+              </Card.Content>
+            </Card>
+          </div>
+
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
+            {/* Profile Stats */}
+            <Card>
+              <Card.Header>
+                <Card.Title>Profile Stats</Card.Title>
+              </Card.Header>
+              <Card.Content>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Profile Views</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">1,234</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Connections</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">567</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Events Attended</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">23</span>
+                  </div>
+                </div>
+              </Card.Content>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card>
+              <Card.Header>
+                <Card.Title>Quick Actions</Card.Title>
+              </Card.Header>
+              <Card.Content>
+                <div className="space-y-3">
+                  <Button variant="outline" fullWidth icon={<MessageCircle className="h-4 w-4" />}>
+                    Send Message
+                  </Button>
+                  <Button variant="outline" fullWidth icon={<User className="h-4 w-4" />}>
+                    Connect
+                  </Button>
+                  <Button variant="outline" fullWidth icon={<Share2 className="h-4 w-4" />}>
+                    Share Profile
+                  </Button>
+                </div>
+              </Card.Content>
+            </Card>
           </div>
         </div>
       </div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-8">
-          {/* About Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-              About
-            </h2>
-            {isEditing ? (
-              <div>
-                <textarea
-                  name="bio"
-                  value={profileData.bio || ""}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                  placeholder="Tell us about yourself..."
-                />
-                {errors.bio && (
-                  <p className="text-sm text-red-500 mt-2">{errors.bio}</p>
-                )}
-              </div>
-            ) : (
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {profileData.bio || "No bio available"}
-              </p>
-            )}
-          </div>
-
-          {/* Experience Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Experience
-              </h2>
-              <button
-                onClick={() => setShowAddExperience(true)}
-                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-              >
-                <Plus className="h-4 w-4" />
+      {/* Add Experience Modal */}
+      {showAddExperience && (
+        <div className="modal-overlay" onClick={() => setShowAddExperience(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Add Experience
-              </button>
-            </div>
-
-            {/* Add Experience Form */}
-            {showAddExperience && (
-              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Add New Experience
-                </h3>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      name="title"
-                      value={newExperience.title}
-                      onChange={handleExperienceChange}
-                      placeholder="Job Title"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                    />
-                    <input
-                      type="text"
-                      name="company"
-                      value={newExperience.company}
-                      onChange={handleExperienceChange}
-                      placeholder="Company Name"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    name="period"
-                    value={newExperience.period}
-                    onChange={handleExperienceChange}
-                    placeholder="Time Period (e.g., Jan 2020 - Present)"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                  />
+              </h3>
+              <div className="space-y-4">
+                <Input
+                  label="Job Title"
+                  name="title"
+                  value={newExperience.title}
+                  onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Company"
+                  name="company"
+                  value={newExperience.company}
+                  onChange={(e) => setNewExperience({ ...newExperience, company: e.target.value })}
+                  required
+                />
+                <Input
+                  label="Period"
+                  name="period"
+                  value={newExperience.period}
+                  onChange={(e) => setNewExperience({ ...newExperience, period: e.target.value })}
+                  placeholder="e.g., 2020 - Present"
+                />
+                <div>
+                  <label className="form-label">Description</label>
                   <textarea
                     name="description"
                     value={newExperience.description}
-                    onChange={handleExperienceChange}
+                    onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
                     rows={3}
-                    placeholder="Job Description"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
+                    className="input"
+                    placeholder="Describe your role and achievements..."
                   />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={addExperience}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                    >
-                      Add Experience
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAddExperience(false);
-                        setNewExperience({
-                          title: "",
-                          company: "",
-                          period: "",
-                          description: "",
-                        });
-                      }}
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+                </div>
+                <div className="flex space-x-3">
+                  <Button onClick={addExperience} fullWidth>
+                    Add Experience
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowAddExperience(false)}
+                    fullWidth
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
-            )}
-
-            {/* Experience List */}
-            {experiences.length > 0 ? (
-              <div className="space-y-4">
-                {experiences.map((exp, index) => (
-                  <div
-                    key={exp.id || index}
-                    className="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
-                  >
-                    <div className="flex items-start gap-3">
-                      <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-1" />
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                          {exp.title}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300">
-                          {exp.company}
-                        </p>
-                        {exp.period && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {exp.period}
-                          </p>
-                        )}
-                        {exp.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-                            {exp.description}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => deleteExperience(exp.id)}
-                      className="text-red-600 hover:text-red-700 p-1"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                No experience added yet
-              </div>
-            )}
+            </div>
           </div>
+        </div>
+      )}
 
-          {/* Interests Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Interests
-              </h2>
-              <button
-                onClick={() => setShowAddInterest(true)}
-                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
-              >
-                <Plus className="h-4 w-4" />
+      {/* Add Interest Modal */}
+      {showAddInterest && (
+        <div className="modal-overlay" onClick={() => setShowAddInterest(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                 Add Interest
-              </button>
-            </div>
-
-            {/* Add Interest Form */}
-            {showAddInterest && (
-              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Add New Interest
-                </h3>
-                <div className="space-y-4">
-                  <input
-                    type="text"
-                    value={newInterest}
-                    onChange={(e) => setNewInterest(e.target.value)}
-                    placeholder="Enter interest (e.g., Java, React, Machine Learning)"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        addInterest();
-                      }
-                    }}
-                  />
-                  <div className="flex gap-2">
-                    <button
-                      onClick={addInterest}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                    >
-                      Add Interest
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAddInterest(false);
-                        setNewInterest("");
-                      }}
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors"
-                    >
-                      Cancel
-                    </button>
-                  </div>
+              </h3>
+              <div className="space-y-4">
+                <Input
+                  label="Interest"
+                  value={newInterest}
+                  onChange={(e) => setNewInterest(e.target.value)}
+                  placeholder="e.g., Machine Learning, Photography"
+                  required
+                />
+                <div className="flex space-x-3">
+                  <Button onClick={addInterest} fullWidth>
+                    Add Interest
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    onClick={() => setShowAddInterest(false)}
+                    fullWidth
+                  >
+                    Cancel
+                  </Button>
                 </div>
               </div>
-            )}
-
-            {/* Interests List */}
-            {interests.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {interests.map((interest, index) => (
-                  <div
-                    key={interest.id || index}
-                    className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-1"
-                  >
-                    <span>
-                      {typeof interest === "string"
-                        ? interest
-                        : interest.interest}
-                    </span>
-                    <button
-                      onClick={() =>
-                        deleteInterest(
-                          typeof interest === "string" ? interest : interest.id
-                        )
-                      }
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                No interests added yet
-              </div>
-            )}
+            </div>
           </div>
         </div>
-
-        {/* Sidebar */}
-        <div className="space-y-6">
-          {/* Contact Information */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Contact Information
-            </h3>
-            <div className="space-y-4">
-              {renderField("Email", "email", Mail, false, "showEmail")}
-              {renderField("Phone", "phone", Phone, false, "showPhone")}
-              {renderField(
-                "LinkedIn",
-                "linkedIn",
-                Linkedin,
-                true,
-                "showLinkedIn"
-              )}
-              {renderField(
-                "Facebook",
-                "facebook",
-                Facebook,
-                true,
-                "showFacebook"
-              )}
-              {renderField("Website", "website", Globe, true, "showWebsite")}
-            </div>
-          </div>
-
-          {/* Profile Stats */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Profile Stats
-            </h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Profile Views
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  156
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Connections
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {profileData.connections || 0}
-                </span>
-              </div>
-
-
-            </div>
-          </div>
-
-          {/* Profile Completion */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Profile Completion
-            </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              85% complete
-            </p>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
-              <div
-                className="bg-green-500 h-2 rounded-full"
-                style={{ width: "85%" }}
-              ></div>
-            </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Add more details to improve your profile visibility
-            </p>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };

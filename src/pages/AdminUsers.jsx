@@ -22,6 +22,7 @@ const AdminUsers = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [selectedUser, setSelectedUser] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [actionLoading, setActionLoading] = useState({});
 
   const API_BASE =
     process.env.REACT_APP_API_ADMIN_URL ||
@@ -83,7 +84,13 @@ const AdminUsers = () => {
       
       // Check if data has the expected structure
       if (data && data.data) {
-        setUsers(data.data);
+        // Process users to determine blocked status based on 'active' field
+        const processedUsers = data.data.map(user => ({
+          ...user,
+          // User is blocked if active is false, or if any of the other blocked indicators are true
+          isBlocked: !user.active || Boolean(user.isBlocked || user.blocked || user.status === 'BLOCKED')
+        }));
+        setUsers(processedUsers);
       } else {
         console.warn("Unexpected data structure:", data);
         setUsers([]);
@@ -98,6 +105,13 @@ const AdminUsers = () => {
   };
 
   const handleBlockUser = async (userId) => {
+    if (!userId) {
+      toast.error("Invalid user ID");
+      return;
+    }
+
+    setActionLoading(prev => ({ ...prev, [`block_${userId}`]: true }));
+
     try {
       const response = await fetch(`${API_BASE}/users/${userId}/block`, {
         method: "POST",
@@ -105,20 +119,46 @@ const AdminUsers = () => {
           Authorization: `Bearer ${admin.token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({}), // Empty body as per API spec
       });
 
       if (!response.ok) {
-        throw new Error("Failed to block user");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to block user: ${response.status}`);
       }
 
-      toast.success("User blocked successfully");
-      fetchUsers(); // Refresh the list
+      const result = await response.json();
+      toast.success(result.message || "User blocked successfully");
+      
+      // Update the user's blocked status locally for immediate UI feedback
+      setUsers(prevUsers => 
+        prevUsers.map(user => {
+          const userKey = user.id || user.userId || user.username;
+          if (userKey === userId) {
+            return { ...user, active: false, isBlocked: true };
+          }
+          return user;
+        })
+      );
+      
+      // Also refresh the full list to ensure consistency
+      setTimeout(() => fetchUsers(), 1000);
     } catch (error) {
-      toast.error("Failed to block user");
+      console.error("Block user error:", error);
+      toast.error(error.message || "Failed to block user");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`block_${userId}`]: false }));
     }
   };
 
   const handleUnblockUser = async (userId) => {
+    if (!userId) {
+      toast.error("Invalid user ID");
+      return;
+    }
+
+    setActionLoading(prev => ({ ...prev, [`unblock_${userId}`]: true }));
+
     try {
       const response = await fetch(`${API_BASE}/users/${userId}/unblock`, {
         method: "POST",
@@ -126,20 +166,46 @@ const AdminUsers = () => {
           Authorization: `Bearer ${admin.token}`,
           "Content-Type": "application/json",
         },
+        body: JSON.stringify({}), // Empty body as per API spec
       });
 
       if (!response.ok) {
-        throw new Error("Failed to unblock user");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to unblock user: ${response.status}`);
       }
 
-      toast.success("User unblocked successfully");
-      fetchUsers(); // Refresh the list
+      const result = await response.json();
+      toast.success(result.message || "User unblocked successfully");
+      
+      // Update the user's blocked status locally for immediate UI feedback
+      setUsers(prevUsers => 
+        prevUsers.map(user => {
+          const userKey = user.id || user.userId || user.username;
+          if (userKey === userId) {
+            return { ...user, active: true, isBlocked: false };
+          }
+          return user;
+        })
+      );
+      
+      // Also refresh the full list to ensure consistency
+      setTimeout(() => fetchUsers(), 1000);
     } catch (error) {
-      toast.error("Failed to unblock user");
+      console.error("Unblock user error:", error);
+      toast.error(error.message || "Failed to unblock user");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`unblock_${userId}`]: false }));
     }
   };
 
   const handleDeleteUser = async (userId) => {
+    if (!userId) {
+      toast.error("Invalid user ID");
+      return;
+    }
+
+    setActionLoading(prev => ({ ...prev, [`delete_${userId}`]: true }));
+
     try {
       const response = await fetch(`${API_BASE}/users/${userId}`, {
         method: "DELETE",
@@ -150,15 +216,20 @@ const AdminUsers = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to delete user");
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Failed to delete user: ${response.status}`);
       }
 
-      toast.success("User deleted successfully");
+      const result = await response.json();
+      toast.success(result.message || "User deleted successfully");
       setShowDeleteModal(false);
       setSelectedUser(null);
       fetchUsers(); // Refresh the list
     } catch (error) {
-      toast.error("Failed to delete user");
+      console.error("Delete user error:", error);
+      toast.error(error.message || "Failed to delete user");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`delete_${userId}`]: false }));
     }
   };
 
@@ -277,81 +348,90 @@ const AdminUsers = () => {
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                            {(user.name || "U").charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
-                            {user.name || "Unknown User"}
+                {filteredUsers.map((user) => {
+                  const userId = user.id || user.userId || user.username;
+                  const isBlockLoading = actionLoading[`block_${userId}`] || actionLoading[`unblock_${userId}`];
+                  const isBlocked = Boolean(user.isBlocked);
+                  
+                  return (
+                    <tr key={userId} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center">
+                          <div className="h-10 w-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                              {(user.name || "U").charAt(0).toUpperCase()}
+                            </span>
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {user.batch || "N/A"}
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {user.name || "Unknown User"}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400">
+                              {user.batch || "N/A"}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {user.email || "No email"}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          user.isBlocked
-                            ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
-                            : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
-                        }`}
-                      >
-                        {user.isBlocked ? "Blocked" : "Active"}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button
-                          onClick={() => {
-                            if (user.isBlocked) {
-                              handleUnblockUser(user.id);
-                            } else {
-                              handleBlockUser(user.id);
-                            }
-                          }}
-                          className={`p-2 rounded-md ${
-                            user.isBlocked
-                              ? "text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
-                              : "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {user.email || "No email"}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                            isBlocked
+                              ? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+                              : "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
                           }`}
-                          title={user.isBlocked ? "Unblock User" : "Block User"}
                         >
-                          {user.isBlocked ? (
-                            <UserCheck className="h-4 w-4" />
-                          ) : (
-                            <UserX className="h-4 w-4" />
-                          )}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setShowDeleteModal(true);
-                          }}
-                          className="p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
-                          title="Delete User"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {isBlocked ? "Blocked" : "Active"}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-2">
+                          <button
+                            onClick={() => {
+                              if (isBlocked) {
+                                handleUnblockUser(userId);
+                              } else {
+                                handleBlockUser(userId);
+                              }
+                            }}
+                            disabled={isBlockLoading}
+                            className={`p-2 rounded-md ${
+                              isBlocked
+                                ? "text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
+                                : "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                            } ${isBlockLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            title={isBlocked ? "Unblock User" : "Block User"}
+                          >
+                            {isBlockLoading ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                            ) : isBlocked ? (
+                              <UserCheck className="h-4 w-4" />
+                            ) : (
+                              <UserX className="h-4 w-4" />
+                            )}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowDeleteModal(true);
+                            }}
+                            className="p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                            title="Delete User"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -375,15 +455,24 @@ const AdminUsers = () => {
                     setShowDeleteModal(false);
                     setSelectedUser(null);
                   }}
-                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
+                  disabled={actionLoading[`delete_${selectedUser.id || selectedUser.userId || selectedUser.username}`]}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
-                  onClick={() => handleDeleteUser(selectedUser.id)}
-                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+                  onClick={() => handleDeleteUser(selectedUser.id || selectedUser.userId || selectedUser.username)}
+                  disabled={actionLoading[`delete_${selectedUser.id || selectedUser.userId || selectedUser.username}`]}
+                  className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 flex items-center"
                 >
-                  Delete
+                  {actionLoading[`delete_${selectedUser.id || selectedUser.userId || selectedUser.username}`] ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
                 </button>
               </div>
             </div>

@@ -84,12 +84,96 @@ export const adminApi = {
   getReports: () => adminApiCall('/reports'),
   resolveReport: (reportId) => adminApiCall(`/reports/${reportId}/resolve`, { method: 'POST' }),
   
-  // Feature Flags
+  // ===== FEATURE FLAGS (GROUP 1 & 2) =====
+  
+  // ===== GROUP 1: BASIC FEATURE FLAG MANAGEMENT =====
+  
+  // 1.1 Get all feature flags
   getFeatureFlags: () => adminApiCall('/feature-flags'),
-  updateFeatureFlag: (featureName, enabled) => adminApiCall(`/feature-flags/${featureName}?enabled=${enabled}`, {
-    method: 'PUT'
+  
+  // 1.2 Get specific feature flag
+  getFeatureFlag: (featureName) => adminApiCall(`/feature-flags/${featureName}`),
+  
+  // 1.3 Create feature flag
+  createFeatureFlag: (featureFlagData) => adminApiCall('/feature-flags', {
+    method: 'POST',
+    body: JSON.stringify(featureFlagData)
   }),
   
-  // Admin Profile
+  // 1.4 Update feature flag
+  updateFeatureFlag: (featureName, featureFlagData) => adminApiCall(`/feature-flags/${featureName}`, {
+    method: 'PUT',
+    body: JSON.stringify(featureFlagData)
+  }),
+  
+  // 1.5 Delete feature flag
+  deleteFeatureFlag: (featureName) => adminApiCall(`/feature-flags/${featureName}`, { method: 'DELETE' }),
+  
+  // ===== GROUP 2: FEATURE FLAG STATUS MANAGEMENT =====
+  
+  // 2.1 Get enabled feature flags
+  getEnabledFeatureFlags: () => adminApiCall('/feature-flags/enabled'),
+  
+  // 2.2 Get disabled feature flags
+  getDisabledFeatureFlags: () => adminApiCall('/feature-flags/disabled'),
+  
+  // ===== GROUP 2 ADDITIONAL UTILITY METHODS =====
+  
+  // 2.3 Get feature flags by status (Utility method)
+  getFeatureFlagsByStatus: (enabled) => adminApiCall(`/feature-flags/${enabled ? 'enabled' : 'disabled'}`),
+  
+  // 2.4 Get feature flags summary (Utility method)
+  getFeatureFlagsSummary: async () => {
+    try {
+      const [enabledResponse, disabledResponse] = await Promise.all([
+        adminApiCall('/feature-flags/enabled'),
+        adminApiCall('/feature-flags/disabled')
+      ]);
+
+      return {
+        enabled: enabledResponse.data || [],
+        disabled: disabledResponse.data || [],
+        total: (enabledResponse.data || []).length + (disabledResponse.data || []).length,
+        enabledCount: (enabledResponse.data || []).length,
+        disabledCount: (disabledResponse.data || []).length
+      };
+    } catch (error) {
+      console.error('Error getting feature flags summary:', error);
+      throw error;
+    }
+  },
+  
+  // Legacy method for backward compatibility
+  toggleFeatureFlag: (featureName, enabled) => adminApiCall(`/feature-flags/${featureName}`, {
+    method: 'PUT',
+    body: JSON.stringify({ enabled })
+  }),
+  
+  // ===== ADMIN PROFILE & PASSWORD MANAGEMENT =====
+  
+  // Get current admin profile
   getAdminProfile: () => adminApiCall('/profile'),
+  
+  // Change admin password
+  changeAdminPassword: (passwordData) => adminApiCall('/change-password', {
+    method: 'PUT',
+    body: JSON.stringify(passwordData)
+  }),
+  
+  // ===== ADMIN MANAGEMENT =====
+  
+  // Get all admins
+  getAllAdmins: () => adminApiCall('/admins'),
+  
+  // Create new admin
+  createAdmin: (adminData) => adminApiCall('/signup', {
+    method: 'POST',
+    body: JSON.stringify(adminData)
+  }),
+  
+  // Activate admin
+  activateAdmin: (adminId) => adminApiCall(`/admins/${adminId}/activate`, { method: 'POST' }),
+  
+  // Deactivate admin
+  deactivateAdmin: (adminId) => adminApiCall(`/admins/${adminId}/deactivate`, { method: 'POST' }),
 }; 

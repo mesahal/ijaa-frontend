@@ -1,13 +1,8 @@
-import { getAuthHeaders, makeApiRequest } from '../../utils/apiClient';
+import apiClient from '../../utils/apiClient';
+import sessionManager from '../../utils/sessionManager';
 
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-};
-global.localStorage = localStorageMock;
+// Mock sessionManager
+jest.mock('../../utils/sessionManager');
 
 // Mock fetch
 global.fetch = jest.fn();
@@ -15,242 +10,570 @@ global.fetch = jest.fn();
 describe('apiClient', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    localStorageMock.getItem.mockReturnValue('mock-token');
+    fetch.mockClear();
   });
 
-  describe('getAuthHeaders', () => {
-    test('returns headers with token when user is authenticated', () => {
-      const mockUser = {
-        username: 'testuser',
-        token: 'mock-token'
-      };
-
-      const headers = getAuthHeaders(mockUser);
-
-      expect(headers).toEqual({
-        'Authorization': 'Bearer mock-token',
-        'Content-Type': 'application/json',
-        'X-USER_ID': expect.any(String)
-      });
-    });
-
-    test('returns headers without token when user is not authenticated', () => {
-      const headers = getAuthHeaders(null);
-
-      expect(headers).toEqual({
-        'Content-Type': 'application/json'
-      });
-    });
-
-    test('returns headers without token when user has no token', () => {
-      const mockUser = {
-        username: 'testuser'
-        // No token
-      };
-
-      const headers = getAuthHeaders(mockUser);
-
-      expect(headers).toEqual({
-        'Content-Type': 'application/json'
-      });
-    });
-
-    test('includes X-USER_ID header with base64 encoded user context', () => {
-      const mockUser = {
-        username: 'testuser',
-        token: 'mock-token'
-      };
-
-      const headers = getAuthHeaders(mockUser);
-
-      expect(headers['X-USER_ID']).toBeDefined();
-      
-      // Decode the base64 string
-      const decoded = JSON.parse(atob(headers['X-USER_ID']));
-      expect(decoded).toEqual({ username: 'testuser' });
-    });
-
-    test('handles special characters in username', () => {
-      const mockUser = {
-        username: 'test.user@domain.com',
-        token: 'mock-token'
-      };
-
-      const headers = getAuthHeaders(mockUser);
-
-      const decoded = JSON.parse(atob(headers['X-USER_ID']));
-      expect(decoded).toEqual({ username: 'test.user@domain.com' });
-    });
-  });
-
-  describe('makeApiRequest', () => {
-    test('makes successful GET request', async () => {
-      const mockResponse = { data: 'test data' };
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
-
-      const result = await makeApiRequest('/test-endpoint', 'GET');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/test-endpoint'),
-        expect.objectContaining({
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-      );
-      expect(result).toEqual(mockResponse);
-    });
-
-    test('makes successful POST request with data', async () => {
-      const mockData = { name: 'test', email: 'test@example.com' };
-      const mockResponse = { success: true };
-      
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => mockResponse
-      });
-
-      const result = await makeApiRequest('/test-endpoint', 'POST', mockData);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/test-endpoint'),
-        expect.objectContaining({
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(mockData)
-        })
-      );
-      expect(result).toEqual(mockResponse);
-    });
-
-    test('includes auth headers when user is provided', async () => {
-      const mockUser = {
-        username: 'testuser',
-        token: 'mock-token'
-      };
-      
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true })
-      });
-
-      await makeApiRequest('/test-endpoint', 'GET', null, mockUser);
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('/test-endpoint'),
-        expect.objectContaining({
-          headers: {
-            'Authorization': 'Bearer mock-token',
-            'Content-Type': 'application/json',
-            'X-USER_ID': expect.any(String)
-          }
-        })
-      );
-    });
-
-    test('handles network errors', async () => {
-      global.fetch.mockRejectedValueOnce(new Error('Network error'));
-
-      await expect(makeApiRequest('/test-endpoint', 'GET')).rejects.toThrow('Network error');
-    });
-
-    test('handles HTTP error responses', async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 404,
-        statusText: 'Not Found',
-        json: async () => ({ message: 'Resource not found' })
-      });
-
-      await expect(makeApiRequest('/test-endpoint', 'GET')).rejects.toThrow('HTTP error! status: 404');
-    });
-
-    test('handles JSON parsing errors', async () => {
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => { throw new Error('Invalid JSON'); }
-      });
-
-      await expect(makeApiRequest('/test-endpoint', 'GET')).rejects.toThrow('Invalid JSON');
-    });
-
-    test('uses correct base URL', async () => {
-      const originalEnv = process.env.REACT_APP_API_BASE_URL;
-      process.env.REACT_APP_API_BASE_URL = 'http://localhost:8000';
-
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true })
-      });
-
-      await makeApiRequest('/test-endpoint', 'GET');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/test-endpoint',
-        expect.any(Object)
-      );
-
-      process.env.REACT_APP_API_BASE_URL = originalEnv;
-    });
-
-    test('uses default base URL when environment variable is not set', async () => {
+  describe('Configuration', () => {
+    test('should use default API base URL when environment variable is not set', () => {
       const originalEnv = process.env.REACT_APP_API_BASE_URL;
       delete process.env.REACT_APP_API_BASE_URL;
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true })
-      });
+      expect(apiClient.getBaseUrl()).toBe('http://localhost:8000/ijaa/api/v1/user');
 
-      await makeApiRequest('/test-endpoint', 'GET');
-
-      expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:8000/ijaa/api/v1/user/test-endpoint',
-        expect.any(Object)
-      );
-
-      process.env.REACT_APP_API_BASE_URL = originalEnv;
-    });
-
-    test('handles different HTTP methods', async () => {
-      const methods = ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'];
-      
-      for (const method of methods) {
-        global.fetch.mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({ success: true })
-        });
-
-        await makeApiRequest('/test-endpoint', method);
-
-        expect(global.fetch).toHaveBeenCalledWith(
-          expect.stringContaining('/test-endpoint'),
-          expect.objectContaining({
-            method: method
-          })
-        );
+      // Restore environment variable
+      if (originalEnv) {
+        process.env.REACT_APP_API_BASE_URL = originalEnv;
       }
     });
 
-    test('handles null and undefined data', async () => {
-      global.fetch.mockResolvedValueOnce({
+    test('should use environment variable for API base URL', () => {
+      const originalEnv = process.env.REACT_APP_API_BASE_URL;
+      process.env.REACT_APP_API_BASE_URL = 'https://custom-api.com';
+
+      expect(apiClient.getBaseUrl()).toBe('https://custom-api.com');
+
+      // Restore environment variable
+      if (originalEnv) {
+        process.env.REACT_APP_API_BASE_URL = originalEnv;
+      } else {
+        delete process.env.REACT_APP_API_BASE_URL;
+      }
+    });
+  });
+
+  describe('GET Requests', () => {
+    test('should make GET request without authentication', async () => {
+      const mockResponse = {
         ok: true,
-        json: async () => ({ success: true })
-      });
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
 
-      await makeApiRequest('/test-endpoint', 'POST', null);
-      await makeApiRequest('/test-endpoint', 'POST', undefined);
+      const result = await apiClient.get('/test-endpoint');
 
-      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json'
+          })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
     });
 
-    test('handles complex data objects', async () => {
+    test('should make GET request with authentication', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+      sessionManager.getUserToken.mockReturnValue('mock-jwt-token');
+
+      const result = await apiClient.get('/test-endpoint', { requireAuth: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer mock-jwt-token'
+          })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should include X-USER_ID header for authenticated requests', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+      sessionManager.getUserToken.mockReturnValue('mock-jwt-token');
+      sessionManager.getUserEmail.mockReturnValue('test@example.com');
+
+      const result = await apiClient.get('/test-endpoint', { requireAuth: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'GET',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer mock-jwt-token',
+            'X-USER_ID': expect.any(String)
+          })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should handle GET request with query parameters', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.get('/test-endpoint', {
+        params: { page: 1, limit: 10, search: 'test' }
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint?page=1&limit=10&search=test'),
+        expect.any(Object)
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+  });
+
+  describe('POST Requests', () => {
+    test('should make POST request without authentication', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.post('/test-endpoint', { test: 'data' });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json'
+          }),
+          body: JSON.stringify({ test: 'data' })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should make POST request with authentication', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+      sessionManager.getUserToken.mockReturnValue('mock-jwt-token');
+
+      const result = await apiClient.post('/test-endpoint', { test: 'data' }, { requireAuth: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer mock-jwt-token'
+          }),
+          body: JSON.stringify({ test: 'data' })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should handle POST request with FormData', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const formData = new FormData();
+      formData.append('file', new Blob(['test']));
+      formData.append('name', 'test-file');
+
+      const result = await apiClient.post('/upload', formData, { isFormData: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/upload'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.not.objectContaining({
+            'Content-Type': 'application/json'
+          }),
+          body: formData
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+  });
+
+  describe('PUT Requests', () => {
+    test('should make PUT request', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.put('/test-endpoint', { test: 'data' });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'PUT',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json'
+          }),
+          body: JSON.stringify({ test: 'data' })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should make PUT request with authentication', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+      sessionManager.getUserToken.mockReturnValue('mock-jwt-token');
+
+      const result = await apiClient.put('/test-endpoint', { test: 'data' }, { requireAuth: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'PUT',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer mock-jwt-token'
+          }),
+          body: JSON.stringify({ test: 'data' })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+  });
+
+  describe('DELETE Requests', () => {
+    test('should make DELETE request', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.delete('/test-endpoint');
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'DELETE',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json'
+          })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should make DELETE request with authentication', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+      sessionManager.getUserToken.mockReturnValue('mock-jwt-token');
+
+      const result = await apiClient.delete('/test-endpoint', { requireAuth: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'DELETE',
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer mock-jwt-token'
+          })
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+  });
+
+  describe('Error Handling', () => {
+    test('should handle network errors', async () => {
+      fetch.mockRejectedValue(new Error('Network error'));
+
+      await expect(apiClient.get('/test-endpoint')).rejects.toThrow('Network error');
+    });
+
+    test('should handle HTTP error responses', async () => {
+      const mockResponse = {
+        ok: false,
+        status: 404,
+        statusText: 'Not Found',
+        json: () => Promise.resolve({ message: 'Resource not found' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      await expect(apiClient.get('/test-endpoint')).rejects.toThrow('HTTP error! status: 404');
+    });
+
+    test('should handle authentication errors', async () => {
+      const mockResponse = {
+        ok: false,
+        status: 401,
+        statusText: 'Unauthorized',
+        json: () => Promise.resolve({ message: 'Invalid token' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      await expect(apiClient.get('/test-endpoint', { requireAuth: true })).rejects.toThrow('HTTP error! status: 401');
+    });
+
+    test('should handle malformed JSON responses', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.reject(new Error('Invalid JSON'))
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      await expect(apiClient.get('/test-endpoint')).rejects.toThrow('Invalid JSON');
+    });
+
+    test('should handle missing token for authenticated requests', async () => {
+      sessionManager.getUserToken.mockReturnValue(null);
+
+      await expect(apiClient.get('/test-endpoint', { requireAuth: true })).rejects.toThrow('No authentication token available');
+    });
+  });
+
+  describe('Authentication Headers', () => {
+    test('should include Authorization header when token is available', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+      sessionManager.getUserToken.mockReturnValue('mock-jwt-token');
+
+      await apiClient.get('/test-endpoint', { requireAuth: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer mock-jwt-token'
+          })
+        })
+      );
+    });
+
+    test('should include X-USER_ID header with base64 encoded user context', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+      sessionManager.getUserToken.mockReturnValue('mock-jwt-token');
+      sessionManager.getUserEmail.mockReturnValue('test@example.com');
+
+      await apiClient.get('/test-endpoint', { requireAuth: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'X-USER_ID': expect.any(String)
+          })
+        })
+      );
+
+      // Verify the X-USER_ID header is base64 encoded
+      const callArgs = fetch.mock.calls[0];
+      const headers = callArgs[1].headers;
+      const xUserIdHeader = headers['X-USER_ID'];
+      
+      // Decode base64 and verify it contains the expected JSON
+      const decoded = atob(xUserIdHeader);
+      const userContext = JSON.parse(decoded);
+      expect(userContext).toHaveProperty('username');
+    });
+
+    test('should handle missing user email for X-USER_ID header', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+      sessionManager.getUserToken.mockReturnValue('mock-jwt-token');
+      sessionManager.getUserEmail.mockReturnValue(null);
+
+      await apiClient.get('/test-endpoint', { requireAuth: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Authorization': 'Bearer mock-jwt-token'
+          })
+        })
+      );
+    });
+  });
+
+  describe('Query Parameters', () => {
+    test('should handle empty query parameters', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      await apiClient.get('/test-endpoint', { params: {} });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.any(Object)
+      );
+    });
+
+    test('should handle query parameters with special characters', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      await apiClient.get('/test-endpoint', {
+        params: { search: 'test@example.com', query: 'hello world' }
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint?search=test%40example.com&query=hello%20world'),
+        expect.any(Object)
+      );
+    });
+
+    test('should handle null and undefined query parameters', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      await apiClient.get('/test-endpoint', {
+        params: { valid: 'test', nullValue: null, undefinedValue: undefined }
+      });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint?valid=test'),
+        expect.any(Object)
+      );
+    });
+  });
+
+  describe('FormData Handling', () => {
+    test('should handle FormData requests correctly', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const formData = new FormData();
+      formData.append('file', new Blob(['test content']));
+      formData.append('description', 'test file');
+
+      await apiClient.post('/upload', formData, { isFormData: true });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/upload'),
+        expect.objectContaining({
+          method: 'POST',
+          headers: expect.not.objectContaining({
+            'Content-Type': 'application/json'
+          }),
+          body: formData
+        })
+      );
+    });
+
+    test('should not set Content-Type header for FormData', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const formData = new FormData();
+      formData.append('test', 'value');
+
+      await apiClient.post('/upload', formData, { isFormData: true });
+
+      const callArgs = fetch.mock.calls[0];
+      const headers = callArgs[1].headers;
+      
+      expect(headers).not.toHaveProperty('Content-Type');
+    });
+  });
+
+  describe('Edge Cases', () => {
+    test('should handle requests with no options', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.get('/test-endpoint');
+
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should handle requests with empty body', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.post('/test-endpoint', null);
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify(null)
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should handle requests with undefined body', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.post('/test-endpoint', undefined);
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/test-endpoint'),
+        expect.objectContaining({
+          method: 'POST',
+          body: JSON.stringify(undefined)
+        })
+      );
+      expect(result).toEqual({ data: 'test' });
+    });
+
+    test('should handle requests with complex objects in body', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
       const complexData = {
         user: {
           name: 'Test User',
@@ -266,19 +589,58 @@ describe('apiClient', () => {
         }
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({ success: true })
-      });
+      await apiClient.post('/test-endpoint', complexData);
 
-      await makeApiRequest('/test-endpoint', 'POST', complexData);
-
-      expect(global.fetch).toHaveBeenCalledWith(
+      expect(fetch).toHaveBeenCalledWith(
         expect.stringContaining('/test-endpoint'),
         expect.objectContaining({
+          method: 'POST',
           body: JSON.stringify(complexData)
         })
       );
+    });
+  });
+
+  describe('Response Handling', () => {
+    test('should handle empty response body', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve(null)
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.get('/test-endpoint');
+
+      expect(result).toBeNull();
+    });
+
+    test('should handle response with status 204 (No Content)', async () => {
+      const mockResponse = {
+        ok: true,
+        status: 204,
+        json: () => Promise.resolve(null)
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.delete('/test-endpoint');
+
+      expect(result).toBeNull();
+    });
+
+    test('should handle response with custom headers', async () => {
+      const mockResponse = {
+        ok: true,
+        json: () => Promise.resolve({ data: 'test' }),
+        headers: new Headers({
+          'X-Custom-Header': 'custom-value',
+          'Content-Type': 'application/json'
+        })
+      };
+      fetch.mockResolvedValue(mockResponse);
+
+      const result = await apiClient.get('/test-endpoint');
+
+      expect(result).toEqual({ data: 'test' });
     });
   });
 }); 

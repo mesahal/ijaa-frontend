@@ -3,23 +3,35 @@ import AdminLayout from "../components/AdminLayout";
 import { useAdminAuth } from "../context/AdminAuthContext";
 import {
   Users,
-
+  UserCheck,
   UserX,
+  Shield,
+  ShieldCheck,
+  Megaphone,
+  FileText,
   TrendingUp,
-  BarChart3,
   Activity,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
 } from "lucide-react";
 import { toast } from "react-toastify";
+import { Card, Badge, Button } from "../components/ui";
 
 const AdminDashboard = () => {
   const { admin } = useAdminAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
+    activeUsers: 0,
     blockedUsers: 0,
-    participationCount: 0,
+    totalAdmins: 0,
+    activeAdmins: 0,
+    totalAnnouncements: 0,
+    activeAnnouncements: 0,
+    totalReports: 0,
+    pendingReports: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [recentActivity, setRecentActivity] = useState([]);
 
   const API_BASE =
     process.env.REACT_APP_API_ADMIN_URL ||
@@ -64,8 +76,14 @@ const AdminDashboard = () => {
         console.warn("Unexpected data structure:", data);
         setStats({
           totalUsers: 0,
+          activeUsers: 0,
           blockedUsers: 0,
-          participationCount: 0,
+          totalAdmins: 0,
+          activeAdmins: 0,
+          totalAnnouncements: 0,
+          activeAnnouncements: 0,
+          totalReports: 0,
+          pendingReports: 0,
         });
       }
     } catch (error) {
@@ -75,8 +93,14 @@ const AdminDashboard = () => {
       // Set default stats on error
       setStats({
         totalUsers: 0,
+        activeUsers: 0,
         blockedUsers: 0,
-        participationCount: 0,
+        totalAdmins: 0,
+        activeAdmins: 0,
+        totalAnnouncements: 0,
+        activeAnnouncements: 0,
+        totalReports: 0,
+        pendingReports: 0,
       });
     } finally {
       setLoading(false);
@@ -88,24 +112,145 @@ const AdminDashboard = () => {
       title: "Total Users",
       value: stats.totalUsers,
       icon: Users,
-      color: "bg-blue-500",
-      textColor: "text-blue-500",
+      color: "primary",
+      description: "All registered users",
+      trend: "+12%",
+      trendType: "up"
     },
-
+    {
+      title: "Active Users",
+      value: stats.activeUsers,
+      icon: UserCheck,
+      color: "success",
+      description: "Currently active users",
+      trend: "+8%",
+      trendType: "up"
+    },
     {
       title: "Blocked Users",
       value: stats.blockedUsers,
       icon: UserX,
-      color: "bg-red-500",
-      textColor: "text-red-500",
+      color: "error",
+      description: "Suspended accounts",
+      trend: "-3%",
+      trendType: "down"
     },
     {
-      title: "Participation",
-      value: stats.participationCount,
-      icon: TrendingUp,
-      color: "bg-purple-500",
-      textColor: "text-purple-500",
+      title: "Total Admins",
+      value: stats.totalAdmins,
+      icon: Shield,
+      color: "secondary",
+      description: "Administrator accounts",
+      trend: "+2",
+      trendType: "up"
     },
+    {
+      title: "Active Admins",
+      value: stats.activeAdmins,
+      icon: ShieldCheck,
+      color: "primary",
+      description: "Currently active admins",
+      trend: "100%",
+      trendType: "up"
+    },
+    {
+      title: "Total Announcements",
+      value: stats.totalAnnouncements,
+      icon: Megaphone,
+      color: "warning",
+      description: "All announcements",
+      trend: "+5",
+      trendType: "up"
+    },
+    {
+      title: "Active Announcements",
+      value: stats.activeAnnouncements,
+      icon: Megaphone,
+      color: "success",
+      description: "Currently active announcements",
+      trend: "+3",
+      trendType: "up"
+    },
+    {
+      title: "Total Reports",
+      value: stats.totalReports,
+      icon: FileText,
+      color: "secondary",
+      description: "All submitted reports",
+      trend: "+15%",
+      trendType: "up"
+    },
+    {
+      title: "Pending Reports",
+      value: stats.pendingReports,
+      icon: TrendingUp,
+      color: "error",
+      description: "Reports awaiting review",
+      trend: "+7",
+      trendType: "up"
+    },
+  ];
+
+  const recentActivities = [
+    {
+      id: 1,
+      type: "user_registration",
+      message: "New user registered: john.doe@example.com",
+      time: "2 minutes ago",
+      status: "success"
+    },
+    {
+      id: 2,
+      type: "report_submitted",
+      message: "New report submitted for review",
+      time: "5 minutes ago",
+      status: "warning"
+    },
+    {
+      id: 3,
+      type: "user_blocked",
+      message: "User account blocked: spam@example.com",
+      time: "10 minutes ago",
+      status: "error"
+    },
+    {
+      id: 4,
+      type: "announcement_published",
+      message: "New announcement published: Alumni Meet 2025",
+      time: "15 minutes ago",
+      status: "success"
+    }
+  ];
+
+  const quickActions = [
+    {
+      title: "Manage Users",
+      description: "View and manage user accounts",
+      icon: Users,
+      color: "primary",
+      path: "/admin/users"
+    },
+    {
+      title: "Review Reports",
+      description: "Handle pending reports",
+      icon: FileText,
+      color: "error",
+      path: "/admin/reports"
+    },
+    {
+      title: "Create Announcement",
+      description: "Publish new announcements",
+      icon: Megaphone,
+      color: "warning",
+      path: "/admin/announcements"
+    },
+    {
+      title: "System Settings",
+      description: "Configure system settings",
+      icon: Shield,
+      color: "secondary",
+      path: "/admin/settings"
+    }
   ];
 
   // Check if admin is available
@@ -114,7 +259,7 @@ const AdminDashboard = () => {
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">Loading admin data...</p>
           </div>
         </div>
@@ -126,7 +271,7 @@ const AdminDashboard = () => {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       </AdminLayout>
     );
@@ -136,118 +281,145 @@ const AdminDashboard = () => {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Dashboard
-          </h1>
-          <p className="text-gray-600 dark:text-gray-400">
-            Welcome back, {admin?.name || admin?.email}
-          </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+              Admin Dashboard
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-1">
+              Welcome back, {admin?.name || admin?.email}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={fetchDashboardData}
+            icon={<Activity className="h-4 w-4" />}
+          >
+            Refresh Data
+          </Button>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {statCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <div
-                key={index}
-                className="bg-white dark:bg-gray-800 rounded-lg shadow p-6"
-              >
-                <div className="flex items-center">
-                  <div
-                    className={`p-3 rounded-full ${stat.color} bg-opacity-10`}
-                  >
-                    <Icon className={`h-6 w-6 ${stat.textColor}`} />
+              <Card key={index} className="hover:shadow-lg transition-shadow">
+                <div className="p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/20`}>
+                      <Icon className={`h-6 w-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
+                    </div>
+                    <Badge 
+                      variant={stat.trendType === "up" ? "success" : "error"} 
+                      size="sm"
+                    >
+                      {stat.trend}
+                    </Badge>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
                       {stat.title}
                     </p>
-                    <p className="text-2xl font-semibold text-gray-900 dark:text-white">
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
                       {(stat.value || 0).toLocaleString()}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {stat.description}
                     </p>
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
 
-        {/* Charts and Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Recent Activity */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Recent Activity
-              </h3>
-            </div>
-            <div className="p-6">
-              {recentActivity.length === 0 ? (
-                <div className="text-center py-8">
-                  <Activity className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                    No recent activity
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                    >
-                      <div className="flex-shrink-0">
-                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-900 dark:text-white">
-                          {activity.message}
-                        </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {activity.timestamp}
-                        </p>
-                      </div>
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* System Overview */}
+          <div className="lg:col-span-2">
+            <Card>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  System Overview
+                </h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {[
+                    { label: "Total Users", value: stats.totalUsers, color: "primary" },
+                    { label: "Active Users", value: stats.activeUsers, color: "success" },
+                    { label: "Administrators", value: stats.totalAdmins, color: "secondary" },
+                    { label: "Pending Reports", value: stats.pendingReports, color: "error" }
+                  ].map((item, index) => (
+                    <div key={index} className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <p className={`text-2xl font-bold text-${item.color}-600 dark:text-${item.color}-400`}>
+                        {item.value}
+                      </p>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.label}</p>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
+              </div>
+            </Card>
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                Quick Actions
-              </h3>
-            </div>
-            <div className="p-6">
-              <div className="grid grid-cols-2 gap-4">
-
-                <button className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors">
-                  <Users className="h-8 w-8 text-green-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                    Manage Users
-                  </p>
-                </button>
-                <button className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors">
-                  <BarChart3 className="h-8 w-8 text-purple-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400">
-                    View Reports
-                  </p>
-                </button>
-                <button className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors">
-                  <Activity className="h-8 w-8 text-orange-600 mx-auto mb-2" />
-                  <p className="text-sm font-medium text-orange-600 dark:text-orange-400">
-                    System Status
-                  </p>
-                </button>
+          <div>
+            <Card>
+              <div className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Quick Actions
+                </h3>
+                <div className="space-y-3">
+                  {quickActions.map((action, index) => {
+                    const Icon = action.icon;
+                    return (
+                      <Button
+                        key={index}
+                        variant="ghost"
+                        className="w-full justify-start h-auto p-3"
+                        as="a"
+                        href={action.path}
+                      >
+                        <Icon className={`h-5 w-5 text-${action.color}-600 dark:text-${action.color}-400 mr-3`} />
+                        <div className="text-left">
+                          <p className="font-medium text-gray-900 dark:text-white">{action.title}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">{action.description}</p>
+                        </div>
+                      </Button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
+            </Card>
           </div>
         </div>
+
+        {/* Recent Activities */}
+        <Card>
+          <div className="p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Recent Activities
+            </h3>
+            <div className="space-y-4">
+              {recentActivities.map((activity) => (
+                <div key={activity.id} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                  <div className={`p-2 rounded-full bg-${activity.status}-100 dark:bg-${activity.status}-900/20`}>
+                    {activity.status === "success" && <CheckCircle className="h-4 w-4 text-success-600 dark:text-success-400" />}
+                    {activity.status === "warning" && <AlertTriangle className="h-4 w-4 text-warning-600 dark:text-warning-400" />}
+                    {activity.status === "error" && <UserX className="h-4 w-4 text-error-600 dark:text-error-400" />}
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
+                  </div>
+                  <Badge variant={activity.status} size="sm">
+                    {activity.type.replace("_", " ")}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          </div>
+        </Card>
       </div>
     </AdminLayout>
   );

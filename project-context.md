@@ -83,6 +83,71 @@ This project is a frontend web application for the IIT JU Alumni Network, design
 
 ---
 
+## 🎉 NEW: Advanced Event Management System
+
+### ✅ Event Management Features
+- **Event Creation & Management**: Full CRUD operations with privacy settings
+- **Event Participation**: RSVP system with multiple status options (CONFIRMED, PENDING, DECLINED, MAYBE, CANCELLED)
+- **Event Invitations**: Invitation management with personal messages
+- **Event Search**: Advanced search with multiple filters (location, eventType, date range, privacy, tags)
+- **Event Comments**: Commenting system for events
+- **Event Media**: Media attachment support for events
+- **Event Templates**: Reusable event templates
+- **Recurring Events**: Support for recurring event patterns
+- **Event Analytics**: Comprehensive event analytics and reporting
+
+### ✅ Event API Endpoints
+- `POST /api/v1/user/events/create` - Create new event
+- `GET /api/v1/user/events` - Get all events with pagination
+- `GET /api/v1/user/events/{eventId}` - Get event details
+- `PUT /api/v1/user/events/{eventId}` - Update event
+- `DELETE /api/v1/user/events/{eventId}` - Delete event
+- `POST /api/v1/user/events/search` - Advanced event search
+- `POST /api/v1/user/events/participation/rsvp` - RSVP to event
+- `POST /api/v1/user/events/invitations/send` - Send event invitations
+- `POST /api/v1/user/events/comments` - Add event comment
+- `POST /api/v1/user/events/media` - Upload event media
+
+### ✅ Event Types & Privacy Levels
+- **Event Types**: NETWORKING, WORKSHOP, CONFERENCE, SOCIAL, CAREER, MENTORSHIP
+- **Privacy Levels**: PUBLIC, PRIVATE, ALUMNI_ONLY
+- **Participation Status**: PENDING, CONFIRMED, DECLINED, MAYBE, CANCELLED
+
+---
+
+## 🎛️ NEW: Feature Flag System
+
+### ✅ Feature Flag Management
+- **Dynamic Feature Control**: Runtime feature enablement/disablement
+- **Admin Interface**: Web-based feature flag management
+- **Granular Control**: Feature-level and user-level controls
+- **Audit Trail**: Feature flag change tracking
+- **Integration**: Seamless integration across all features
+
+### ✅ Feature Flag API Endpoints
+- `GET /api/v1/admin/feature-flags` - Get all feature flags
+- `GET /api/v1/admin/feature-flags/{flagName}` - Get specific feature flag
+- `POST /api/v1/admin/feature-flags` - Create feature flag
+- `PUT /api/v1/admin/feature-flags/{flagName}` - Update feature flag
+- `DELETE /api/v1/admin/feature-flags/{flagName}` - Delete feature flag
+- `GET /api/v1/admin/feature-flags/enabled` - Get enabled features
+- `GET /api/v1/admin/feature-flags/disabled` - Get disabled features
+- `GET /api/v1/user/feature-flags/{flagName}/check` - Check feature flag for user
+
+### ✅ Predefined Feature Flags
+- **NEW_UI**: Modern user interface with enhanced design
+- **CHAT_FEATURE**: Real-time chat functionality
+- **EVENT_REGISTRATION**: Event registration system
+- **PAYMENT_INTEGRATION**: Payment processing
+- **SOCIAL_LOGIN**: Social media login options
+- **DARK_MODE**: Dark mode theme
+- **NOTIFICATIONS**: Push notifications
+- **ADVANCED_SEARCH**: Advanced search with filters
+- **ALUMNI_DIRECTORY**: Public alumni directory
+- **MENTORSHIP_PROGRAM**: Mentorship program matching
+
+---
+
 ## 🧩 Key Reusable Components & Custom Hooks
 
 - **Navbar**: Responsive navigation bar with profile dropdown, theme toggle, and notifications
@@ -140,6 +205,73 @@ This project is a frontend web application for the IIT JU Alumni Network, design
 - **No global error boundary or toast notifications**: Errors are handled inline in forms/pages
 - **No Redux or Zustand**: State management is via React Context only
 - **Planned Integrations**: Real-time chat (Firebase), video calls (WebRTC), payments (Stripe/Razorpay), social login (Google/Facebook OAuth)
+
+---
+
+## 🔄 API Versioning
+
+All endpoints use version `v1`. Future updates will use `v2`, `v3`, etc., ensuring backward compatibility.
+
+---
+
+## 📊 Data Models
+
+### Event Types
+```json
+{
+  "NETWORKING": "Networking events",
+  "WORKSHOP": "Workshop and training events", 
+  "CONFERENCE": "Conference and seminar events",
+  "SOCIAL": "Social and recreational events",
+  "CAREER": "Career development events",
+  "MENTORSHIP": "Mentorship and guidance events"
+}
+```
+
+### Event Privacy Levels
+```json
+{
+  "PUBLIC": "Visible to all users",
+  "PRIVATE": "Visible only to invited users", 
+  "ALUMNI_ONLY": "Visible only to verified alumni"
+}
+```
+
+### Participation Status
+```json
+{
+  "PENDING": "RSVP pending",
+  "CONFIRMED": "Confirmed attendance",
+  "DECLINED": "Declined attendance", 
+  "MAYBE": "Maybe attending",
+  "CANCELLED": "Cancelled participation"
+}
+```
+
+### Admin Roles
+```json
+{
+  "SUPER_ADMIN": "Full system access",
+  "ADMIN": "Standard admin access",
+  "MODERATOR": "Limited admin access"
+}
+```
+
+### Feature Flag Types
+```json
+{
+  "NEW_UI": "Modern user interface",
+  "CHAT_FEATURE": "Real-time chat functionality",
+  "EVENT_REGISTRATION": "Event registration system",
+  "PAYMENT_INTEGRATION": "Payment processing",
+  "SOCIAL_LOGIN": "Social media login options",
+  "DARK_MODE": "Dark mode theme",
+  "NOTIFICATIONS": "Push notifications",
+  "ADVANCED_SEARCH": "Advanced search with filters",
+  "ALUMNI_DIRECTORY": "Public alumni directory",
+  "MENTORSHIP_PROGRAM": "Mentorship program matching"
+}
+```
 
 ---
 

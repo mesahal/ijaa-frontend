@@ -1,0 +1,360 @@
+name: Test Suite
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linting
+      run: npm run lint:check
+      
+    - name: Run unit tests with coverage
+      run: npm run test:ci
+      
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        file: ./coverage/lcov.info
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
+        
+    - name: Run E2E tests
+      run: |
+        npm run build
+        npm run start &
+        npm run test:e2e:all
+      env:
+        CI: true
+        
+    - name: Run accessibility tests
+      run: npm run test:accessibility
+      
+    - name: Run performance tests
+      run: npm run test:performance
+      
+    - name: Check bundle size
+      run: npm run build
+      
+    - name: Upload test results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-results
+        path: |
+          coverage/
+          cypress/videos/
+          cypress/screenshots/
+          
+  security:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run security tests
+      run: npm run test:security
+      
+    - name: Run dependency audit
+      run: npm audit --audit-level moderate
+      
+  e2e-comprehensive:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    strategy:
+      matrix:
+        browser: [chrome, firefox, edge]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run E2E tests on ${{ matrix.browser }}
+      run: |
+        npm run build
+        npm run start &
+        npm run cypress:run:${{ matrix.browser }}
+      env:
+        CI: true
+        
+  responsive:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    strategy:
+      matrix:
+        viewport: [mobile, tablet, desktop]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run responsive tests on ${{ matrix.viewport }}
+      run: |
+        npm run build
+        npm run start &
+        npm run cypress:run:${{ matrix.viewport }}
+      env:
+        CI: true
+        
+  visual-regression:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run visual regression tests
+      run: |
+        npm run build
+        npm run start &
+        npm run test:visual
+      env:
+        CI: true
+        
+  performance:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run performance tests
+      run: |
+        npm run build
+        npm run start &
+        npm run test:performance:full
+      env:
+        CI: true
+        
+  accessibility:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run accessibility tests
+      run: |
+        npm run build
+        npm run start &
+        npm run test:accessibility:full
+      env:
+        CI: true
+        
+  integration:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run integration tests
+      run: |
+        npm run build
+        npm run start &
+        npm run test:integration:full
+      env:
+        CI: true
+        
+  regression:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run regression tests
+      run: |
+        npm run build
+        npm run start &
+        npm run test:regression:full
+      env:
+        CI: true
+        
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: [test, security, e2e-comprehensive, responsive, visual-regression, performance, accessibility, integration, regression]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Run final E2E tests
+      run: |
+        npm run start &
+        npm run test:e2e:all
+      env:
+        CI: true
+        
+    - name: Deploy to staging
+      run: echo "Deploying to staging environment"
+      # Add your deployment steps here
+      
+  deploy-production:
+    runs-on: ubuntu-latest
+    needs: build-and-deploy
+    if: github.ref == 'refs/heads/main'
+    environment: production
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build application
+      run: npm run build
+      
+    - name: Deploy to production
+      run: echo "Deploying to production environment"
+      # Add your production deployment steps here
+      
+  notify:
+    runs-on: ubuntu-latest
+    needs: [test, security, e2e-comprehensive, responsive, visual-regression, performance, accessibility, integration, regression]
+    if: always()
+    
+    steps:
+    - name: Notify on success
+      if: success()
+      run: echo "All tests passed successfully! 🎉"
+      
+    - name: Notify on failure
+      if: failure()
+      run: echo "Some tests failed. Please check the logs. ❌"
+      
+    - name: Generate test report
+      if: always()
+      run: |
+        echo "Generating comprehensive test report..."
+        # Add your test report generation logic here
+        
+    - name: Upload test report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-report
+        path: test-report.html

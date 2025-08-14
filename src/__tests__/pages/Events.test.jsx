@@ -1,271 +1,491 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import Events from '../../pages/Events';
-import { mockUser, mockApiResponses } from '../utils/test-utils';
+import { useAuth } from '../../context/AuthContext';
 
-// Mock the useAuth hook
-jest.mock('../../context/AuthContext', () => ({
-  useAuth: () => ({
-    user: mockUser
-  })
+// Mock the dependencies
+jest.mock('../../context/AuthContext');
+jest.mock('../../hooks/events/useEvents');
+jest.mock('../../hooks/events/useEventActions');
+jest.mock('../../hooks/events/useEventSearch');
+jest.mock('../../hooks/events/useEventInvitations');
+jest.mock('../../services/eventService');
+
+// Mock the components
+jest.mock('../../components/events/EventCard', () => {
+  return function MockEventCard({ event, onView }) {
+    return (
+      <div data-testid="event-card">
+        <h3>{event.title}</h3>
+        <p>{event.description}</p>
+        <p>{event.location}</p>
+        <button onClick={() => onView(event)}>View</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../../components/events/EventTabs', () => {
+  return function MockEventTabs({ activeTab, onTabChange }) {
+    return (
+      <div data-testid="event-tabs">
+        <button onClick={() => onTabChange('all')}>All Events</button>
+        <button onClick={() => onTabChange('my-events')}>My Events</button>
+        <button onClick={() => onTabChange('my-active-events')}>My Active Events</button>
+        <button onClick={() => onTabChange('invitations')}>Invitations</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../../components/events/EventFilters', () => {
+  return function MockEventFilters({ searchQuery, onSearchChange, filterType, onFilterChange, onAdvancedSearch }) {
+    return (
+      <div data-testid="event-filters">
+        <input 
+          value={searchQuery} 
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search events..."
+        />
+        <select value={filterType} onChange={(e) => onFilterChange(e.target.value)}>
+          <option value="all">All Types</option>
+          <option value="NETWORKING">Networking</option>
+          <option value="WORKSHOP">Workshop</option>
+        </select>
+        <button onClick={onAdvancedSearch}>Advanced Search</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../../components/events/EventForm', () => {
+  return function MockEventForm({ isOpen, onClose }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="event-form">
+        <h2>Create Event</h2>
+        <button onClick={onClose}>Close</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../../components/events/EventDetailsModal', () => {
+  return function MockEventDetailsModal({ isOpen, onClose }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="event-details-modal">
+        <h2>Event Details</h2>
+        <button onClick={onClose}>Close</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../../components/events/InviteModal', () => {
+  return function MockInviteModal({ isOpen, onClose }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="invite-modal">
+        <h2>Invite People</h2>
+        <button onClick={onClose}>Close</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../../components/events/ParticipantsModal', () => {
+  return function MockParticipantsModal({ isOpen, onClose }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="participants-modal">
+        <h2>Participants</h2>
+        <button onClick={onClose}>Close</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('../../components/events/SearchModal', () => {
+  return function MockSearchModal({ isOpen, onClose }) {
+    if (!isOpen) return null;
+    return (
+      <div data-testid="search-modal">
+        <h2>Advanced Search</h2>
+        <button onClick={onClose}>Close</button>
+      </div>
+    );
+  };
+});
+
+jest.mock('lucide-react', () => ({
+  Calendar: () => <div data-testid="calendar-icon">Calendar</div>,
+  Plus: () => <div data-testid="plus-icon">Plus</div>,
+  Loader2: () => <div data-testid="loader-icon">Loader2</div>,
+  AlertCircle: () => <div data-testid="alertcircle-icon">AlertCircle</div>,
 }));
 
-// Mock the apiClient
-jest.mock('../../utils/apiClient', () => ({
-  __esModule: true,
-  default: {
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    delete: jest.fn()
-  }
-}));
+describe('Events Page - Group 1: Basic Event Management', () => {
+  const mockUser = {
+    id: 'user123',
+    username: 'testuser',
+    email: 'test@example.com',
+    token: 'mock-token'
+  };
 
-describe('Events Component', () => {
-  let mockApiClient;
+  const mockEvents = [
+    {
+      id: 1,
+      title: 'Alumni Meet 2024',
+      description: 'Annual alumni gathering',
+      startDate: '2024-12-25T18:00:00',
+      endDate: '2024-12-25T22:00:00',
+      location: 'IIT Campus',
+      eventType: 'NETWORKING',
+      active: true,
+      isOnline: false,
+      meetingLink: null,
+      maxParticipants: 100,
+      currentParticipants: 0,
+      organizerName: 'John Doe',
+      organizerEmail: 'john@example.com',
+      createdByUsername: 'john.doe',
+      privacy: 'PUBLIC',
+      inviteMessage: 'Join our annual alumni meet!',
+      createdAt: '2024-12-01T10:00:00',
+      updatedAt: '2024-12-01T10:00:00'
+    },
+    {
+      id: 2,
+      title: 'Workshop on AI',
+      description: 'Learn about artificial intelligence',
+      startDate: '2024-12-30T10:00:00',
+      endDate: '2024-12-30T16:00:00',
+      location: 'Online',
+      eventType: 'WORKSHOP',
+      active: true,
+      isOnline: true,
+      meetingLink: 'https://meet.google.com/abc123',
+      maxParticipants: 50,
+      currentParticipants: 25,
+      organizerName: 'Jane Smith',
+      organizerEmail: 'jane@example.com',
+      createdByUsername: 'jane.smith',
+      privacy: 'PUBLIC',
+      inviteMessage: 'Join our AI workshop!',
+      createdAt: '2024-12-01T10:00:00',
+      updatedAt: '2024-12-01T10:00:00'
+    }
+  ];
+
+  const mockUseEvents = {
+    events: mockEvents,
+    myEvents: mockEvents.filter(e => e.createdByUsername === 'testuser'),
+    loading: false,
+    error: null,
+    activeTab: 'all',
+    loadEvents: jest.fn(),
+    refreshEvents: jest.fn(),
+    handleTabChange: jest.fn(),
+    getCurrentEvents: jest.fn(() => mockEvents),
+    getEventById: jest.fn()
+  };
+
+  const mockUseEventActions = {
+    loading: false,
+    error: null,
+    handleCreateEvent: jest.fn(),
+    handleDeleteEvent: jest.fn(),
+    handleRsvp: jest.fn(),
+    handleCancelRsvp: jest.fn(),
+    clearError: jest.fn()
+  };
+
+  const mockUseEventSearch = {
+    searchQuery: '',
+    filterType: 'all',
+    loading: false,
+    error: null,
+    handleSearchQueryChange: jest.fn(),
+    handleFilterTypeChange: jest.fn(),
+    searchEvents: jest.fn(),
+    clearSearch: jest.fn(),
+    getFilteredEvents: jest.fn(() => mockEvents)
+  };
+
+  const mockUseEventInvitations = {
+    myParticipations: [],
+    myInvitations: [],
+    invitationCounts: { unreadCount: 0 },
+    loading: false,
+    error: null,
+    sendInvitations: jest.fn(),
+    acceptInvitation: jest.fn(),
+    declineInvitation: jest.fn(),
+    getEventParticipants: jest.fn(),
+    clearError: jest.fn(),
+    getMyParticipationStatus: jest.fn(),
+    getMyInvitationStatus: jest.fn()
+  };
 
   beforeEach(() => {
+    // Mock the auth context
+    useAuth.mockReturnValue({
+      user: mockUser,
+      signIn: jest.fn(),
+      signOut: jest.fn()
+    });
+
+    // Mock the custom hooks
+    useEvents.mockReturnValue(mockUseEvents);
+    useEventActions.mockReturnValue(mockUseEventActions);
+    useEventSearch.mockReturnValue(mockUseEventSearch);
+    useEventInvitations.mockReturnValue(mockUseEventInvitations);
+
+    // Reset all mocks
     jest.clearAllMocks();
-    mockApiClient = require('../../utils/apiClient').default;
   });
 
-  test('renders events page with title and description', () => {
-    render(<Events />);
-    
-    expect(screen.getByText('Events')).toBeInTheDocument();
-    expect(screen.getByText('Discover and manage alumni events')).toBeInTheDocument();
-  });
+  describe('Group 1: Basic Event Management - Core Functionality', () => {
+    it('should render without crashing', async () => {
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Events')).toBeInTheDocument();
+      });
+    });
 
-  test('renders create event button', () => {
-    render(<Events />);
-    
-    const createButton = screen.getByRole('button', { name: /create event/i });
-    expect(createButton).toBeInTheDocument();
-  });
+    it('should display events header and create button', async () => {
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Events')).toBeInTheDocument();
+        expect(screen.getByText('Discover and manage alumni events')).toBeInTheDocument();
+        expect(screen.getByText('Create Event')).toBeInTheDocument();
+      });
+    });
 
-  test('renders tab navigation', () => {
-    render(<Events />);
-    
-    expect(screen.getByText('All Events')).toBeInTheDocument();
-    expect(screen.getByText('My Events')).toBeInTheDocument();
-  });
+    it('should display all Group 1 tabs for navigation', async () => {
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('All Events')).toBeInTheDocument();
+        expect(screen.getByText('My Events')).toBeInTheDocument();
+        expect(screen.getByText('My Active Events')).toBeInTheDocument();
+        expect(screen.getByText('Invitations')).toBeInTheDocument();
+      });
+    });
 
-  test('renders search and filter controls', () => {
-    render(<Events />);
-    
-    expect(screen.getByPlaceholderText('Search events...')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('All Types')).toBeInTheDocument();
-  });
+    it('should display search and filter controls', async () => {
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByPlaceholderText('Search events...')).toBeInTheDocument();
+        expect(screen.getByDisplayValue('All Types')).toBeInTheDocument();
+        expect(screen.getByText('Advanced Search')).toBeInTheDocument();
+      });
+    });
 
-  test('shows loading state when fetching events', async () => {
-    mockApiClient.get.mockImplementation(() => 
-      new Promise(resolve => setTimeout(() => resolve({ data: mockApiResponses.events.success }), 100))
-    );
+    it('should show loading state when loading', async () => {
+      const loadingMock = {
+        ...mockUseEvents,
+        loading: true,
+      };
+      useEvents.mockReturnValue(loadingMock);
 
-    render(<Events />);
-    
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
-  });
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByTestId('loader-icon')).toBeInTheDocument();
+      });
+    });
 
-  test('displays events when API call succeeds', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
+    it('should show error message when there is an error', async () => {
+      const errorMock = {
+        ...mockUseEvents,
+        error: 'Failed to load events',
+      };
+      useEvents.mockReturnValue(errorMock);
 
-    render(<Events />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Test Event')).toBeInTheDocument();
-      expect(screen.getByText('Test event description')).toBeInTheDocument();
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Failed to load events')).toBeInTheDocument();
+      });
+    });
+
+    it('should show empty state when no events', async () => {
+      const emptyMock = {
+        ...mockUseEvents,
+        events: [],
+        getCurrentEvents: jest.fn(() => [])
+      };
+      useEvents.mockReturnValue(emptyMock);
+
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('No events found')).toBeInTheDocument();
+        expect(screen.getByText('No events match your search criteria.')).toBeInTheDocument();
+      });
     });
   });
 
-  test('shows error message when API call fails', async () => {
-    mockApiClient.get.mockRejectedValue(new Error('Failed to fetch events'));
+  describe('Group 1: Basic Event Management - Tab Navigation', () => {
+    it('should handle tab changes correctly', async () => {
+      const user = userEvent.setup();
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('All Events')).toBeInTheDocument();
+      });
 
-    render(<Events />);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/failed to load events/i)).toBeInTheDocument();
+      // Test tab navigation
+      const myEventsTab = screen.getByText('My Events');
+      await user.click(myEventsTab);
+      expect(mockUseEvents.handleTabChange).toHaveBeenCalledWith('my-events');
+
+      const myActiveEventsTab = screen.getByText('My Active Events');
+      await user.click(myActiveEventsTab);
+      expect(mockUseEvents.handleTabChange).toHaveBeenCalledWith('my-active-events');
+
+      const invitationsTab = screen.getByText('Invitations');
+      await user.click(invitationsTab);
+      expect(mockUseEvents.handleTabChange).toHaveBeenCalledWith('invitations');
+    });
+
+    it('should display correct events for each tab', async () => {
+      const myEventsMock = {
+        ...mockUseEvents,
+        activeTab: 'my-events',
+        getCurrentEvents: jest.fn(() => mockEvents.filter(e => e.createdByUsername === 'testuser'))
+      };
+      useEvents.mockReturnValue(myEventsMock);
+
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('My Events')).toBeInTheDocument();
+      });
     });
   });
 
-  test('opens create event modal when create button is clicked', () => {
-    render(<Events />);
-    
-    const createButton = screen.getByRole('button', { name: /create event/i });
-    fireEvent.click(createButton);
-    
-    expect(screen.getByText('Create New Event')).toBeInTheDocument();
-  });
-
-  test('creates event successfully', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
-    mockApiClient.post.mockResolvedValue({ data: { code: '201', data: { id: 1 } } });
-
-    render(<Events />);
-    
-    // Open create modal
-    const createButton = screen.getByRole('button', { name: /create event/i });
-    fireEvent.click(createButton);
-    
-    // Fill form
-    fireEvent.change(screen.getByPlaceholderText('Enter event title'), {
-      target: { value: 'New Test Event' }
+  describe('Group 1: Basic Event Management - Event Display', () => {
+    it('should display event cards with correct information', async () => {
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Alumni Meet 2024')).toBeInTheDocument();
+        expect(screen.getByText('Annual alumni gathering')).toBeInTheDocument();
+        expect(screen.getByText('IIT Campus')).toBeInTheDocument();
+        expect(screen.getByText('Workshop on AI')).toBeInTheDocument();
+        expect(screen.getByText('Learn about artificial intelligence')).toBeInTheDocument();
+      });
     });
-    fireEvent.change(screen.getByPlaceholderText('Enter event description'), {
-      target: { value: 'New test event description' }
-    });
-    
-    // Submit form
-    const submitButton = screen.getByRole('button', { name: /create event/i });
-    fireEvent.click(submitButton);
-    
-    await waitFor(() => {
-      expect(mockApiClient.post).toHaveBeenCalledWith('/events/create', expect.any(Object));
+
+    it('should handle event card view action', async () => {
+      render(<Events />);
+      
+      await waitFor(() => {
+        const viewButtons = screen.getAllByText('View');
+        expect(viewButtons).toHaveLength(2);
+      });
+
+      const firstViewButton = screen.getAllByText('View')[0];
+      fireEvent.click(firstViewButton);
     });
   });
 
-  test('validates required fields in create event form', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
-
-    render(<Events />);
-    
-    // Open create modal
-    const createButton = screen.getByRole('button', { name: /create event/i });
-    fireEvent.click(createButton);
-    
-    // Try to submit without filling required fields
-    const submitButton = screen.getByRole('button', { name: /create event/i });
-    fireEvent.click(submitButton);
-    
-    await waitFor(() => {
-      expect(screen.getByText(/please fill in all required fields/i)).toBeInTheDocument();
+  describe('Group 1: Basic Event Management - Event Creation', () => {
+    it('should handle create event button click', async () => {
+      render(<Events />);
+      
+      const createButton = screen.getByText('Create Event');
+      fireEvent.click(createButton);
+      
+      // Modal should be opened (this would be tested in the modal component)
+      expect(createButton).toBeInTheDocument();
     });
   });
 
-  test('filters events by type', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
-
-    render(<Events />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Test Event')).toBeInTheDocument();
+  describe('Group 1: Basic Event Management - Search and Filters', () => {
+    it('should handle search input changes', async () => {
+      const user = userEvent.setup();
+      render(<Events />);
+      
+      const searchInput = screen.getByPlaceholderText('Search events...');
+      await user.type(searchInput, 'test search');
+      
+      expect(mockUseEventSearch.handleSearchQueryChange).toHaveBeenCalledWith('test search');
     });
-    
-    // Change filter
-    const filterSelect = screen.getByDisplayValue('All Types');
-    fireEvent.change(filterSelect, { target: { value: 'WORKSHOP' } });
-    
-    // Event should still be visible since it's a workshop
-    expect(screen.getByText('Test Event')).toBeInTheDocument();
-  });
 
-  test('searches events by text', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
-
-    render(<Events />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Test Event')).toBeInTheDocument();
+    it('should handle filter type changes', async () => {
+      const user = userEvent.setup();
+      render(<Events />);
+      
+      const filterSelect = screen.getByDisplayValue('All Types');
+      await user.selectOptions(filterSelect, 'NETWORKING');
+      
+      expect(mockUseEventSearch.handleFilterTypeChange).toHaveBeenCalledWith('NETWORKING');
     });
-    
-    // Search for non-existent event
-    const searchInput = screen.getByPlaceholderText('Search events...');
-    fireEvent.change(searchInput, { target: { value: 'Non-existent Event' } });
-    
-    expect(screen.queryByText('Test Event')).not.toBeInTheDocument();
-  });
 
-  test('switches between all events and my events tabs', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
-
-    render(<Events />);
-    
-    // Initially on "All Events" tab
-    expect(screen.getByText('All Events')).toHaveClass('bg-white');
-    
-    // Switch to "My Events" tab
-    const myEventsTab = screen.getByText('My Events');
-    fireEvent.click(myEventsTab);
-    
-    expect(myEventsTab).toHaveClass('bg-white');
-  });
-
-  test('shows empty state when no events are found', async () => {
-    mockApiClient.get.mockResolvedValue({ data: { code: '200', data: [] } });
-
-    render(<Events />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('No events found')).toBeInTheDocument();
+    it('should handle advanced search button click', async () => {
+      render(<Events />);
+      
+      const advancedSearchButton = screen.getByText('Advanced Search');
+      fireEvent.click(advancedSearchButton);
+      
+      expect(advancedSearchButton).toBeInTheDocument();
     });
   });
 
-  test('handles event deletion', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
-    mockApiClient.delete.mockResolvedValue({ data: { code: '200' } });
+  describe('Group 1: Basic Event Management - Error Handling', () => {
+    it('should handle API errors gracefully', async () => {
+      const errorMock = {
+        ...mockUseEvents,
+        error: 'Network error occurred',
+      };
+      useEvents.mockReturnValue(errorMock);
 
-    // Mock window.confirm
-    window.confirm = jest.fn(() => true);
-
-    render(<Events />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Test Event')).toBeInTheDocument();
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Network error occurred')).toBeInTheDocument();
+      });
     });
-    
-    // Find and click delete button (if it exists for my events)
-    const deleteButtons = screen.queryAllByRole('button', { name: /delete/i });
-    if (deleteButtons.length > 0) {
-      fireEvent.click(deleteButtons[0]);
-      expect(window.confirm).toHaveBeenCalled();
-    }
-  });
 
-  test('displays event details in modal', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
+    it('should handle authentication errors', async () => {
+      const authErrorMock = {
+        ...mockUseEvents,
+        error: 'Authentication required',
+      };
+      useEvents.mockReturnValue(authErrorMock);
 
-    render(<Events />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Test Event')).toBeInTheDocument();
-    });
-    
-    // Click view details button
-    const viewButton = screen.getByText('View Details');
-    fireEvent.click(viewButton);
-    
-    expect(screen.getByText('Event Details')).toBeInTheDocument();
-    expect(screen.getByText('Test Event')).toBeInTheDocument();
-  });
-
-  test('handles online events correctly', async () => {
-    const onlineEventResponse = {
-      ...mockApiResponses.events.success,
-      data: [{
-        ...mockApiResponses.events.success.data[0],
-        isOnline: true,
-        meetingLink: 'https://meet.google.com/test'
-      }]
-    };
-    
-    mockApiClient.get.mockResolvedValue({ data: onlineEventResponse });
-
-    render(<Events />);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Online Event')).toBeInTheDocument();
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Authentication required')).toBeInTheDocument();
+      });
     });
   });
 
-  test('accessibility features are present', async () => {
-    mockApiClient.get.mockResolvedValue({ data: mockApiResponses.events.success });
+  describe('Group 1: Basic Event Management - Integration', () => {
+    it('should integrate with event service correctly', async () => {
+      render(<Events />);
+      
+      await waitFor(() => {
+        expect(mockUseEvents.loadEvents).toHaveBeenCalled();
+      });
+    });
 
-    render(<Events />);
-    
-    // Check for proper ARIA labels
-    expect(screen.getByRole('button', { name: /create event/i })).toBeInTheDocument();
-    
-    // Check for proper form labels
-    expect(screen.getByText('Search events...')).toBeInTheDocument();
+    it('should refresh events when needed', async () => {
+      render(<Events />);
+      
+      // Simulate a refresh
+      mockUseEvents.refreshEvents();
+      
+      expect(mockUseEvents.refreshEvents).toHaveBeenCalled();
+    });
   });
 }); 

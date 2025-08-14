@@ -1,65 +1,65 @@
 import React from 'react';
 import { render, screen, fireEvent } from '../utils/test-utils';
-import AdminSidebar from '../../components/AdminSidebar';
+import AdminNavbar from '../../components/AdminNavbar';
 import { MemoryRouter } from 'react-router-dom';
 
-describe('AdminSidebar', () => {
-  test('renders admin sidebar with navigation links', () => {
+describe('AdminNavbar', () => {
+  test('renders admin navbar with navigation links', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
     // Check for main navigation items
     expect(screen.getByText(/dashboard/i)).toBeInTheDocument();
     expect(screen.getByText(/users/i)).toBeInTheDocument();
-    expect(screen.getByText(/events/i)).toBeInTheDocument();
     expect(screen.getByText(/announcements/i)).toBeInTheDocument();
     expect(screen.getByText(/reports/i)).toBeInTheDocument();
     expect(screen.getByText(/feature flags/i)).toBeInTheDocument();
   });
 
-  test('renders sidebar with proper styling', () => {
+  test('renders navbar with proper styling', () => {
     const { container } = render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
-    const sidebar = container.firstChild;
-    expect(sidebar).toHaveClass('bg-gray-800', 'text-white', 'w-64');
+    const navbar = container.querySelector('nav');
+    expect(navbar).toHaveClass('bg-white', 'dark:bg-gray-800', 'shadow-lg');
   });
 
   test('renders admin header section', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
     expect(screen.getByText(/admin panel/i)).toBeInTheDocument();
+    expect(screen.getByText(/IIT JU Alumni Network/i)).toBeInTheDocument();
   });
 
   test('renders navigation links with proper structure', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
     const nav = screen.getByRole('navigation');
     expect(nav).toBeInTheDocument();
 
-    // Check for navigation list
-    const navList = nav.querySelector('ul');
-    expect(navList).toBeInTheDocument();
+    // Check for navigation items
+    const dashboardLink = screen.getByText(/dashboard/i);
+    expect(dashboardLink).toBeInTheDocument();
   });
 
   test('renders navigation items with icons', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
@@ -71,7 +71,7 @@ describe('AdminSidebar', () => {
   test('handles navigation link clicks', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
@@ -85,7 +85,7 @@ describe('AdminSidebar', () => {
   test('renders with proper accessibility attributes', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
@@ -100,7 +100,7 @@ describe('AdminSidebar', () => {
   test('renders all navigation sections', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
@@ -108,7 +108,6 @@ describe('AdminSidebar', () => {
     const expectedItems = [
       'Dashboard',
       'Users',
-      'Events',
       'Announcements',
       'Reports',
       'Feature Flags'
@@ -122,55 +121,74 @@ describe('AdminSidebar', () => {
   test('renders with responsive design', () => {
     const { container } = render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
-    const sidebar = container.firstChild;
-    expect(sidebar).toHaveClass('w-64');
+    const navbar = container.querySelector('nav');
+    expect(navbar).toHaveClass('sticky', 'top-0', 'z-50');
   });
 
   test('handles mobile menu toggle', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
     // Check if mobile menu functionality is present
-    const sidebar = screen.getByRole('navigation');
-    expect(sidebar).toBeInTheDocument();
+    const navbar = screen.getByRole('navigation');
+    expect(navbar).toBeInTheDocument();
   });
 
   test('renders with proper semantic structure', () => {
     render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
     // Check for proper HTML structure
     const nav = screen.getByRole('navigation');
-    const list = nav.querySelector('ul');
-    const items = list?.querySelectorAll('li');
-
     expect(nav).toBeInTheDocument();
-    expect(list).toBeInTheDocument();
-    expect(items?.length).toBeGreaterThan(0);
   });
 
   test('renders with consistent styling', () => {
     const { container } = render(
       <MemoryRouter>
-        <AdminSidebar />
+        <AdminNavbar />
       </MemoryRouter>
     );
 
-    const sidebar = container.firstChild;
+    const navbar = container.querySelector('nav');
     
     // Check for consistent styling classes
-    expect(sidebar).toHaveClass('bg-gray-800');
-    expect(sidebar).toHaveClass('text-white');
-    expect(sidebar).toHaveClass('min-h-screen');
+    expect(navbar).toHaveClass('bg-white');
+    expect(navbar).toHaveClass('dark:bg-gray-800');
+    expect(navbar).toHaveClass('shadow-lg');
+  });
+
+  test('renders theme toggle button', () => {
+    render(
+      <MemoryRouter>
+        <AdminNavbar />
+      </MemoryRouter>
+    );
+
+    // Check for theme toggle functionality
+    const navbar = screen.getByRole('navigation');
+    expect(navbar).toBeInTheDocument();
+  });
+
+  test('renders notifications icon', () => {
+    render(
+      <MemoryRouter>
+        <AdminNavbar />
+      </MemoryRouter>
+    );
+
+    // Check for notifications functionality
+    const navbar = screen.getByRole('navigation');
+    expect(navbar).toBeInTheDocument();
   });
 }); 

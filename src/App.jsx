@@ -27,6 +27,8 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminAnnouncements from "./pages/AdminAnnouncements";
 import AdminReports from "./pages/AdminReports";
 import AdminFeatureFlags from "./pages/AdminFeatureFlags";
+import AdminSettings from "./pages/AdminSettings";
+import AdminManagement from "./pages/AdminManagement";
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import { AdminAuthProvider, useAdminAuth } from "./context/AdminAuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
@@ -40,14 +42,17 @@ function AppRoutes() {
 
   if (loading || adminLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Show navbar for regular users only, never for admin users or admin pages */}
       {user && !admin && !location.pathname.startsWith('/admin') && <Navbar />}
 
@@ -97,29 +102,34 @@ function AppRoutes() {
             </AdminRoute>
           }
         />
-
-        {/* User Routes */}
         <Route
-          path="/"
-          element={user ? <Navigate to="/dashboard" /> : <LandingPage />}
+          path="/admin/settings"
+          element={
+            <AdminRoute requiredPermission="canManageSettings">
+              <AdminSettings />
+            </AdminRoute>
+          }
         />
         <Route
-          path="/signin"
-          element={user ? <Navigate to="/dashboard" /> : <SignIn />}
-        />
-        <Route
-          path="/signup"
-          element={user ? <Navigate to="/dashboard" /> : <SignUp />}
-        />
-        <Route
-          path="/forgot-password"
-          element={user ? <Navigate to="/dashboard" /> : <ForgotPassword />}
-        />
-        <Route
-          path="/reset-password"
-          element={user ? <Navigate to="/dashboard" /> : <ResetPassword />}
+          path="/admin/management"
+          element={
+            <AdminRoute requiredPermission="canManageSystem">
+              <AdminManagement />
+            </AdminRoute>
+          }
         />
 
+        {/* Public Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/maintenance" element={<Maintenance />} />
+
+        {/* Protected Routes */}
         <Route
           path="/dashboard"
           element={
@@ -136,12 +146,19 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/profile/:userId"
           element={
             <ProtectedRoute>
               <ViewProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/search"
+          element={
+            <ProtectedRoute>
+              <Search />
             </ProtectedRoute>
           }
         />
@@ -154,16 +171,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/search"
-          element={
-            <ProtectedRoute>
-              <Search />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route
-          path="/settings/account"
+          path="/account-settings"
           element={
             <ProtectedRoute>
               <AccountSettings />
@@ -178,15 +186,34 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/contact-support"
+          element={
+            <ProtectedRoute>
+              <ContactSupport />
+            </ProtectedRoute>
+          }
+        />
 
-        {/* Public pages */}
-        <Route path="/support" element={<ContactSupport />} />
-        <Route path="/terms" element={<TermsAndConditions />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/maintenance" element={<Maintenance />} />
-        <Route path="/404" element={<NotFound />} />
+        {/* Catch all route */}
         <Route path="*" element={<NotFound />} />
       </Routes>
+
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+        toastClassName="rounded-lg shadow-lg"
+        bodyClassName="font-medium"
+      />
     </div>
   );
 }
@@ -197,18 +224,6 @@ function App() {
       <AuthProvider>
         <AdminAuthProvider>
           <AppRoutes />
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-          />
         </AdminAuthProvider>
       </AuthProvider>
     </ThemeProvider>

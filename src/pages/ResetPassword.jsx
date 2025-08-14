@@ -7,7 +7,10 @@ import {
   CheckCircle,
   GraduationCap,
   AlertCircle,
+  Shield,
+  Key,
 } from "lucide-react";
+import { Button, Input, Card } from "../components/ui";
 
 const ResetPassword = () => {
   const [searchParams] = useSearchParams();
@@ -63,217 +66,262 @@ const ResetPassword = () => {
 
   if (!token) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full text-center">
-          <div className="bg-red-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <AlertCircle className="h-10 w-10 text-red-600" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <Card className="max-w-md w-full p-8 text-center">
+          <div className="bg-error-100 dark:bg-error-900/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <AlertCircle className="h-10 w-10 text-error-600 dark:text-error-400" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
             Invalid Reset Link
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 dark:text-gray-300 mb-6">
             This password reset link is invalid or has expired.
           </p>
-          <Link
+          <Button
+            as={Link}
             to="/forgot-password"
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+            variant="primary"
+            size="lg"
+            fullWidth
           >
             Request New Link
-          </Link>
-        </div>
+          </Button>
+        </Card>
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className="min-h-screen flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
         <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-          <div className="max-w-md w-full space-y-8">
+          <Card className="max-w-md w-full p-8">
             <div className="text-center">
               <div className="flex items-center justify-center space-x-3 mb-6">
-                <div className="bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-lg p-3">
+                <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-3 shadow-lg">
                   <GraduationCap className="h-8 w-8" />
                 </div>
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">
+                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     IIT JU Alumni
                   </h1>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
                     Jahangirnagar University
                   </p>
                 </div>
               </div>
 
-              <div className="bg-green-100 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <CheckCircle className="h-10 w-10 text-green-600" />
+              <div className="bg-success-100 dark:bg-success-900/20 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle className="h-10 w-10 text-success-600 dark:text-success-400" />
               </div>
 
-              <h2 className="text-3xl font-bold text-gray-900">
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Password Reset Successful
               </h2>
-              <p className="mt-4 text-gray-600">
+              <p className="mt-4 text-gray-600 dark:text-gray-300">
                 Your password has been successfully reset. You can now sign in
                 with your new password.
               </p>
-              <p className="mt-2 text-sm text-gray-500">
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Redirecting to sign in page in 3 seconds...
               </p>
             </div>
 
-            <Link
-              to="/signin"
-              className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 text-white py-3 px-4 rounded-lg font-semibold hover:shadow-lg transition-all text-center block"
-            >
-              Sign In Now
-            </Link>
-          </div>
+            <div className="mt-8">
+              <Button
+                as={Link}
+                to="/signin"
+                variant="primary"
+                size="lg"
+                fullWidth
+              >
+                Sign In Now
+              </Button>
+            </div>
+          </Card>
         </div>
 
-        <div className="hidden lg:block relative w-0 flex-1">
-          <img
-            className="absolute inset-0 h-full w-full object-cover"
-            src="https://images.pexels.com/photos/1438081/pexels-photo-1438081.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&dpr=1"
-            alt="University campus"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-emerald-600/20"></div>
+        <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800">
+          <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+          <div className="relative h-full flex items-center justify-center px-12">
+            <div className="max-w-lg text-white text-center">
+              <div className="mb-8">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Shield className="h-8 w-8 text-white" />
+                </div>
+                <h3 className="text-3xl font-bold mb-4">
+                  Welcome Back!
+                </h3>
+                <p className="text-lg opacity-90 leading-relaxed">
+                  Your account is now secure with your new password. You're all set to continue your alumni journey.
+                </p>
+              </div>
+              
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold">✓</span>
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold">Password Updated</h4>
+                    <p className="text-white/80 text-sm">Your new password is now active</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold">✓</span>
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold">Account Secure</h4>
+                    <p className="text-white/80 text-sm">Your account is protected</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center space-x-4">
+                  <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                    <span className="text-white font-semibold">✓</span>
+                  </div>
+                  <div className="text-left">
+                    <h4 className="font-semibold">Ready to Connect</h4>
+                    <p className="text-white/80 text-sm">Access your alumni network</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div className="text-center">
+        <Card className="max-w-md w-full p-8">
+          <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="bg-gradient-to-r from-blue-600 to-emerald-600 text-white rounded-lg p-3">
+              <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-3 shadow-lg">
                 <GraduationCap className="h-8 w-8" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   IIT JU Alumni
                 </h1>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   Jahangirnagar University
                 </p>
               </div>
             </div>
-            <h2 className="text-3xl font-bold text-gray-900">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
               Reset Your Password
             </h2>
-            <p className="mt-2 text-gray-600">Enter your new password below</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">Enter your new password below</p>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center space-x-2">
+            <div className="mb-6 bg-error-50 dark:bg-error-900/20 border border-error-200 dark:border-error-700 text-error-700 dark:text-error-300 px-4 py-3 rounded-lg flex items-center space-x-2">
               <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span className="text-sm">{error}</span>
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label
-                htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                New Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="Enter new password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <Input
+              label="New Password"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter new password"
+              leftIcon={<Lock className="h-5 w-5" />}
+              required
+            />
 
-            <div>
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Confirm New Password
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors"
-                  placeholder="Confirm new password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
-                </button>
-              </div>
-            </div>
+            <Input
+              label="Confirm New Password"
+              type="password"
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              placeholder="Confirm new password"
+              leftIcon={<Lock className="h-5 w-5" />}
+              required
+            />
 
-            <button
+            <Button
               type="submit"
-              disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-emerald-600 text-white py-3 px-4 rounded-lg font-semibold hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              variant="primary"
+              size="lg"
+              fullWidth
+              loading={loading}
             >
-              {loading ? (
-                <div className="flex items-center justify-center space-x-2">
-                  <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                  <span>Resetting...</span>
-                </div>
-              ) : (
-                "Reset Password"
-              )}
-            </button>
+              {loading ? "Resetting..." : "Reset Password"}
+            </Button>
           </form>
 
-          <div className="text-center">
-            <Link
+          <div className="mt-8 text-center">
+            <Button
+              as={Link}
               to="/signin"
-              className="text-blue-600 hover:text-blue-500 font-medium"
+              variant="ghost"
+              size="sm"
             >
               Back to Sign In
-            </Link>
+            </Button>
           </div>
-        </div>
+        </Card>
       </div>
 
-      <div className="hidden lg:block relative w-0 flex-1">
-        <img
-          className="absolute inset-0 h-full w-full object-cover"
-          src="https://images.pexels.com/photos/1438081/pexels-photo-1438081.jpeg?auto=compress&cs=tinysrgb&w=1200&h=800&dpr=1"
-          alt="University campus"
-        />
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-600/20 to-emerald-600/20"></div>
+      <div className="hidden lg:block relative w-0 flex-1 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800">
+        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        <div className="relative h-full flex items-center justify-center px-12">
+          <div className="max-w-lg text-white text-center">
+            <div className="mb-8">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Key className="h-8 w-8 text-white" />
+              </div>
+              <h3 className="text-3xl font-bold mb-4">
+                Create a Strong Password
+              </h3>
+              <p className="text-lg opacity-90 leading-relaxed">
+                Choose a secure password to protect your alumni account and keep your personal information safe.
+              </p>
+            </div>
+            
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold">🔒</span>
+                </div>
+                <div className="text-left">
+                  <h4 className="font-semibold">At least 6 characters</h4>
+                  <p className="text-white/80 text-sm">Make it longer for better security</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold">🔤</span>
+                </div>
+                <div className="text-left">
+                  <h4 className="font-semibold">Mix of characters</h4>
+                  <p className="text-white/80 text-sm">Use letters, numbers, and symbols</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-4">
+                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold">🚫</span>
+                </div>
+                <div className="text-left">
+                  <h4 className="font-semibold">Avoid common patterns</h4>
+                  <p className="text-white/80 text-sm">Don't use obvious sequences</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
