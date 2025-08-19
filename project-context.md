@@ -54,6 +54,7 @@ This project is a frontend web application for the IIT JU Alumni Network, design
 - **Session Persistence**: On app load, checks localStorage for existing user session.
 - **No Axios Interceptors**: Headers are set per-request, not globally via interceptors.
 - **Password Security**: Passwords are never stored in the frontend; only sent to backend for authentication.
+- **Enhanced Email Validation**: SignUp component now includes comprehensive email validation using regex pattern `/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/` to validate email format, domain, and TLD.
 
 ---
 
@@ -115,6 +116,25 @@ This project is a frontend web application for the IIT JU Alumni Network, design
 
 ---
 
+## 🐛 RECENT BUG FIXES (Latest Update)
+
+### ✅ Fixed Issues
+- **Email Validation in SignUp**: Enhanced email validation with comprehensive regex pattern `/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/` to properly validate email format, domain, and TLD
+- **LandingPage Button Functionality**: Fixed non-working "Get Started" and "Sign In" buttons in hero section and CTA section by implementing `asChild` prop support in Button component
+- **Button Component Enhancement**: Added `asChild` prop support for polymorphic rendering, allowing buttons to render as Link components while maintaining styling and functionality
+- **Build System Error Fix**: Resolved critical build error caused by missing `useNavbarState.js` file reference in cached build artifacts
+- **ThemeContext Test Environment Fix**: Fixed ThemeContext to handle `window.matchMedia` safely in test environments (Jest) by adding proper error handling and fallbacks
+- **Build Cache Cleanup**: Implemented proper build cache cleanup to prevent stale references from causing build failures
+
+### ✅ Test Coverage Added
+- **SignUp Component Tests**: 46 comprehensive tests covering email validation, password validation, form submission, error handling, and user interactions
+- **LandingPage Component Tests**: 18 tests covering navigation buttons, hero section, CTA section, features, footer links, responsive design, and button functionality
+- **Button Component Tests**: 30 tests covering variants, sizes, icons, loading states, accessibility, and asChild functionality
+- **Build System Integrity Tests**: 5 tests covering missing component detection, required file validation, orphaned import detection, and App.jsx structure validation
+- **Navbar Logic Tests**: 5 tests covering navbar visibility logic, route-based logic, session management, authentication state handling, and edge cases
+
+---
+
 ## 🎛️ NEW: Feature Flag System
 
 ### ✅ Feature Flag Management
@@ -154,6 +174,7 @@ This project is a frontend web application for the IIT JU Alumni Network, design
 - **DirectChat / GroupChat**: Chat UIs for direct and group messaging
 - **AuthContext**: Custom hook `useAuth` for authentication state and actions
 - **ThemeContext**: Custom hook `useTheme` for dark/light mode and persistence
+- **Button Component**: Enhanced with `asChild` prop support for rendering as different elements (e.g., Link components) while maintaining button styling and functionality
 
 ---
 
@@ -191,7 +212,15 @@ This project is a frontend web application for the IIT JU Alumni Network, design
 
 - **Testing Libraries**: React Testing Library, Jest DOM, User Event
 - **Scripts**: `npm test` runs tests via `react-scripts test`
-- **No test files detected in src/**: But dependencies and scripts are present for testing
+- **Comprehensive Test Coverage**: 
+  - **SignUp Component Tests**: Extensive email validation tests, password validation, form submission, error handling, and user interaction tests
+  - **LandingPage Component Tests**: Navigation button functionality, hero section content, CTA section buttons, features section, footer links, responsive design, and button styling tests
+  - **Button Component Tests**: Variants, sizes, icons, loading states, accessibility, and asChild functionality tests
+  - **Build System Tests**: File integrity checks, missing component detection, orphaned import validation, and structure validation
+  - **Navbar Logic Tests**: Navbar visibility logic, route-based logic, session management, and edge case handling
+- **Test Patterns**: Uses `getAllByText` for multiple elements, flexible text matching with regex, and comprehensive error handling validation
+- **Test Environment**: Proper Jest configuration with jsdom environment for DOM testing
+- **Error Handling**: Robust error boundaries and fallbacks for test environments
 
 ---
 
@@ -204,6 +233,11 @@ This project is a frontend web application for the IIT JU Alumni Network, design
 - **No .env file in repo**: But environment variable usage is present in code
 - **No global error boundary or toast notifications**: Errors are handled inline in forms/pages
 - **No Redux or Zustand**: State management is via React Context only
+- **Enhanced Button Component**: Supports `asChild` prop for polymorphic rendering, allowing buttons to render as links while maintaining styling and functionality
+- **Robust Email Validation**: Comprehensive email validation in SignUp component with proper regex pattern matching
+- **Comprehensive Testing**: Extensive test coverage for components with proper error handling and edge case testing
+- **Build System Integrity**: Automated tests to detect missing components, orphaned imports, and structural issues
+- **Robust Error Handling**: ThemeContext and other components handle test environments gracefully with proper fallbacks
 - **Planned Integrations**: Real-time chat (Firebase), video calls (WebRTC), payments (Stripe/Razorpay), social login (Google/Facebook OAuth)
 
 ---
