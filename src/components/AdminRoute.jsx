@@ -1,11 +1,11 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAdminAuth } from '../context/AdminAuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 import { permissions, roleErrorMessages } from '../utils/roleConstants';
 import { toast } from 'react-toastify';
 
 const AdminRoute = ({ children, requiredPermission = null }) => {
-  const { admin, loading } = useAdminAuth();
+  const { admin, loading, isAdmin } = useUnifiedAuth();
   const location = useLocation();
 
   // Show loading spinner while checking authentication
@@ -18,7 +18,7 @@ const AdminRoute = ({ children, requiredPermission = null }) => {
   }
 
   // If no admin, redirect to login
-  if (!admin) {
+  if (!isAdmin()) {
     return <Navigate to="/admin/login" state={{ from: location }} replace />;
   }
 

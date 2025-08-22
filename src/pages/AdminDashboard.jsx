@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import {
   Users,
   UserCheck,
@@ -19,7 +19,7 @@ import { toast } from "react-toastify";
 import { Card, Badge, Button } from "../components/ui";
 
 const AdminDashboard = () => {
-  const { admin } = useAdminAuth();
+  const { admin } = useUnifiedAuth();
   const [stats, setStats] = useState({
     totalUsers: 0,
     activeUsers: 0,

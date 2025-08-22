@@ -29,11 +29,11 @@ import {
   CheckCircle,
   ExternalLink,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { Card, Button, Avatar, Badge, Input } from "../components/ui";
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -71,16 +71,59 @@ const Profile = () => {
 
       const profile = response.data.data;
       console.log("Fetched Profile:", profile);
-      setProfileData(profile);
+      
+      // Ensure all required fields are present
+      const profileWithDefaults = {
+        userId: profile.userId || user?.userId,
+        name: profile.name || "",
+        profession: profile.profession || "",
+        location: profile.location || "",
+        bio: profile.bio || "",
+        phone: profile.phone || "",
+        linkedIn: profile.linkedIn || "",
+        website: profile.website || "",
+        batch: profile.batch || "",
+        facebook: profile.facebook || "",
+        email: profile.email || "",
+        connections: profile.connections || 0,
+        showPhone: profile.showPhone !== undefined ? profile.showPhone : true,
+        showLinkedIn: profile.showLinkedIn !== undefined ? profile.showLinkedIn : true,
+        showWebsite: profile.showWebsite !== undefined ? profile.showWebsite : true,
+        showEmail: profile.showEmail !== undefined ? profile.showEmail : true,
+        showFacebook: profile.showFacebook !== undefined ? profile.showFacebook : true,
+        ...profile // Spread any additional fields
+      };
+      
+      setProfileData(profileWithDefaults);
       setVisibility({
-        showPhone: profile.showPhone,
-        showLinkedIn: profile.showLinkedIn,
-        showWebsite: profile.showWebsite,
-        showEmail: profile.showEmail,
-        showFacebook: profile.showFacebook,
+        showPhone: profileWithDefaults.showPhone,
+        showLinkedIn: profileWithDefaults.showLinkedIn,
+        showWebsite: profileWithDefaults.showWebsite,
+        showEmail: profileWithDefaults.showEmail,
+        showFacebook: profileWithDefaults.showFacebook,
       });
     } catch (err) {
       console.error("Failed to fetch profile", err);
+      // Set default profile data on error
+      setProfileData({
+        userId: user?.userId,
+        name: "",
+        profession: "",
+        location: "",
+        bio: "",
+        phone: "",
+        linkedIn: "",
+        website: "",
+        batch: "",
+        facebook: "",
+        email: "",
+        connections: 0,
+        showPhone: true,
+        showLinkedIn: true,
+        showWebsite: true,
+        showEmail: true,
+        showFacebook: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -89,33 +132,67 @@ const Profile = () => {
   const fetchExperiences = async () => {
     try {
       const response = await apiClient.get(`/experiences/${user?.userId}`);
-      setExperiences(response.data.data || []);
+      const experiencesData = response.data.data || [];
+      console.log("Fetched Experiences:", experiencesData);
+      
+      // Ensure we have an array of experience objects
+      if (Array.isArray(experiencesData)) {
+        setExperiences(experiencesData);
+      } else if (experiencesData && typeof experiencesData === 'object') {
+        // If it's a single object, wrap it in an array
+        setExperiences([experiencesData]);
+      } else {
+        setExperiences([]);
+      }
     } catch (err) {
       console.error("Failed to fetch experiences", err);
+      setExperiences([]);
     }
   };
 
   const fetchInterests = async () => {
     try {
       const response = await apiClient.get(`/interests/${user?.userId}`);
-      setInterests(response.data.data || []);
+      const interestsData = response.data.data || [];
+      console.log("Fetched Interests:", interestsData);
+      
+      // Ensure we have an array of interest objects
+      if (Array.isArray(interestsData)) {
+        setInterests(interestsData);
+      } else if (interestsData && typeof interestsData === 'object') {
+        // If it's a single object, wrap it in an array
+        setInterests([interestsData]);
+      } else {
+        setInterests([]);
+      }
     } catch (err) {
       console.error("Failed to fetch interests", err);
+      setInterests([]);
     }
   };
 
   const updateSection = async (sectionName, payload) => {
     try {
-      // Add userId to payload for backend
-      const payloadWithUserId = {
-        ...payload,
-        userId: user?.userId,
-      };
+      let endpoint;
+      let requestPayload;
 
-      const response = await apiClient.put(
-        `/${sectionName}`,
-        payloadWithUserId
-      );
+      if (sectionName === "profile") {
+        // For profile update, use PUT /profile endpoint
+        endpoint = "/profile";
+        requestPayload = {
+          ...payload,
+          userId: user?.userId,
+        };
+      } else if (sectionName === "visibility") {
+        // For visibility update, use PUT /visibility endpoint
+        endpoint = "/visibility";
+        requestPayload = payload; // Don't include userId for visibility
+      } else {
+        endpoint = `/${sectionName}`;
+        requestPayload = payload;
+      }
+
+      const response = await apiClient.put(endpoint, requestPayload);
 
       const updatedProfile = response.data.data;
       setProfileData(updatedProfile);
@@ -140,13 +217,15 @@ const Profile = () => {
     }
 
     try {
-      // Add userId to experience data
-      const experienceWithUserId = {
-        ...newExperience,
-        userId: user?.userId,
+      // According to API docs: POST /experiences with { title, company, period, description }
+      const experienceData = {
+        title: newExperience.title,
+        company: newExperience.company,
+        period: newExperience.period,
+        description: newExperience.description,
       };
 
-      await apiClient.post(`/experiences`, experienceWithUserId);
+      await apiClient.post(`/experiences`, experienceData);
 
       setNewExperience({ title: "", company: "", period: "", description: "" });
       setShowAddExperience(false);
@@ -159,7 +238,7 @@ const Profile = () => {
 
   const deleteExperience = async (experienceId) => {
     try {
-      // Backend expects userId in URL path: /experiences/{userId}
+      // According to API docs: DELETE /experiences/{experienceId}
       await apiClient.delete(`/experiences/${experienceId}`);
       fetchExperiences();
     } catch (err) {
@@ -175,7 +254,7 @@ const Profile = () => {
     }
 
     try {
-      // Backend expects { interest: "value" } in request body
+      // According to API docs: POST /interests with { interest: "value" }
       await apiClient.post(`/interests`, { interest: newInterest.trim() });
 
       // Refresh the interests list
@@ -194,7 +273,7 @@ const Profile = () => {
 
   const deleteInterest = async (interestId) => {
     try {
-      // Backend expects userId in URL path: /interests/{userId}
+      // According to API docs: DELETE /interests/{interestId}
       await apiClient.delete(`/interests/${interestId}`);
 
       fetchInterests();
@@ -213,12 +292,25 @@ const Profile = () => {
     }
   };
 
+  const toggleVisibility = (field) => {
+    setVisibility(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
   const handleSave = async () => {
     if (!validateFields()) {
       return;
     }
 
-    await updateSection("profile", profileData);
+    // Update both profile data and visibility settings
+    const updatedProfileData = {
+      ...profileData,
+      ...visibility
+    };
+
+    await updateSection("profile", updatedProfileData);
   };
 
   useEffect(() => {
@@ -239,48 +331,50 @@ const Profile = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Hero Section */}
+      {/* Hero Section - Full width cover image */}
       <div className="relative bg-gradient-to-r from-primary-600 to-primary-800 h-64">
         <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-end pb-8">
-          <div className="flex items-end space-x-6">
-            <div className="relative">
-              <Avatar 
-                size="3xl" 
-                src={profileData.profilePicture || "/dp.png"} 
-                alt={profileData.name || "Profile"} 
-                className="border-4 border-white dark:border-gray-800 shadow-xl"
-              />
-              {isEditing && (
-                <Button
-                  size="sm"
-                  className="absolute bottom-0 right-0 rounded-full p-2"
-                  aria-label="Change photo"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-            <div className="mb-4">
-              <h1 className="text-3xl font-bold text-white mb-2">
-                {profileData.name || "Your Name"}
-              </h1>
-              <p className="text-xl text-white/90 mb-2">
-                {profileData.profession || "Your Profession"}
-              </p>
-              <div className="flex items-center space-x-4 text-white/80">
-                {profileData.location && (
-                  <div className="flex items-center space-x-1">
-                    <MapPin className="h-4 w-4" />
-                    <span>{profileData.location}</span>
-                  </div>
+        <div className="relative h-full flex items-end pb-8">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div className="flex items-end space-x-6">
+              <div className="relative">
+                <Avatar 
+                  size="3xl" 
+                  src={profileData.profilePicture || "/dp.png"} 
+                  alt={profileData.name || "Profile"} 
+                  className="border-4 border-white dark:border-gray-800 shadow-xl"
+                />
+                {isEditing && (
+                  <Button
+                    size="sm"
+                    className="absolute bottom-0 right-0 rounded-full p-2"
+                    aria-label="Change photo"
+                  >
+                    <Camera className="h-4 w-4" />
+                  </Button>
                 )}
-                {profileData.company && (
-                  <div className="flex items-center space-x-1">
-                    <Briefcase className="h-4 w-4" />
-                    <span>{profileData.company}</span>
-                  </div>
-                )}
+              </div>
+              <div className="mb-4">
+                <h1 className="text-3xl font-bold text-white mb-2">
+                  {profileData.name || "Your Name"}
+                </h1>
+                <p className="text-xl text-white/90 mb-2">
+                  {profileData.profession || "Your Profession"}
+                </p>
+                <div className="flex items-center space-x-4 text-white/80">
+                  {profileData.location && (
+                    <div className="flex items-center space-x-1">
+                      <MapPin className="h-4 w-4" />
+                      <span>{profileData.location}</span>
+                    </div>
+                  )}
+                  {profileData.batch && (
+                    <div className="flex items-center space-x-1">
+                      <GraduationCap className="h-4 w-4" />
+                      <span>Batch {profileData.batch}</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -288,7 +382,7 @@ const Profile = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Main Profile Info */}
           <div className="lg:col-span-2 space-y-6">
@@ -311,54 +405,202 @@ const Profile = () => {
               </Card.Header>
               <Card.Content>
                 {isEditing ? (
-                  <div className="space-y-4">
-                    <Input
-                      label="Full Name"
-                      name="name"
-                      value={profileData.name || ""}
-                      onChange={handleInputChange}
-                      error={errors.name}
-                      required
-                    />
-                    <Input
-                      label="Profession"
-                      name="profession"
-                      value={profileData.profession || ""}
-                      onChange={handleInputChange}
-                      error={errors.profession}
-                      required
-                    />
-                    <Input
-                      label="Location"
-                      name="location"
-                      value={profileData.location || ""}
-                      onChange={handleInputChange}
-                      error={errors.location}
-                      leftIcon={<MapPin className="h-4 w-4" />}
-                      required
-                    />
-                    <Input
-                      label="Company"
-                      name="company"
-                      value={profileData.company || ""}
-                      onChange={handleInputChange}
-                      leftIcon={<Briefcase className="h-4 w-4" />}
-                    />
-                    <div>
-                      <label className="form-label">Bio</label>
-                      <textarea
-                        name="bio"
-                        value={profileData.bio || ""}
+                  <div className="space-y-6">
+                    {/* Basic Information */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h4>
+                      <Input
+                        label="Full Name"
+                        name="name"
+                        value={profileData.name || ""}
                         onChange={handleInputChange}
-                        rows={4}
-                        className="input"
-                        placeholder="Tell us about yourself..."
+                        error={errors.name}
+                        required
                       />
-                      {errors.bio && <p className="form-error">{errors.bio}</p>}
+                      <Input
+                        label="Profession"
+                        name="profession"
+                        value={profileData.profession || ""}
+                        onChange={handleInputChange}
+                        error={errors.profession}
+                        required
+                      />
+                      <Input
+                        label="Location"
+                        name="location"
+                        value={profileData.location || ""}
+                        onChange={handleInputChange}
+                        error={errors.location}
+                        leftIcon={<MapPin className="h-4 w-4" />}
+                        required
+                      />
+                      <Input
+                        label="Batch"
+                        name="batch"
+                        value={profileData.batch || ""}
+                        onChange={handleInputChange}
+                        leftIcon={<GraduationCap className="h-4 w-4" />}
+                        placeholder="e.g., 2020"
+                      />
                     </div>
-                    <div className="flex space-x-3">
+
+                    {/* Bio Section */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Bio</h4>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          About Me <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          name="bio"
+                          value={profileData.bio || ""}
+                          onChange={handleInputChange}
+                          rows={4}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                          placeholder="Tell us about yourself..."
+                        />
+                        {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio}</p>}
+                      </div>
+                    </div>
+
+                    {/* Contact Information */}
+                    <div className="space-y-4">
+                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h4>
+                      
+                      {/* Email */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Email Address
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleVisibility('showEmail')}
+                            icon={visibility.showEmail ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            {visibility.showEmail ? 'Visible' : 'Hidden'}
+                          </Button>
+                        </div>
+                        <Input
+                          name="email"
+                          value={profileData.email || ""}
+                          onChange={handleInputChange}
+                          leftIcon={<Mail className="h-4 w-4" />}
+                          placeholder="your.email@example.com"
+                        />
+                      </div>
+
+                      {/* Phone */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Phone Number
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleVisibility('showPhone')}
+                            icon={visibility.showPhone ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            {visibility.showPhone ? 'Visible' : 'Hidden'}
+                          </Button>
+                        </div>
+                        <Input
+                          name="phone"
+                          value={profileData.phone || ""}
+                          onChange={handleInputChange}
+                          leftIcon={<Phone className="h-4 w-4" />}
+                          placeholder="+1-555-123-4567"
+                        />
+                      </div>
+
+                      {/* LinkedIn */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            LinkedIn Profile
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleVisibility('showLinkedIn')}
+                            icon={visibility.showLinkedIn ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            {visibility.showLinkedIn ? 'Visible' : 'Hidden'}
+                          </Button>
+                        </div>
+                        <Input
+                          name="linkedIn"
+                          value={profileData.linkedIn || ""}
+                          onChange={handleInputChange}
+                          leftIcon={<Linkedin className="h-4 w-4" />}
+                          placeholder="https://linkedin.com/in/yourprofile"
+                        />
+                      </div>
+
+                      {/* Website */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Website
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleVisibility('showWebsite')}
+                            icon={visibility.showWebsite ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            {visibility.showWebsite ? 'Visible' : 'Hidden'}
+                          </Button>
+                        </div>
+                        <Input
+                          name="website"
+                          value={profileData.website || ""}
+                          onChange={handleInputChange}
+                          leftIcon={<Globe className="h-4 w-4" />}
+                          placeholder="https://yourwebsite.com"
+                        />
+                      </div>
+
+                      {/* Facebook */}
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Facebook Profile
+                          </label>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => toggleVisibility('showFacebook')}
+                            icon={visibility.showFacebook ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                            className="text-gray-500 hover:text-gray-700"
+                          >
+                            {visibility.showFacebook ? 'Visible' : 'Hidden'}
+                          </Button>
+                        </div>
+                        <Input
+                          name="facebook"
+                          value={profileData.facebook || ""}
+                          onChange={handleInputChange}
+                          leftIcon={<Facebook className="h-4 w-4" />}
+                          placeholder="https://facebook.com/yourprofile"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex space-x-3 pt-4">
                       <Button onClick={handleSave} icon={<Save className="h-4 w-4" />}>
-                        Save
+                        Save Changes
                       </Button>
                       <Button
                         variant="secondary"
@@ -393,11 +635,11 @@ const Profile = () => {
                           </span>
                         </div>
                       )}
-                      {visibility.showLinkedIn && profileData.linkedin && (
+                      {visibility.showLinkedIn && profileData.linkedIn && (
                         <div className="flex items-center space-x-3">
                           <Linkedin className="h-4 w-4 text-gray-400" />
                           <a
-                            href={profileData.linkedin}
+                            href={profileData.linkedIn}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1"
@@ -417,6 +659,20 @@ const Profile = () => {
                             className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1"
                           >
                             <span>Website</span>
+                            <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      )}
+                      {visibility.showFacebook && profileData.facebook && (
+                        <div className="flex items-center space-x-3">
+                          <Facebook className="h-4 w-4 text-gray-400" />
+                          <a
+                            href={profileData.facebook}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1"
+                          >
+                            <span>Facebook Profile</span>
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         </div>
@@ -443,6 +699,62 @@ const Profile = () => {
                 </div>
               </Card.Header>
               <Card.Content>
+                {showAddExperience && (
+                  <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Add Experience
+                    </h4>
+                    <div className="space-y-4">
+                      <Input
+                        label="Job Title"
+                        name="title"
+                        value={newExperience.title}
+                        onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
+                        required
+                      />
+                      <Input
+                        label="Company"
+                        name="company"
+                        value={newExperience.company}
+                        onChange={(e) => setNewExperience({ ...newExperience, company: e.target.value })}
+                        required
+                      />
+                      <Input
+                        label="Period"
+                        name="period"
+                        value={newExperience.period}
+                        onChange={(e) => setNewExperience({ ...newExperience, period: e.target.value })}
+                        placeholder="e.g., 2020 - Present"
+                      />
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Description
+                        </label>
+                        <textarea
+                          name="description"
+                          value={newExperience.description}
+                          onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                          placeholder="Describe your role and achievements..."
+                        />
+                      </div>
+                      <div className="flex space-x-3">
+                        <Button onClick={addExperience} icon={<Plus className="h-4 w-4" />}>
+                          Add Experience
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setShowAddExperience(false)}
+                          icon={<X className="h-4 w-4" />}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {experiences.length > 0 ? (
                   <div className="space-y-6">
                     {experiences.map((exp) => (
@@ -472,6 +784,7 @@ const Profile = () => {
                           onClick={() => deleteExperience(exp.id)}
                           icon={<Trash2 className="h-4 w-4" />}
                           className="text-error-600 hover:text-error-700"
+                          data-testid={`delete-experience-${exp.id}`}
                         />
                       </div>
                     ))}
@@ -500,6 +813,35 @@ const Profile = () => {
                 </div>
               </Card.Header>
               <Card.Content>
+                {showAddInterest && (
+                  <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Add Interest
+                    </h4>
+                    <div className="space-y-4">
+                      <Input
+                        label="Interest"
+                        value={newInterest}
+                        onChange={(e) => setNewInterest(e.target.value)}
+                        placeholder="e.g., Machine Learning, Photography"
+                        required
+                      />
+                      <div className="flex space-x-3">
+                        <Button onClick={addInterest} icon={<Plus className="h-4 w-4" />}>
+                          Add Interest
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() => setShowAddInterest(false)}
+                          icon={<X className="h-4 w-4" />}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
                 {interests.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {interests.map((interest) => (
@@ -508,6 +850,7 @@ const Profile = () => {
                         variant="outline"
                         removable
                         onRemove={() => deleteInterest(interest.id)}
+                        data-testid={`remove-interest-${interest.id}`}
                       >
                         {interest.interest}
                       </Badge>
@@ -537,7 +880,9 @@ const Profile = () => {
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Connections</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">567</span>
+                    <span className="font-semibold text-gray-900 dark:text-white">
+                      {profileData.connections || 0}
+                    </span>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">Events Attended</span>
@@ -569,99 +914,6 @@ const Profile = () => {
           </div>
         </div>
       </div>
-
-      {/* Add Experience Modal */}
-      {showAddExperience && (
-        <div className="modal-overlay" onClick={() => setShowAddExperience(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Add Experience
-              </h3>
-              <div className="space-y-4">
-                <Input
-                  label="Job Title"
-                  name="title"
-                  value={newExperience.title}
-                  onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
-                  required
-                />
-                <Input
-                  label="Company"
-                  name="company"
-                  value={newExperience.company}
-                  onChange={(e) => setNewExperience({ ...newExperience, company: e.target.value })}
-                  required
-                />
-                <Input
-                  label="Period"
-                  name="period"
-                  value={newExperience.period}
-                  onChange={(e) => setNewExperience({ ...newExperience, period: e.target.value })}
-                  placeholder="e.g., 2020 - Present"
-                />
-                <div>
-                  <label className="form-label">Description</label>
-                  <textarea
-                    name="description"
-                    value={newExperience.description}
-                    onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
-                    rows={3}
-                    className="input"
-                    placeholder="Describe your role and achievements..."
-                  />
-                </div>
-                <div className="flex space-x-3">
-                  <Button onClick={addExperience} fullWidth>
-                    Add Experience
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowAddExperience(false)}
-                    fullWidth
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Interest Modal */}
-      {showAddInterest && (
-        <div className="modal-overlay" onClick={() => setShowAddInterest(false)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="p-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                Add Interest
-              </h3>
-              <div className="space-y-4">
-                <Input
-                  label="Interest"
-                  value={newInterest}
-                  onChange={(e) => setNewInterest(e.target.value)}
-                  placeholder="e.g., Machine Learning, Photography"
-                  required
-                />
-                <div className="flex space-x-3">
-                  <Button onClick={addInterest} fullWidth>
-                    Add Interest
-                  </Button>
-                  <Button
-                    variant="secondary"
-                    onClick={() => setShowAddInterest(false)}
-                    fullWidth
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import {
   FileText,
   CheckCircle,
@@ -14,7 +14,7 @@ import {
 import { toast } from "react-toastify";
 
 const AdminReports = () => {
-  const { admin } = useAdminAuth();
+  const { admin } = useUnifiedAuth();
   const [reports, setReports] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");

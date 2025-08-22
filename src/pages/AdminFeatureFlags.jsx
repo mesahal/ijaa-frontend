@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import {
   Flag,
   ToggleLeft,
@@ -17,7 +17,7 @@ import {
 import { adminApi } from "../utils/adminApi";
 
 const AdminFeatureFlags = () => {
-  const { admin } = useAdminAuth();
+  const { admin } = useUnifiedAuth();
   const [featureFlags, setFeatureFlags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

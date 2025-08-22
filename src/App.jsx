@@ -29,18 +29,16 @@ import AdminReports from "./pages/AdminReports";
 import AdminFeatureFlags from "./pages/AdminFeatureFlags";
 import AdminSettings from "./pages/AdminSettings";
 import AdminManagement from "./pages/AdminManagement";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { AdminAuthProvider, useAdminAuth } from "./context/AdminAuthContext";
+import { UnifiedAuthProvider, useUnifiedAuth } from "./context/UnifiedAuthContext";
 import { ThemeProvider } from "./context/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
 function AppRoutes() {
-  const { user, loading } = useAuth();
-  const { admin, loading: adminLoading } = useAdminAuth();
+  const { loading, isUser, isAdmin, admin } = useUnifiedAuth();
   const location = useLocation();
 
-  if (loading || adminLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
@@ -54,7 +52,7 @@ function AppRoutes() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Show navbar for regular users only, never for admin users or admin pages */}
-      {user && !admin && !location.pathname.startsWith('/admin') && <Navbar />}
+      {isUser() && !isAdmin() && !location.pathname.startsWith("/admin") && <Navbar />}
 
       <Routes>
         {/* Admin Routes */}
@@ -221,11 +219,9 @@ function AppRoutes() {
 function App() {
   return (
     <ThemeProvider>
-      <AuthProvider>
-        <AdminAuthProvider>
-          <AppRoutes />
-        </AdminAuthProvider>
-      </AuthProvider>
+      <UnifiedAuthProvider>
+        <AppRoutes />
+      </UnifiedAuthProvider>
     </ThemeProvider>
   );
 }

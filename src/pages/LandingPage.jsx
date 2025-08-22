@@ -135,12 +135,16 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-2 shadow-lg">
-                <GraduationCap className="h-6 w-6" />
+              <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                <img
+                  src="/logo-2.png"
+                  alt="IIT JU Alumni Logo"
+                  className="h-8 w-8 object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                  IIT JU Alumni
+                  IIT Alumni Association
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Jahangirnagar University
@@ -326,11 +330,15 @@ const LandingPage = () => {
           <div className="grid md:grid-cols-4 gap-8">
             <div>
               <div className="flex items-center space-x-3 mb-4">
-                <div className="bg-primary-600 text-white rounded-lg p-2">
-                  <GraduationCap className="h-6 w-6" />
+                <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                  <img
+                    src="/logo-2.png"
+                    alt="IIT JU Alumni Logo"
+                    className="h-8 w-8 object-contain"
+                  />
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold">IIT JU Alumni</h3>
+                  <h3 className="text-xl font-bold">IIT Alumni Association</h3>
                   <p className="text-sm text-gray-400">
                     Jahangirnagar University
                   </p>
@@ -430,7 +438,7 @@ const LandingPage = () => {
           </div>
 
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 IIT JU Alumni Network. All rights reserved.</p>
+            <p>&copy; 2024 IIT JU Alumni Association. All rights reserved.</p>
           </div>
         </div>
       </footer>

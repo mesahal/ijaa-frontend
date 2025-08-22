@@ -103,7 +103,7 @@ const ResetPassword = () => {
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    IIT JU Alumni
+                    IIT Alumni Association
                   </h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Jahangirnagar University
@@ -149,14 +149,13 @@ const ResetPassword = () => {
                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-6">
                   <Shield className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-3xl font-bold mb-4">
-                  Welcome Back!
-                </h3>
+                <h3 className="text-3xl font-bold mb-4">Welcome Back!</h3>
                 <p className="text-lg opacity-90 leading-relaxed">
-                  Your account is now secure with your new password. You're all set to continue your alumni journey.
+                  Your account is now secure with your new password. You're all
+                  set to continue your alumni journey.
                 </p>
               </div>
-              
+
               <div className="space-y-6">
                 <div className="flex items-center space-x-4">
                   <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -164,27 +163,33 @@ const ResetPassword = () => {
                   </div>
                   <div className="text-left">
                     <h4 className="font-semibold">Password Updated</h4>
-                    <p className="text-white/80 text-sm">Your new password is now active</p>
+                    <p className="text-white/80 text-sm">
+                      Your new password is now active
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
                   <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold">✓</span>
                   </div>
                   <div className="text-left">
                     <h4 className="font-semibold">Account Secure</h4>
-                    <p className="text-white/80 text-sm">Your account is protected</p>
+                    <p className="text-white/80 text-sm">
+                      Your account is protected
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
                   <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold">✓</span>
                   </div>
                   <div className="text-left">
                     <h4 className="font-semibold">Ready to Connect</h4>
-                    <p className="text-white/80 text-sm">Access your alumni network</p>
+                    <p className="text-white/80 text-sm">
+                      Access your alumni network
+                    </p>
                   </div>
                 </div>
               </div>
@@ -206,7 +211,7 @@ const ResetPassword = () => {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  IIT JU Alumni
+                  IIT Alumni Association
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Jahangirnagar University
@@ -216,7 +221,9 @@ const ResetPassword = () => {
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
               Reset Your Password
             </h2>
-            <p className="mt-2 text-gray-600 dark:text-gray-300">Enter your new password below</p>
+            <p className="mt-2 text-gray-600 dark:text-gray-300">
+              Enter your new password below
+            </p>
           </div>
 
           {error && (
@@ -261,12 +268,7 @@ const ResetPassword = () => {
           </form>
 
           <div className="mt-8 text-center">
-            <Button
-              as={Link}
-              to="/signin"
-              variant="ghost"
-              size="sm"
-            >
+            <Button as={Link} to="/signin" variant="ghost" size="sm">
               Back to Sign In
             </Button>
           </div>
@@ -285,10 +287,11 @@ const ResetPassword = () => {
                 Create a Strong Password
               </h3>
               <p className="text-lg opacity-90 leading-relaxed">
-                Choose a secure password to protect your alumni account and keep your personal information safe.
+                Choose a secure password to protect your alumni account and keep
+                your personal information safe.
               </p>
             </div>
-            
+
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -296,27 +299,33 @@ const ResetPassword = () => {
                 </div>
                 <div className="text-left">
                   <h4 className="font-semibold">At least 6 characters</h4>
-                  <p className="text-white/80 text-sm">Make it longer for better security</p>
+                  <p className="text-white/80 text-sm">
+                    Make it longer for better security
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold">🔤</span>
                 </div>
                 <div className="text-left">
                   <h4 className="font-semibold">Mix of characters</h4>
-                  <p className="text-white/80 text-sm">Use letters, numbers, and symbols</p>
+                  <p className="text-white/80 text-sm">
+                    Use letters, numbers, and symbols
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold">🚫</span>
                 </div>
                 <div className="text-left">
                   <h4 className="font-semibold">Avoid common patterns</h4>
-                  <p className="text-white/80 text-sm">Don't use obvious sequences</p>
+                  <p className="text-white/80 text-sm">
+                    Don't use obvious sequences
+                  </p>
                 </div>
               </div>
             </div>

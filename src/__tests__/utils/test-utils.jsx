@@ -1,20 +1,17 @@
 import React from 'react';
 import { render } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../../context/AuthContext';
+import { UnifiedAuthProvider } from '../../context/UnifiedAuthContext';
 import { ThemeProvider } from '../../context/ThemeContext';
-import { AdminAuthProvider } from '../../context/AdminAuthContext';
 
 // Custom render function that includes all providers
 const AllTheProviders = ({ children }) => {
   return (
     <BrowserRouter>
       <ThemeProvider>
-        <AuthProvider>
-          <AdminAuthProvider>
-            {children}
-          </AdminAuthProvider>
-        </AuthProvider>
+        <UnifiedAuthProvider>
+          {children}
+        </UnifiedAuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

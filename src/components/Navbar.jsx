@@ -18,7 +18,7 @@ import {
   Bookmark,
   HelpCircle,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { Button, Avatar, Badge } from "./ui";
 
@@ -29,7 +29,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut } = useUnifiedAuth();
   const { isDark, toggleTheme } = useTheme();
 
   // Handle scroll effect
@@ -90,16 +90,16 @@ const Navbar = () => {
           {/* Logo and Brand */}
           <div className="flex items-center space-x-4">
             <Link to="/dashboard" className="flex items-center space-x-3 group">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-2.5 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 overflow-hidden">
-                <img 
-                  src="/logo.png" 
-                  alt="IIT JU Alumni Logo" 
-                  className="h-6 w-6 object-contain"
+              <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                <img
+                  src="/logo-2.png"
+                  alt="IIT JU Alumni Logo"
+                  className="h-8 w-8 object-contain"
                 />
               </div>
               <div className="hidden sm:block">
                 <h1 className="text-xl font-bold text-gray-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-                  IIT JU Alumni
+                  IIT Alumni Association
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Jahangirnagar University
@@ -217,22 +217,14 @@ const Navbar = () => {
                   e.stopPropagation();
                   setShowProfileMenu(!showProfileMenu);
                 }}
-                className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+                className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               >
                 <Avatar
                   size="sm"
                   src={user?.profilePicture || `/dp.png`}
                   alt={user?.name || "User"}
                 />
-                <div className="hidden sm:block text-left">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user?.name || "User"}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
-                    {user?.profession || "Alumni"}
-                  </p>
-                </div>
-                <ChevronDown className="h-4 w-4 text-gray-400" />
+                <ChevronDown className="h-4 w-4 text-gray-400 ml-1" />
               </Button>
 
               {/* Profile Dropdown */}

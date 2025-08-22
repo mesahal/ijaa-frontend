@@ -1,9 +1,9 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
 
 const ProtectedRoute = ({ children }) => {
-  const { user, loading } = useAuth();
+  const { loading, isUser } = useUnifiedAuth();
   const location = useLocation();
 
   // Show loading spinner while checking authentication
@@ -16,7 +16,7 @@ const ProtectedRoute = ({ children }) => {
   }
 
   // If no user, redirect to signin with return URL
-  if (!user) {
+  if (!isUser()) {
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 

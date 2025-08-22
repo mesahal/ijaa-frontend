@@ -17,7 +17,7 @@ import {
   Grid3X3,
   List,
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
 
 /**
  * EventMedia Component
@@ -29,7 +29,7 @@ const EventMedia = ({
   onMediaUpdated, 
   onMediaDeleted 
 }) => {
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   const fileInputRef = useRef(null);
   const [media, setMedia] = useState([]);
   const [loading, setLoading] = useState(false);

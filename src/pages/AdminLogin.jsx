@@ -1,7 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAdminAuth } from "../context/AdminAuthContext";
-import { Eye, EyeOff, Shield, Lock, AlertTriangle, CheckCircle } from "lucide-react";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
+import {
+  Eye,
+  EyeOff,
+  Shield,
+  Lock,
+  AlertTriangle,
+  CheckCircle,
+} from "lucide-react";
 import { toast } from "react-toastify";
 import { Button, Input, Card, Badge } from "../components/ui";
 
@@ -10,7 +17,7 @@ const AdminLogin = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { adminSignIn } = useAdminAuth();
+  const { adminSignIn } = useUnifiedAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
@@ -32,18 +39,18 @@ const AdminLogin = () => {
     {
       icon: Shield,
       title: "Secure Access",
-      description: "Two-factor authentication enabled"
+      description: "Two-factor authentication enabled",
     },
     {
       icon: CheckCircle,
       title: "Audit Trail",
-      description: "All actions are logged and monitored"
+      description: "All actions are logged and monitored",
     },
     {
       icon: AlertTriangle,
       title: "Admin Only",
-      description: "Restricted to authorized administrators"
-    }
+      description: "Restricted to authorized administrators",
+    },
   ];
 
   return (
@@ -107,7 +114,8 @@ const AdminLogin = () => {
                     Security Notice
                   </p>
                   <p className="text-xs text-warning-700 dark:text-warning-300 mt-1">
-                    This area is restricted to authorized administrators only. Unauthorized access attempts will be logged and reported.
+                    This area is restricted to authorized administrators only.
+                    Unauthorized access attempts will be logged and reported.
                   </p>
                 </div>
               </div>
@@ -123,7 +131,9 @@ const AdminLogin = () => {
                 Admin Panel
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-300 mb-8">
-                Complete administrative control over the IIT JU Alumni platform. Manage users, content, and system settings with powerful tools.
+                Complete administrative control over the IIT JU Alumni
+                Association. Manage users, content, and system settings with
+                powerful tools.
               </p>
             </div>
 
@@ -160,7 +170,7 @@ const AdminLogin = () => {
                   { label: "User Management", color: "primary" },
                   { label: "Content Moderation", color: "warning" },
                   { label: "System Settings", color: "secondary" },
-                  { label: "Analytics", color: "success" }
+                  { label: "Analytics", color: "success" },
                 ].map((capability, index) => (
                   <Badge key={index} variant={capability.color} size="sm">
                     {capability.label}
@@ -190,4 +200,4 @@ const AdminLogin = () => {
   );
 };
 
-export default AdminLogin; 
+export default AdminLogin;

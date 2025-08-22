@@ -15,7 +15,7 @@ import {
   Search,
   BarChart3,
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
 import useEventSocialFeatures from '../../hooks/events/useEventSocialFeatures';
 
 /**
@@ -29,7 +29,7 @@ const EventComments = ({
   onCommentUpdated, 
   onCommentDeleted 
 }) => {
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);

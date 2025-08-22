@@ -17,12 +17,12 @@ import {
   Tag,
   X,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import apiClient from "../utils/apiClient";
 import { Button, Input, Card, Avatar, Badge } from "../components/ui";
 
 const Search = () => {
-  const { user } = useAuth();
+  // const { user } = useUnifiedAuth(); // Unused variable
   const navigate = useNavigate();
 
   // State variables

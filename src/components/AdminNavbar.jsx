@@ -16,7 +16,7 @@ import {
   Shield,
   ChevronDown,
 } from "lucide-react";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { useTheme } from "../context/ThemeContext";
 
 const AdminNavbar = () => {
@@ -24,7 +24,7 @@ const AdminNavbar = () => {
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { admin, adminSignOut } = useAdminAuth();
+  const { admin, adminSignOut } = useUnifiedAuth();
   const { isDark, toggleTheme } = useTheme();
 
   const handleSignOut = () => {
@@ -33,12 +33,42 @@ const AdminNavbar = () => {
   };
 
   const navItems = [
-    { path: "/admin/dashboard", icon: LayoutDashboard, label: "Dashboard", tooltip: "Dashboard" },
-    { path: "/admin/users", icon: Users, label: "Users", tooltip: "User Management" },
-    { path: "/admin/announcements", icon: Megaphone, label: "Announcements", tooltip: "Announcements" },
-    { path: "/admin/reports", icon: FileText, label: "Reports", tooltip: "Reports" },
-    { path: "/admin/feature-flags", icon: Flag, label: "Feature Flags", tooltip: "Feature Flags" },
-    { path: "/admin/management", icon: Shield, label: "Admin Management", tooltip: "Admin Management" },
+    {
+      path: "/admin/dashboard",
+      icon: LayoutDashboard,
+      label: "Dashboard",
+      tooltip: "Dashboard",
+    },
+    {
+      path: "/admin/users",
+      icon: Users,
+      label: "Users",
+      tooltip: "User Management",
+    },
+    {
+      path: "/admin/announcements",
+      icon: Megaphone,
+      label: "Announcements",
+      tooltip: "Announcements",
+    },
+    {
+      path: "/admin/reports",
+      icon: FileText,
+      label: "Reports",
+      tooltip: "Reports",
+    },
+    {
+      path: "/admin/feature-flags",
+      icon: Flag,
+      label: "Feature Flags",
+      tooltip: "Feature Flags",
+    },
+    {
+      path: "/admin/management",
+      icon: Shield,
+      label: "Admin Management",
+      tooltip: "Admin Management",
+    },
   ];
 
   return (
@@ -47,12 +77,15 @@ const AdminNavbar = () => {
         <div className="flex justify-between h-16">
           {/* Logo and Brand */}
           <div className="flex items-center">
-            <Link to="/admin/dashboard" className="flex items-center space-x-3 group">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-2.5 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105 overflow-hidden">
-                <img 
-                  src="/logo.png" 
-                  alt="IIT JU Alumni Logo" 
-                  className="h-6 w-6 object-contain"
+            <Link
+              to="/admin/dashboard"
+              className="flex items-center space-x-3 group"
+            >
+              <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                <img
+                  src="/logo-2.png"
+                  alt="IIT JU Alumni Logo"
+                  className="h-8 w-8 object-contain"
                 />
               </div>
               <div className="hidden sm:block">
@@ -60,7 +93,7 @@ const AdminNavbar = () => {
                   Admin Panel
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400 group-hover:text-gray-600 dark:group-hover:text-gray-300 transition-colors">
-                  IIT JU Alumni Network
+                  IIT JU Alumni Association
                 </p>
               </div>
             </Link>
@@ -81,8 +114,12 @@ const AdminNavbar = () => {
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-800 hover:shadow-md"
                   }`}
                 >
-                  <item.icon className={`h-5 w-5 ${isActive ? 'text-primary-600 dark:text-primary-400' : ''}`} />
-                  
+                  <item.icon
+                    className={`h-5 w-5 ${
+                      isActive ? "text-primary-600 dark:text-primary-400" : ""
+                    }`}
+                  />
+
                   {/* Tooltip */}
                   <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
                     {item.tooltip}
@@ -127,11 +164,11 @@ const AdminNavbar = () => {
                 className="flex items-center space-x-3 p-2 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 hover:shadow-md group"
                 title="Admin Profile"
               >
-                <div className="h-9 w-9 rounded-xl bg-gradient-to-r from-primary-600 to-primary-700 flex items-center justify-center shadow-lg group-hover:shadow-xl transition-all duration-200 group-hover:scale-105 overflow-hidden">
-                  <img 
-                    src="/logo.png" 
-                    alt="Admin Logo" 
-                    className="h-5 w-5 object-contain"
+                <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                  <img
+                    src="/logo-2.png"
+                    alt="IIT JU Alumni Logo"
+                    className="h-8 w-8 object-contain"
                   />
                 </div>
                 <div className="hidden sm:block text-left">
@@ -142,14 +179,22 @@ const AdminNavbar = () => {
                     Administrator
                   </p>
                 </div>
-                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                    showProfileMenu ? "rotate-180" : ""
+                  }`}
+                />
               </button>
 
               {showProfileMenu && (
                 <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50 backdrop-blur-sm">
                   <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
-                    <p className="font-medium text-gray-900 dark:text-white">Administrator</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">{admin?.email}</p>
+                    <p className="font-medium text-gray-900 dark:text-white">
+                      Administrator
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {admin?.email}
+                    </p>
                   </div>
                   <Link
                     to="/admin/settings"
@@ -204,7 +249,11 @@ const AdminNavbar = () => {
                       : "text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700"
                   }`}
                 >
-                  <item.icon className={`h-5 w-5 ${isActive ? 'text-primary-600 dark:text-primary-400' : ''}`} />
+                  <item.icon
+                    className={`h-5 w-5 ${
+                      isActive ? "text-primary-600 dark:text-primary-400" : ""
+                    }`}
+                  />
                   <span>{item.label}</span>
                 </Link>
               );

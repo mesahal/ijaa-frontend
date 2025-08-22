@@ -1,6 +1,13 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { Mail, ArrowLeft, CheckCircle, GraduationCap, Shield, Lock } from "lucide-react";
+import {
+  Mail,
+  ArrowLeft,
+  CheckCircle,
+  GraduationCap,
+  Shield,
+  Lock,
+} from "lucide-react";
 import { Button, Input, Card } from "../components/ui";
 
 const ForgotPassword = () => {
@@ -28,12 +35,16 @@ const ForgotPassword = () => {
           <Card className="max-w-md w-full p-8">
             <div className="text-center">
               <div className="flex items-center justify-center space-x-3 mb-6">
-                <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-3 shadow-lg">
-                  <GraduationCap className="h-8 w-8" />
+                <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                  <img
+                    src="/logo-2.png"
+                    alt="IIT JU Alumni Logo"
+                    className="h-8 w-8 object-contain"
+                  />
                 </div>
                 <div>
                   <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                    IIT JU Alumni
+                    IIT Alumni Association
                   </h1>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     Jahangirnagar University
@@ -49,7 +60,10 @@ const ForgotPassword = () => {
                 Check Your Email
               </h2>
               <p className="mt-4 text-gray-600 dark:text-gray-300">
-                We've sent a password reset link to <strong className="text-gray-900 dark:text-white">{email}</strong>
+                We've sent a password reset link to{" "}
+                <strong className="text-gray-900 dark:text-white">
+                  {email}
+                </strong>
               </p>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                 Didn't receive the email? Check your spam folder or try again.
@@ -91,10 +105,11 @@ const ForgotPassword = () => {
                   Secure Password Reset
                 </h3>
                 <p className="text-lg opacity-90 leading-relaxed">
-                  Your account security is our priority. We'll help you get back to your alumni network safely.
+                  Your account security is our priority. We'll help you get back
+                  to your alumni network safely.
                 </p>
               </div>
-              
+
               <div className="space-y-6">
                 <div className="flex items-center space-x-4">
                   <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -102,27 +117,33 @@ const ForgotPassword = () => {
                   </div>
                   <div className="text-left">
                     <h4 className="font-semibold">Enter your email</h4>
-                    <p className="text-white/80 text-sm">Provide the email associated with your account</p>
+                    <p className="text-white/80 text-sm">
+                      Provide the email associated with your account
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
                   <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold">2</span>
                   </div>
                   <div className="text-left">
                     <h4 className="font-semibold">Check your inbox</h4>
-                    <p className="text-white/80 text-sm">We'll send you a secure reset link</p>
+                    <p className="text-white/80 text-sm">
+                      We'll send you a secure reset link
+                    </p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-4">
                   <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold">3</span>
                   </div>
                   <div className="text-left">
                     <h4 className="font-semibold">Reset your password</h4>
-                    <p className="text-white/80 text-sm">Create a new secure password</p>
+                    <p className="text-white/80 text-sm">
+                      Create a new secure password
+                    </p>
                   </div>
                 </div>
               </div>
@@ -139,12 +160,16 @@ const ForgotPassword = () => {
         <Card className="max-w-md w-full p-8">
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-3 shadow-lg">
-                <GraduationCap className="h-8 w-8" />
+              <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                <img
+                  src="/logo-2.png"
+                  alt="IIT JU Alumni Logo"
+                  className="h-10 w-10 object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  IIT JU Alumni
+                  IIT Alumni Association
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Jahangirnagar University
@@ -155,7 +180,8 @@ const ForgotPassword = () => {
               Forgot Password?
             </h2>
             <p className="mt-2 text-gray-600 dark:text-gray-300">
-              Enter your email address and we'll send you a link to reset your password.
+              Enter your email address and we'll send you a link to reset your
+              password.
             </p>
           </div>
 
@@ -214,10 +240,11 @@ const ForgotPassword = () => {
                 Secure Account Recovery
               </h3>
               <p className="text-lg opacity-90 leading-relaxed">
-                Don't worry! We'll help you regain access to your alumni account with our secure password reset process.
+                Don't worry! We'll help you regain access to your alumni account
+                with our secure password reset process.
               </p>
             </div>
-            
+
             <div className="space-y-6">
               <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
@@ -225,27 +252,33 @@ const ForgotPassword = () => {
                 </div>
                 <div className="text-left">
                   <h4 className="font-semibold">Enter your email</h4>
-                  <p className="text-white/80 text-sm">Provide the email associated with your account</p>
+                  <p className="text-white/80 text-sm">
+                    Provide the email associated with your account
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold">2</span>
                 </div>
                 <div className="text-left">
                   <h4 className="font-semibold">Check your inbox</h4>
-                  <p className="text-white/80 text-sm">We'll send you a secure reset link</p>
+                  <p className="text-white/80 text-sm">
+                    We'll send you a secure reset link
+                  </p>
                 </div>
               </div>
-              
+
               <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
                   <span className="text-white font-semibold">3</span>
                 </div>
                 <div className="text-left">
                   <h4 className="font-semibold">Reset your password</h4>
-                  <p className="text-white/80 text-sm">Create a new secure password</p>
+                  <p className="text-white/80 text-sm">
+                    Create a new secure password
+                  </p>
                 </div>
               </div>
             </div>

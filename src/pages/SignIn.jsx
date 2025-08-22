@@ -12,7 +12,7 @@ import {
   Shield,
   Sparkles,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { Button, Input, Card } from "../components/ui";
 
 const SignIn = () => {
@@ -24,7 +24,7 @@ const SignIn = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
-  const { signIn } = useAuth();
+  const { signIn } = useUnifiedAuth();
 
   const handleChange = (e) => {
     setFormData({
@@ -63,18 +63,18 @@ const SignIn = () => {
     {
       icon: User,
       title: "Connect with Alumni",
-      description: "Build meaningful connections with fellow graduates"
+      description: "Build meaningful connections with fellow graduates",
     },
     {
       icon: Shield,
       title: "Secure & Private",
-      description: "Your data is protected with enterprise-grade security"
+      description: "Your data is protected with enterprise-grade security",
     },
     {
       icon: Sparkles,
       title: "Stay Updated",
-      description: "Get the latest news and events from your alma mater"
-    }
+      description: "Get the latest news and events from your alma mater",
+    },
   ];
 
   return (
@@ -85,12 +85,16 @@ const SignIn = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-3 shadow-lg">
-                <GraduationCap className="h-8 w-8" />
+              <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                <img
+                  src="/logo-2.png"
+                  alt="IIT JU Alumni Logo"
+                  className="h-10 w-10 object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  IIT JU Alumni
+                  IIT Alumni Association
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Jahangirnagar University
@@ -215,8 +219,12 @@ const SignIn = () => {
                 onClick={() => handleSocialSignIn("facebook")}
                 className="border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
-                <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                <svg
+                  className="h-5 w-5 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                 </svg>
                 Continue with Facebook
               </Button>
@@ -248,7 +256,8 @@ const SignIn = () => {
                 Connect with Your Alumni Network
               </h2>
               <p className="text-xl text-primary-100 leading-relaxed">
-                Stay connected with fellow graduates, discover opportunities, and grow your professional network.
+                Stay connected with fellow graduates, discover opportunities,
+                and grow your professional network.
               </p>
             </div>
 
@@ -262,9 +271,7 @@ const SignIn = () => {
                     <h3 className="text-lg font-semibold mb-1">
                       {feature.title}
                     </h3>
-                    <p className="text-primary-100">
-                      {feature.description}
-                    </p>
+                    <p className="text-primary-100">{feature.description}</p>
                   </div>
                 </div>
               ))}

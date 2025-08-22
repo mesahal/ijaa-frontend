@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { adminApi } from "../utils/adminApi";
 import {
   Shield,
@@ -17,7 +17,7 @@ import { toast } from "react-toastify";
 import { Button, Input, Card, Badge, Avatar } from "../components/ui";
 
 const AdminManagement = () => {
-  const { admin: currentAdmin } = useAdminAuth();
+  const { admin: currentAdmin } = useUnifiedAuth();
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);

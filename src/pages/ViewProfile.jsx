@@ -19,11 +19,11 @@ import {
   Calendar,
   Tag,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 
 const ViewProfile = () => {
   const { userId } = useParams();
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -57,7 +57,17 @@ const ViewProfile = () => {
 
       // Handle both array and object response
       const experiencesData = response.data.data || [];
-      setExperiences(Array.isArray(experiencesData) ? experiencesData : []);
+      console.log("Fetched Experiences:", experiencesData);
+      
+      // Ensure we have an array of experience objects
+      if (Array.isArray(experiencesData)) {
+        setExperiences(experiencesData);
+      } else if (experiencesData && typeof experiencesData === 'object') {
+        // If it's a single object, wrap it in an array
+        setExperiences([experiencesData]);
+      } else {
+        setExperiences([]);
+      }
     } catch (err) {
       console.error("Failed to fetch experiences", err);
       setExperiences([]);
@@ -68,14 +78,35 @@ const ViewProfile = () => {
     try {
       const response = await apiClient.get(`/interests/${userId}`);
 
-      // Handle both array and object response, and extract interest strings
+      // Handle both array and object response
       const interestsData = response.data.data || [];
-      const processedInterests = Array.isArray(interestsData)
-        ? interestsData.map((item) =>
-            typeof item === "string" ? item : item.interest
-          )
-        : [];
-      setInterests(processedInterests);
+      console.log("Fetched Interests:", interestsData);
+      
+      // Ensure we have an array of interest objects
+      if (Array.isArray(interestsData)) {
+        // Map to ensure each item has the correct structure
+        const processedInterests = interestsData.map((item) => {
+          if (typeof item === "string") {
+            return { id: Math.random(), interest: item };
+          } else if (item && typeof item === "object") {
+            return {
+              id: item.id || Math.random(),
+              interest: item.interest || item.name || "Unknown Interest"
+            };
+          }
+          return { id: Math.random(), interest: "Unknown Interest" };
+        });
+        setInterests(processedInterests);
+      } else if (interestsData && typeof interestsData === 'object') {
+        // If it's a single object, wrap it in an array
+        const processedInterest = {
+          id: interestsData.id || Math.random(),
+          interest: interestsData.interest || interestsData.name || "Unknown Interest"
+        };
+        setInterests([processedInterest]);
+      } else {
+        setInterests([]);
+      }
     } catch (err) {
       console.error("Failed to fetch interests", err);
       setInterests([]);
@@ -349,11 +380,11 @@ const ViewProfile = () => {
               <div className="flex flex-wrap gap-2">
                 {interests.map((interest, index) => (
                   <div
-                    key={index}
+                    key={interest.id || index}
                     className="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-3 py-1 rounded-full text-sm flex items-center gap-1"
                   >
                     <Tag className="h-3 w-3" />
-                    <span>{interest}</span>
+                    <span>{interest.interest}</span>
                   </div>
                 ))}
               </div>

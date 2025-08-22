@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { permissions, roleErrorMessages } from "../utils/roleConstants";
 import {
   Users,
@@ -15,7 +15,7 @@ import {
 import { toast } from "react-toastify";
 
 const AdminUsers = () => {
-  const { admin } = useAdminAuth();
+  const { admin } = useUnifiedAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");

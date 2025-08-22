@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
-import { useAdminAuth } from "../context/AdminAuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import {
   Megaphone,
   Plus,
@@ -13,7 +13,7 @@ import {
 import { toast } from "react-toastify";
 
 const AdminAnnouncements = () => {
-  const { admin } = useAdminAuth();
+  const { admin } = useUnifiedAuth();
   const [announcements, setAnnouncements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);

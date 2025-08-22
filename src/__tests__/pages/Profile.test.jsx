@@ -1,297 +1,623 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
-import { useAuth } from '../../context/AuthContext';
 import Profile from '../../pages/Profile';
-import { MemoryRouter } from 'react-router-dom';
 
-// Mock the AuthContext
-jest.mock('../../context/AuthContext');
+// Mock the UnifiedAuthContext
+jest.mock('../../context/UnifiedAuthContext', () => ({
+  useUnifiedAuth: () => ({
+    user: {
+      userId: 'USER_123456',
+      username: 'testuser',
+      name: 'Test User',
+      email: 'test@example.com',
+      profession: 'Software Engineer',
+      location: 'New York, NY',
+      bio: 'A passionate developer',
+      phone: '+1-555-123-4567',
+      linkedIn: 'https://linkedin.com/in/testuser',
+      website: 'https://testuser.dev',
+      batch: '2020',
+      facebook: 'https://facebook.com/testuser',
+      connections: 150,
+      showPhone: true,
+      showLinkedIn: true,
+      showWebsite: true,
+      showEmail: true,
+      showFacebook: true
+    },
+    isAuthenticated: true,
+    loading: false
+  })
+}));
 
-const mockUseAuth = useAuth;
+// Mock apiClient
+jest.mock('../../utils/apiClient', () => ({
+  get: jest.fn(),
+  put: jest.fn(),
+  post: jest.fn(),
+  delete: jest.fn(),
+}));
+
+import apiClient from '../../utils/apiClient';
 
 describe('Profile', () => {
   const mockUser = {
+    userId: 'USER_123456',
     username: 'testuser',
     name: 'Test User',
     email: 'test@example.com',
     profession: 'Software Engineer',
-    location: 'Dhaka, Bangladesh',
-    bio: 'Test bio',
-    phone: '+880-1234567890',
+    location: 'New York, NY',
+    bio: 'A passionate developer',
+    phone: '+1-555-123-4567',
     linkedIn: 'https://linkedin.com/in/testuser',
-    website: 'https://testuser.com',
-    batch: '2018',
+    website: 'https://testuser.dev',
+    batch: '2020',
     facebook: 'https://facebook.com/testuser',
-    connections: 25
+    connections: 150,
+    showPhone: true,
+    showLinkedIn: true,
+    showWebsite: true,
+    showEmail: true,
+    showFacebook: true
   };
 
+  const mockExperiences = [
+    {
+      id: 1,
+      title: 'Senior Developer',
+      company: 'Tech Corp',
+      period: '2022-2024',
+      description: 'Led development team'
+    }
+  ];
+
+  const mockInterests = [
+    {
+      id: 1,
+      interest: 'Machine Learning'
+    }
+  ];
+
   beforeEach(() => {
+    // Clear all mocks
     jest.clearAllMocks();
-    mockUseAuth.mockReturnValue({
-      user: mockUser,
-      loading: false
+
+    // Mock API responses
+    apiClient.get.mockImplementation((url) => {
+      if (url.includes('/profile/')) {
+        return Promise.resolve({
+          data: {
+            data: mockUser
+          }
+        });
+      } else if (url.includes('/experiences/')) {
+        return Promise.resolve({
+          data: {
+            data: mockExperiences
+          }
+        });
+      } else if (url.includes('/interests/')) {
+        return Promise.resolve({
+          data: {
+            data: mockInterests
+          }
+        });
+      }
+      return Promise.resolve({ data: { data: [] } });
+    });
+
+    apiClient.put.mockResolvedValue({
+      data: {
+        data: mockUser
+      }
+    });
+
+    apiClient.post.mockResolvedValue({
+      data: {
+        data: { id: 2, interest: 'New Interest' }
+      }
+    });
+
+    apiClient.delete.mockResolvedValue({
+      data: {
+        message: 'Deleted successfully'
+      }
     });
   });
 
-  test('renders profile information', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText(mockUser.name)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.profession)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.location)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.bio)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.phone)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.batch)).toBeInTheDocument();
+  afterEach(() => {
+    jest.clearAllMocks();
   });
 
-  test('renders edit profile button', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
+  test('renders profile with user information', async () => {
+    render(<Profile />);
 
-    expect(screen.getByText(/edit profile/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Test User')).toBeInTheDocument();
+      expect(screen.getByText('Software Engineer')).toBeInTheDocument();
+      expect(screen.getByText('New York, NY')).toBeInTheDocument();
+      expect(screen.getByText('A passionate developer')).toBeInTheDocument();
+    });
   });
 
-  test('renders profile sections', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
+  test('renders user avatar', async () => {
+    render(<Profile />);
 
-    expect(screen.getByText(/personal information/i)).toBeInTheDocument();
-    expect(screen.getByText(/contact information/i)).toBeInTheDocument();
-    expect(screen.getByText(/social links/i)).toBeInTheDocument();
-    expect(screen.getByText(/connections/i)).toBeInTheDocument();
+    await waitFor(() => {
+      const avatar = screen.getByAltText('Test User');
+      expect(avatar).toBeInTheDocument();
+    });
   });
 
-  test('renders user avatar', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
+  test('displays batch information in hero section', async () => {
+    render(<Profile />);
 
-    const avatar = screen.getByAltText(/user avatar/i);
-    expect(avatar).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('Batch 2020')).toBeInTheDocument();
+    });
   });
 
-  test('renders social links', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
+  test('displays connections count from API', async () => {
+    render(<Profile />);
 
-    expect(screen.getByText(/linkedin/i)).toBeInTheDocument();
-    expect(screen.getByText(/website/i)).toBeInTheDocument();
-    expect(screen.getByText(/facebook/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('150')).toBeInTheDocument();
+    });
   });
 
-  test('renders connections count', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
+  test('shows edit button when not editing', async () => {
+    render(<Profile />);
 
-    expect(screen.getByText(mockUser.connections.toString())).toBeInTheDocument();
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      expect(editButton).toBeInTheDocument();
+    });
   });
 
-  test('handles edit profile button click', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
+  test('enters edit mode when edit button is clicked', async () => {
+    render(<Profile />);
 
-    const editButton = screen.getByText(/edit profile/i);
-    fireEvent.click(editButton);
-
-    // Should navigate to edit profile page
-    expect(editButton).toBeInTheDocument();
-  });
-
-  test('renders with loading state', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: true
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
     });
 
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Test User')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('Software Engineer')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('New York, NY')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('2020')).toBeInTheDocument();
+    });
   });
 
-  test('renders with no user data', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: false
+  test('shows all contact fields in edit mode', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
     });
 
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText(/profile not found/i)).toBeInTheDocument();
+    await waitFor(() => {
+      // Check for all contact fields
+      expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('+1-555-123-4567')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('https://linkedin.com/in/testuser')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('https://testuser.dev')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('https://facebook.com/testuser')).toBeInTheDocument();
+    });
   });
 
-  test('handles missing optional fields gracefully', () => {
-    const userWithMissingFields = {
-      username: 'testuser',
+  test('shows section headers in edit mode', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Basic Information')).toBeInTheDocument();
+      expect(screen.getByText('Bio')).toBeInTheDocument();
+      expect(screen.getByText('Contact Information')).toBeInTheDocument();
+    });
+  });
+
+  test('shows visibility toggle buttons for contact fields', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      // Check for visibility toggle buttons
+      expect(screen.getAllByText('Visible')).toHaveLength(5); // All fields are visible by default
+      expect(screen.getByText('Email Address')).toBeInTheDocument();
+      expect(screen.getByText('Phone Number')).toBeInTheDocument();
+      expect(screen.getByText('LinkedIn Profile')).toBeInTheDocument();
+      expect(screen.getByText('Website')).toBeInTheDocument();
+      expect(screen.getByText('Facebook Profile')).toBeInTheDocument();
+    });
+  });
+
+  test('toggles visibility when visibility buttons are clicked', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      const emailVisibilityButton = screen.getByText('Email Address').closest('div').querySelector('button');
+      fireEvent.click(emailVisibilityButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Hidden')).toBeInTheDocument();
+    });
+  });
+
+  test('shows save and cancel buttons when editing', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Save Changes')).toBeInTheDocument();
+      expect(screen.getByText('Cancel')).toBeInTheDocument();
+    });
+  });
+
+  test('displays contact information based on visibility settings', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.getByText('test@example.com')).toBeInTheDocument();
+      expect(screen.getByText('+1-555-123-4567')).toBeInTheDocument();
+      expect(screen.getByText('LinkedIn Profile')).toBeInTheDocument();
+      expect(screen.getByText('Website')).toBeInTheDocument();
+      expect(screen.getByText('Facebook Profile')).toBeInTheDocument();
+    });
+  });
+
+  test('displays experiences', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Senior Developer')).toBeInTheDocument();
+      expect(screen.getByText('Tech Corp')).toBeInTheDocument();
+      expect(screen.getByText('2022-2024')).toBeInTheDocument();
+      expect(screen.getByText('Led development team')).toBeInTheDocument();
+    });
+  });
+
+  test('displays interests', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Machine Learning')).toBeInTheDocument();
+    });
+  });
+
+  test('shows add experience form when add button is clicked', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const addButton = screen.getAllByText('Add Experience')[0];
+      fireEvent.click(addButton);
+    });
+
+    await waitFor(() => {
+      // Check for the form title (h4 element) specifically
+      const formTitle = screen.getByRole('heading', { name: 'Add Experience' });
+      expect(formTitle).toBeInTheDocument();
+    });
+  });
+
+  test('shows add interest form when add button is clicked', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const addButton = screen.getAllByText('Add Interest')[0];
+      fireEvent.click(addButton);
+    });
+
+    await waitFor(() => {
+      // Check for the form title (h4 element) specifically
+      const formTitle = screen.getByRole('heading', { name: 'Add Interest' });
+      expect(formTitle).toBeInTheDocument();
+    });
+  });
+
+  test('handles experience deletion', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      // Find the delete button by test ID
+      const deleteButton = screen.getByTestId('delete-experience-1');
+      fireEvent.click(deleteButton);
+    });
+
+    await waitFor(() => {
+      expect(apiClient.delete).toHaveBeenCalledWith('/experiences/1');
+    });
+  });
+
+  test('validates required fields when saving', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      const nameInput = screen.getByDisplayValue('Test User');
+      fireEvent.change(nameInput, { target: { value: '' } });
+      
+      const saveButton = screen.getByText('Save Changes');
+      fireEvent.click(saveButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('This field is required')).toBeInTheDocument();
+    });
+  });
+
+  test('cancels edit mode when cancel button is clicked', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      const cancelButton = screen.getByText('Cancel');
+      fireEvent.click(cancelButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Edit')).toBeInTheDocument();
+      expect(screen.queryByText('Save Changes')).not.toBeInTheDocument();
+    });
+  });
+
+  test('shows loading spinner initially', () => {
+    render(<Profile />);
+    
+    // Check for the loading spinner by its class
+    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+  });
+
+  test('handles API errors gracefully', async () => {
+    apiClient.get.mockRejectedValue(new Error('API Error'));
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      // Should not crash and should show some content
+      expect(screen.getByText('Your Name')).toBeInTheDocument();
+    });
+  });
+
+  test('updates profile with visibility settings when saving', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      const saveButton = screen.getByText('Save Changes');
+      fireEvent.click(saveButton);
+    });
+
+    await waitFor(() => {
+      expect(apiClient.put).toHaveBeenCalledWith('/profile', expect.objectContaining({
+        userId: 'USER_123456',
+        showPhone: true,
+        showLinkedIn: true,
+        showWebsite: true,
+        showEmail: true,
+        showFacebook: true
+      }));
+    });
+  });
+
+  test('displays bio field with proper styling in edit mode', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      const bioTextarea = screen.getByDisplayValue('A passionate developer');
+      expect(bioTextarea).toBeInTheDocument();
+      expect(bioTextarea.tagName).toBe('TEXTAREA');
+      expect(bioTextarea).toHaveAttribute('rows', '4');
+    });
+  });
+
+  test('displays experience description field with proper styling', async () => {
+    render(<Profile />);
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit');
+      fireEvent.click(editButton);
+    });
+    await waitFor(() => {
+      const addExperienceButton = screen.getByText('Add Experience');
+      fireEvent.click(addExperienceButton);
+    });
+    await waitFor(() => {
+      const descriptionField = screen.getByPlaceholderText('Describe your role and achievements...');
+      expect(descriptionField).toHaveClass('w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200');
+    });
+  });
+
+  test('handles single experience object response correctly', async () => {
+    const singleExperience = {
+      id: 1,
+      title: 'Single Experience',
+      company: 'Single Company',
+      period: '2023-2024',
+      description: 'Single description'
+    };
+
+    apiClient.get.mockImplementation((url) => {
+      if (url.includes('/experiences/')) {
+        return Promise.resolve({
+          data: {
+            data: singleExperience
+          }
+        });
+      }
+      return Promise.resolve({
+        data: {
+          data: mockUser
+        }
+      });
+    });
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Single Experience')).toBeInTheDocument();
+      expect(screen.getByText('Single Company')).toBeInTheDocument();
+    });
+  });
+
+  test('handles single interest object response correctly', async () => {
+    const singleInterest = {
+      id: 1,
+      interest: 'Single Interest'
+    };
+
+    apiClient.get.mockImplementation((url) => {
+      if (url.includes('/interests/')) {
+        return Promise.resolve({
+          data: {
+            data: singleInterest
+          }
+        });
+      }
+      return Promise.resolve({
+        data: {
+          data: mockUser
+        }
+      });
+    });
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Single Interest')).toBeInTheDocument();
+    });
+  });
+
+  test('handles empty experiences array gracefully', async () => {
+    apiClient.get.mockImplementation((url) => {
+      if (url.includes('/experiences/')) {
+        return Promise.resolve({
+          data: {
+            data: []
+          }
+        });
+      }
+      return Promise.resolve({
+        data: {
+          data: mockUser
+        }
+      });
+    });
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.getByText('No experience added yet. Click "Add Experience" to get started.')).toBeInTheDocument();
+    });
+  });
+
+  test('handles empty interests array gracefully', async () => {
+    apiClient.get.mockImplementation((url) => {
+      if (url.includes('/interests/')) {
+        return Promise.resolve({
+          data: {
+            data: []
+          }
+        });
+      }
+      return Promise.resolve({
+        data: {
+          data: mockUser
+        }
+      });
+    });
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.getByText('No interests added yet. Click "Add Interest" to get started.')).toBeInTheDocument();
+    });
+  });
+
+  test('sets default profile data on API error', async () => {
+    apiClient.get.mockRejectedValue(new Error('API Error'));
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Your Name')).toBeInTheDocument();
+      expect(screen.getByText('Your Profession')).toBeInTheDocument();
+    });
+  });
+
+  test('renders with consistent cover image width', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const container = screen.getByText('Test User').closest('.max-w-4xl');
+      expect(container).toBeInTheDocument();
+    });
+  });
+
+  test('handles profile data with missing fields gracefully', async () => {
+    const incompleteProfile = {
+      userId: 'USER_123456',
       name: 'Test User',
-      email: 'test@example.com'
       // Missing other fields
     };
 
-    mockUseAuth.mockReturnValue({
-      user: userWithMissingFields,
-      loading: false
+    apiClient.get.mockImplementation((url) => {
+      if (url.includes('/profile/')) {
+        return Promise.resolve({
+          data: {
+            data: incompleteProfile
+          }
+        });
+      }
+      return Promise.resolve({
+        data: {
+          data: []
+        }
+      });
     });
 
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
+    render(<Profile />);
 
-    expect(screen.getByText(userWithMissingFields.name)).toBeInTheDocument();
-    expect(screen.getByText(userWithMissingFields.email)).toBeInTheDocument();
-  });
-
-  test('renders privacy settings indicators', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    // Check for privacy indicators
-    expect(screen.getByText(/visibility settings/i)).toBeInTheDocument();
-  });
-
-  test('renders with proper styling', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    const profile = container.firstChild;
-    expect(profile).toHaveClass('min-h-screen', 'bg-gray-50');
-  });
-
-  test('renders responsive design elements', () => {
-    const { container } = render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    // Check for responsive classes
-    const grid = container.querySelector('.grid');
-    expect(grid).toHaveClass('grid-cols-1', 'lg:grid-cols-3');
-  });
-
-  test('renders with proper accessibility attributes', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    // Check for proper heading structure
-    const heading = screen.getByRole('heading', { level: 1 });
-    expect(heading).toBeInTheDocument();
-  });
-
-  test('handles long text content', () => {
-    const userWithLongBio = {
-      ...mockUser,
-      bio: 'This is a very long bio that should be handled properly by the component. It contains multiple sentences and should be displayed correctly without breaking the layout.'
-    };
-
-    mockUseAuth.mockReturnValue({
-      user: userWithLongBio,
-      loading: false
+    await waitFor(() => {
+      expect(screen.getByText('Test User')).toBeInTheDocument();
+      expect(screen.getByText('Your Profession')).toBeInTheDocument();
     });
-
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText(userWithLongBio.bio)).toBeInTheDocument();
   });
-
-  test('renders contact information section', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText(/email/i)).toBeInTheDocument();
-    expect(screen.getByText(/phone/i)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.email)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.phone)).toBeInTheDocument();
-  });
-
-  test('renders batch information', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText(/batch/i)).toBeInTheDocument();
-    expect(screen.getByText(mockUser.batch)).toBeInTheDocument();
-  });
-
-  test('handles special characters in user data', () => {
-    const userWithSpecialChars = {
-      ...mockUser,
-      name: 'Test User & Co.',
-      bio: 'Bio with special chars: @#$%^&*()'
-    };
-
-    mockUseAuth.mockReturnValue({
-      user: userWithSpecialChars,
-      loading: false
-    });
-
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    expect(screen.getByText(userWithSpecialChars.name)).toBeInTheDocument();
-    expect(screen.getByText(userWithSpecialChars.bio)).toBeInTheDocument();
-  });
-
-  test('renders with proper semantic structure', () => {
-    render(
-      <MemoryRouter>
-        <Profile />
-      </MemoryRouter>
-    );
-
-    // Check for proper section structure
-    const sections = screen.getAllByRole('region');
-    expect(sections.length).toBeGreaterThan(0);
-  });
-}); 
+});

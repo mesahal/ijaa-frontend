@@ -17,7 +17,7 @@ import {
   Sparkles,
   Users,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { Button, Input, Card } from "../components/ui";
 
 const SignUp = () => {
@@ -31,7 +31,7 @@ const SignUp = () => {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp } = useUnifiedAuth();
 
   const features = [
     {
@@ -126,12 +126,16 @@ const SignUp = () => {
           {/* Header */}
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-3 mb-6">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-3 shadow-lg">
-                <GraduationCap className="h-8 w-8" />
+              <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
+                <img
+                  src="/logo-2.png"
+                  alt="IIT JU Alumni Logo"
+                  className="h-10 w-10 object-contain"
+                />
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  IIT JU Alumni
+                  IIT Alumni Association
                 </h1>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
                   Jahangirnagar University
@@ -286,10 +290,11 @@ const SignUp = () => {
                 Welcome to Your Alumni Network
               </h3>
               <p className="text-xl opacity-90 leading-relaxed">
-                Join thousands of graduates and unlock exclusive opportunities for networking, mentorship, and career growth.
+                Join thousands of graduates and unlock exclusive opportunities
+                for networking, mentorship, and career growth.
               </p>
             </div>
-            
+
             <div className="space-y-8">
               {features.map((feature, index) => (
                 <div key={index} className="flex items-start space-x-4">
@@ -297,8 +302,12 @@ const SignUp = () => {
                     <feature.icon className="h-6 w-6 text-white" />
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold mb-2">{feature.title}</h4>
-                    <p className="text-white/80 leading-relaxed">{feature.description}</p>
+                    <h4 className="text-lg font-semibold mb-2">
+                      {feature.title}
+                    </h4>
+                    <p className="text-white/80 leading-relaxed">
+                      {feature.description}
+                    </p>
                   </div>
                 </div>
               ))}
