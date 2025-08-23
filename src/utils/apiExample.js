@@ -7,7 +7,7 @@ export const apiExamples = {
   // Get user profile - automatically handles auth headers and token expiry
   getProfile: async (userId) => {
     try {
-      const response = await apiClient.get(`/profile/${userId}`);
+      const response = await apiClient.get(`/profile`);
       return response.data;
     } catch (error) {
       // If token is expired, the interceptor will automatically:

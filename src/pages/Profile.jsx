@@ -28,6 +28,7 @@ import {
   Star,
   CheckCircle,
   ExternalLink,
+  Users,
 } from "lucide-react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { Card, Button, Avatar, Badge, Input } from "../components/ui";
@@ -67,25 +68,44 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
+      console.log("Fetching profile for user:", user?.userId);
+      
+      if (!user?.userId) {
+        console.error("No user ID available");
+        setLoading(false);
+        return;
+      }
+      
       const response = await apiClient.get(`/profile/${user?.userId}`);
+      console.log("Profile API Response:", response);
+
+      if (!response.data || !response.data.data) {
+        console.error("Invalid profile response structure:", response);
+        throw new Error("Invalid profile response structure");
+      }
 
       const profile = response.data.data;
       console.log("Fetched Profile:", profile);
       
-      // Ensure all required fields are present
+      if (!profile) {
+        console.error("No profile data received");
+        throw new Error("No profile data received");
+      }
+      
+      // Ensure all required fields are present with proper fallbacks
       const profileWithDefaults = {
         userId: profile.userId || user?.userId,
-        name: profile.name || "",
-        profession: profile.profession || "",
-        location: profile.location || "",
-        bio: profile.bio || "",
-        phone: profile.phone || "",
-        linkedIn: profile.linkedIn || "",
-        website: profile.website || "",
-        batch: profile.batch || "",
-        facebook: profile.facebook || "",
-        email: profile.email || "",
-        connections: profile.connections || 0,
+        name: profile.name || user?.name || "",
+        profession: profile.profession || user?.profession || "",
+        location: profile.location || user?.location || "",
+        bio: profile.bio || user?.bio || "",
+        phone: profile.phone || user?.phone || "",
+        linkedIn: profile.linkedIn || user?.linkedIn || "",
+        website: profile.website || user?.website || "",
+        batch: profile.batch || user?.batch || "",
+        facebook: profile.facebook || user?.facebook || "",
+        email: profile.email || user?.email || "",
+        connections: profile.connections || user?.connections || 0,
         showPhone: profile.showPhone !== undefined ? profile.showPhone : true,
         showLinkedIn: profile.showLinkedIn !== undefined ? profile.showLinkedIn : true,
         showWebsite: profile.showWebsite !== undefined ? profile.showWebsite : true,
@@ -94,6 +114,7 @@ const Profile = () => {
         ...profile // Spread any additional fields
       };
       
+      console.log("Profile with defaults:", profileWithDefaults);
       setProfileData(profileWithDefaults);
       setVisibility({
         showPhone: profileWithDefaults.showPhone,
@@ -104,20 +125,29 @@ const Profile = () => {
       });
     } catch (err) {
       console.error("Failed to fetch profile", err);
-      // Set default profile data on error
-      setProfileData({
+      // Set default profile data on error, using user context data as fallback
+      const defaultProfile = {
         userId: user?.userId,
-        name: "",
-        profession: "",
-        location: "",
-        bio: "",
-        phone: "",
-        linkedIn: "",
-        website: "",
-        batch: "",
-        facebook: "",
-        email: "",
-        connections: 0,
+        name: user?.name || "",
+        profession: user?.profession || "",
+        location: user?.location || "",
+        bio: user?.bio || "",
+        phone: user?.phone || "",
+        linkedIn: user?.linkedIn || "",
+        website: user?.website || "",
+        batch: user?.batch || "",
+        facebook: user?.facebook || "",
+        email: user?.email || "",
+        connections: user?.connections || 0,
+        showPhone: true,
+        showLinkedIn: true,
+        showWebsite: true,
+        showEmail: true,
+        showFacebook: true,
+      };
+      console.log("Setting default profile data:", defaultProfile);
+      setProfileData(defaultProfile);
+      setVisibility({
         showPhone: true,
         showLinkedIn: true,
         showWebsite: true,
@@ -132,10 +162,18 @@ const Profile = () => {
   const fetchExperiences = async () => {
     try {
       const response = await apiClient.get(`/experiences/${user?.userId}`);
-      const experiencesData = response.data.data || [];
+      console.log("Experiences API Response:", response);
+      
+      if (!response.data || !response.data.data) {
+        console.error("Invalid experiences response structure:", response);
+        setExperiences([]);
+        return;
+      }
+
+      const experiencesData = response.data.data;
       console.log("Fetched Experiences:", experiencesData);
       
-      // Ensure we have an array of experience objects
+      // Handle different response formats
       if (Array.isArray(experiencesData)) {
         setExperiences(experiencesData);
       } else if (experiencesData && typeof experiencesData === 'object') {
@@ -153,10 +191,18 @@ const Profile = () => {
   const fetchInterests = async () => {
     try {
       const response = await apiClient.get(`/interests/${user?.userId}`);
-      const interestsData = response.data.data || [];
+      console.log("Interests API Response:", response);
+      
+      if (!response.data || !response.data.data) {
+        console.error("Invalid interests response structure:", response);
+        setInterests([]);
+        return;
+      }
+
+      const interestsData = response.data.data;
       console.log("Fetched Interests:", interestsData);
       
-      // Ensure we have an array of interest objects
+      // Handle different response formats
       if (Array.isArray(interestsData)) {
         setInterests(interestsData);
       } else if (interestsData && typeof interestsData === 'object') {
@@ -313,6 +359,46 @@ const Profile = () => {
     await updateSection("profile", updatedProfileData);
   };
 
+  const renderContactField = (
+    label,
+    value,
+    Icon,
+    isLink = false,
+    isVisible = true
+  ) => {
+    // Don't show if value doesn't exist or visibility is false
+    if (!value || !isVisible) return null;
+
+    return (
+      <div className="flex items-start gap-3">
+        <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            {label}
+          </p>
+          {isLink ? (
+            <a
+              href={value}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate block"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {label === "Website"
+                ? "Visit Website"
+                : label === "Facebook"
+                ? "View Profile"
+                : "View Profile"}
+            </a>
+          ) : (
+            <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+              {value}
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (user?.userId) {
       fetchProfile();
@@ -323,594 +409,606 @@ const Profile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="bg-gray-300 h-48 rounded-t-2xl"></div>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-b-2xl">
+            <div className="h-6 bg-gray-300 rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/4"></div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      {/* Hero Section - Full width cover image */}
-      <div className="relative bg-gradient-to-r from-primary-600 to-primary-800 h-64">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative h-full flex items-end pb-8">
-          <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-            <div className="flex items-end space-x-6">
-              <div className="relative">
-                <Avatar 
-                  size="3xl" 
-                  src={profileData.profilePicture || "/dp.png"} 
-                  alt={profileData.name || "Profile"} 
-                  className="border-4 border-white dark:border-gray-800 shadow-xl"
-                />
-                {isEditing && (
-                  <Button
-                    size="sm"
-                    className="absolute bottom-0 right-0 rounded-full p-2"
-                    aria-label="Change photo"
-                  >
-                    <Camera className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-              <div className="mb-4">
-                <h1 className="text-3xl font-bold text-white mb-2">
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
+        {/* Cover Photo */}
+        <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
+          <img
+            src="/cover-image.jpg"
+            alt="Cover"
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        <div className="px-4 sm:px-8 pb-8 relative">
+          {/* Profile Picture */}
+          <div className="absolute -top-16 left-4 sm:left-8">
+            <div className="relative">
+              <img
+                src={profileData.profilePicture || "/dp.png"}
+                alt={profileData.name || "Profile"}
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
+                onError={(e) => {
+                  e.target.src = "/dp.png"; // Fallback image if avatar fails to load
+                }}
+              />
+              {isEditing && (
+                <Button
+                  size="sm"
+                  className="absolute bottom-0 right-0 rounded-full p-2"
+                  aria-label="Change photo"
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* Header Content */}
+          <div className="pt-12 sm:pt-20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="space-y-2 flex-1">
+                {/* Name */}
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                   {profileData.name || "Your Name"}
                 </h1>
-                <p className="text-xl text-white/90 mb-2">
+
+                {/* Profession */}
+                <p className="text-lg text-gray-600 dark:text-gray-300">
                   {profileData.profession || "Your Profession"}
                 </p>
-                <div className="flex items-center space-x-4 text-white/80">
+
+                {/* Location and Batch */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
                   {profileData.location && (
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
                       <span>{profileData.location}</span>
                     </div>
                   )}
+
                   {profileData.batch && (
-                    <div className="flex items-center space-x-1">
+                    <div className="flex items-center gap-1">
                       <GraduationCap className="h-4 w-4" />
                       <span>Batch {profileData.batch}</span>
                     </div>
                   )}
+
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span>{profileData.connections || 0} connections</span>
+                  </div>
                 </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex gap-2">
+                {!isEditing ? (
+                  <Button
+                    onClick={() => setIsEditing(true)}
+                    icon={<Edit3 className="h-4 w-4" />}
+                  >
+                    Edit Profile
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button onClick={handleSave} icon={<Save className="h-4 w-4" />}>
+                      Save Changes
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setIsEditing(false)}
+                      icon={<X className="h-4 w-4" />}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Profile Info */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* About Section */}
-            <Card>
-              <Card.Header>
-                <div className="flex items-center justify-between">
-                  <Card.Title>About</Card.Title>
-                  {!isEditing && (
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-8">
+          {/* About Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              About
+            </h2>
+            {isEditing ? (
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h4>
+                  <Input
+                    label="Full Name"
+                    name="name"
+                    value={profileData.name || ""}
+                    onChange={handleInputChange}
+                    error={errors.name}
+                    required
+                  />
+                  <Input
+                    label="Profession"
+                    name="profession"
+                    value={profileData.profession || ""}
+                    onChange={handleInputChange}
+                    error={errors.profession}
+                    required
+                  />
+                  <Input
+                    label="Location"
+                    name="location"
+                    value={profileData.location || ""}
+                    onChange={handleInputChange}
+                    error={errors.location}
+                    leftIcon={<MapPin className="h-4 w-4" />}
+                    required
+                  />
+                  <Input
+                    label="Batch"
+                    name="batch"
+                    value={profileData.batch || ""}
+                    onChange={handleInputChange}
+                    leftIcon={<GraduationCap className="h-4 w-4" />}
+                    placeholder="e.g., 2020"
+                  />
+                </div>
+
+                {/* Bio Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Bio</h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      About Me <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      name="bio"
+                      value={profileData.bio || ""}
+                      onChange={handleInputChange}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                      placeholder="Tell us about yourself..."
+                    />
+                    {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio}</p>}
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h4>
+                  
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email Address
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility('showEmail')}
+                        icon={visibility.showEmail ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showEmail ? 'Visible' : 'Hidden'}
+                      </Button>
+                    </div>
+                    <Input
+                      name="email"
+                      value={profileData.email || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Mail className="h-4 w-4" />}
+                      placeholder="your.email@example.com"
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Phone Number
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility('showPhone')}
+                        icon={visibility.showPhone ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showPhone ? 'Visible' : 'Hidden'}
+                      </Button>
+                    </div>
+                    <Input
+                      name="phone"
+                      value={profileData.phone || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Phone className="h-4 w-4" />}
+                      placeholder="+1-555-123-4567"
+                    />
+                  </div>
+
+                  {/* LinkedIn */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        LinkedIn Profile
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility('showLinkedIn')}
+                        icon={visibility.showLinkedIn ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showLinkedIn ? 'Visible' : 'Hidden'}
+                      </Button>
+                    </div>
+                    <Input
+                      name="linkedIn"
+                      value={profileData.linkedIn || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Linkedin className="h-4 w-4" />}
+                      placeholder="https://linkedin.com/in/yourprofile"
+                    />
+                  </div>
+
+                  {/* Website */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Website
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility('showWebsite')}
+                        icon={visibility.showWebsite ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showWebsite ? 'Visible' : 'Hidden'}
+                      </Button>
+                    </div>
+                    <Input
+                      name="website"
+                      value={profileData.website || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Globe className="h-4 w-4" />}
+                      placeholder="https://yourwebsite.com"
+                    />
+                  </div>
+
+                  {/* Facebook */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Facebook Profile
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility('showFacebook')}
+                        icon={visibility.showFacebook ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showFacebook ? 'Visible' : 'Hidden'}
+                      </Button>
+                    </div>
+                    <Input
+                      name="facebook"
+                      value={profileData.facebook || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Facebook className="h-4 w-4" />}
+                      placeholder="https://facebook.com/yourprofile"
+                    />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                {profileData.bio || "No bio available. Click edit to add your bio."}
+              </p>
+            )}
+          </div>
+
+          {/* Experience Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Experience
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddExperience(true)}
+                icon={<Plus className="h-4 w-4" />}
+              >
+                Add Experience
+              </Button>
+            </div>
+
+            {showAddExperience && (
+              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Add Experience
+                </h4>
+                <div className="space-y-4">
+                  <Input
+                    label="Job Title"
+                    name="title"
+                    value={newExperience.title}
+                    onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Company"
+                    name="company"
+                    value={newExperience.company}
+                    onChange={(e) => setNewExperience({ ...newExperience, company: e.target.value })}
+                    required
+                  />
+                  <Input
+                    label="Period"
+                    name="period"
+                    value={newExperience.period}
+                    onChange={(e) => setNewExperience({ ...newExperience, period: e.target.value })}
+                    placeholder="e.g., 2020 - Present"
+                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={newExperience.description}
+                      onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                      placeholder="Describe your role and achievements..."
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <Button onClick={addExperience} icon={<Plus className="h-4 w-4" />}>
+                      Add Experience
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowAddExperience(false)}
+                      icon={<X className="h-4 w-4" />}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {experiences.length > 0 ? (
+              <div className="space-y-4">
+                {experiences.map((exp) => (
+                  <div key={exp.id} className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                    <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-1" />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                        {exp.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        {exp.company}
+                      </p>
+                      {exp.period && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {exp.period}
+                        </p>
+                      )}
+                      {exp.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                          {exp.description}
+                        </p>
+                      )}
+                    </div>
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setIsEditing(true)}
-                      icon={<Edit3 className="h-4 w-4" />}
-                    >
-                      Edit
-                    </Button>
-                  )}
-                </div>
-              </Card.Header>
-              <Card.Content>
-                {isEditing ? (
-                  <div className="space-y-6">
-                    {/* Basic Information */}
-                    <div className="space-y-4">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h4>
-                      <Input
-                        label="Full Name"
-                        name="name"
-                        value={profileData.name || ""}
-                        onChange={handleInputChange}
-                        error={errors.name}
-                        required
-                      />
-                      <Input
-                        label="Profession"
-                        name="profession"
-                        value={profileData.profession || ""}
-                        onChange={handleInputChange}
-                        error={errors.profession}
-                        required
-                      />
-                      <Input
-                        label="Location"
-                        name="location"
-                        value={profileData.location || ""}
-                        onChange={handleInputChange}
-                        error={errors.location}
-                        leftIcon={<MapPin className="h-4 w-4" />}
-                        required
-                      />
-                      <Input
-                        label="Batch"
-                        name="batch"
-                        value={profileData.batch || ""}
-                        onChange={handleInputChange}
-                        leftIcon={<GraduationCap className="h-4 w-4" />}
-                        placeholder="e.g., 2020"
-                      />
-                    </div>
-
-                    {/* Bio Section */}
-                    <div className="space-y-4">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Bio</h4>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          About Me <span className="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          name="bio"
-                          value={profileData.bio || ""}
-                          onChange={handleInputChange}
-                          rows={4}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
-                          placeholder="Tell us about yourself..."
-                        />
-                        {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio}</p>}
-                      </div>
-                    </div>
-
-                    {/* Contact Information */}
-                    <div className="space-y-4">
-                      <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h4>
-                      
-                      {/* Email */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Email Address
-                          </label>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleVisibility('showEmail')}
-                            icon={visibility.showEmail ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
-                            {visibility.showEmail ? 'Visible' : 'Hidden'}
-                          </Button>
-                        </div>
-                        <Input
-                          name="email"
-                          value={profileData.email || ""}
-                          onChange={handleInputChange}
-                          leftIcon={<Mail className="h-4 w-4" />}
-                          placeholder="your.email@example.com"
-                        />
-                      </div>
-
-                      {/* Phone */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Phone Number
-                          </label>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleVisibility('showPhone')}
-                            icon={visibility.showPhone ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
-                            {visibility.showPhone ? 'Visible' : 'Hidden'}
-                          </Button>
-                        </div>
-                        <Input
-                          name="phone"
-                          value={profileData.phone || ""}
-                          onChange={handleInputChange}
-                          leftIcon={<Phone className="h-4 w-4" />}
-                          placeholder="+1-555-123-4567"
-                        />
-                      </div>
-
-                      {/* LinkedIn */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            LinkedIn Profile
-                          </label>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleVisibility('showLinkedIn')}
-                            icon={visibility.showLinkedIn ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
-                            {visibility.showLinkedIn ? 'Visible' : 'Hidden'}
-                          </Button>
-                        </div>
-                        <Input
-                          name="linkedIn"
-                          value={profileData.linkedIn || ""}
-                          onChange={handleInputChange}
-                          leftIcon={<Linkedin className="h-4 w-4" />}
-                          placeholder="https://linkedin.com/in/yourprofile"
-                        />
-                      </div>
-
-                      {/* Website */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Website
-                          </label>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleVisibility('showWebsite')}
-                            icon={visibility.showWebsite ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
-                            {visibility.showWebsite ? 'Visible' : 'Hidden'}
-                          </Button>
-                        </div>
-                        <Input
-                          name="website"
-                          value={profileData.website || ""}
-                          onChange={handleInputChange}
-                          leftIcon={<Globe className="h-4 w-4" />}
-                          placeholder="https://yourwebsite.com"
-                        />
-                      </div>
-
-                      {/* Facebook */}
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                            Facebook Profile
-                          </label>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => toggleVisibility('showFacebook')}
-                            icon={visibility.showFacebook ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
-                            className="text-gray-500 hover:text-gray-700"
-                          >
-                            {visibility.showFacebook ? 'Visible' : 'Hidden'}
-                          </Button>
-                        </div>
-                        <Input
-                          name="facebook"
-                          value={profileData.facebook || ""}
-                          onChange={handleInputChange}
-                          leftIcon={<Facebook className="h-4 w-4" />}
-                          placeholder="https://facebook.com/yourprofile"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="flex space-x-3 pt-4">
-                      <Button onClick={handleSave} icon={<Save className="h-4 w-4" />}>
-                        Save Changes
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        onClick={() => setIsEditing(false)}
-                        icon={<X className="h-4 w-4" />}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
+                      onClick={() => deleteExperience(exp.id)}
+                      icon={<Trash2 className="h-4 w-4" />}
+                      className="text-error-600 hover:text-error-700"
+                      data-testid={`delete-experience-${exp.id}`}
+                    />
                   </div>
-                ) : (
-                  <div className="space-y-4">
-                    <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                      {profileData.bio || "No bio available. Click edit to add your bio."}
-                    </p>
-                    
-                    {/* Contact Information */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                      {visibility.showEmail && profileData.email && (
-                        <div className="flex items-center space-x-3">
-                          <Mail className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {profileData.email}
-                          </span>
-                        </div>
-                      )}
-                      {visibility.showPhone && profileData.phone && (
-                        <div className="flex items-center space-x-3">
-                          <Phone className="h-4 w-4 text-gray-400" />
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
-                            {profileData.phone}
-                          </span>
-                        </div>
-                      )}
-                      {visibility.showLinkedIn && profileData.linkedIn && (
-                        <div className="flex items-center space-x-3">
-                          <Linkedin className="h-4 w-4 text-gray-400" />
-                          <a
-                            href={profileData.linkedIn}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1"
-                          >
-                            <span>LinkedIn Profile</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      )}
-                      {visibility.showWebsite && profileData.website && (
-                        <div className="flex items-center space-x-3">
-                          <Globe className="h-4 w-4 text-gray-400" />
-                          <a
-                            href={profileData.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1"
-                          >
-                            <span>Website</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      )}
-                      {visibility.showFacebook && profileData.facebook && (
-                        <div className="flex items-center space-x-3">
-                          <Facebook className="h-4 w-4 text-gray-400" />
-                          <a
-                            href={profileData.facebook}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm text-primary-600 hover:text-primary-700 flex items-center space-x-1"
-                          >
-                            <span>Facebook Profile</span>
-                            <ExternalLink className="h-3 w-3" />
-                          </a>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </Card.Content>
-            </Card>
-
-            {/* Experience Section */}
-            <Card>
-              <Card.Header>
-                <div className="flex items-center justify-between">
-                  <Card.Title>Experience</Card.Title>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAddExperience(true)}
-                    icon={<Plus className="h-4 w-4" />}
-                  >
-                    Add Experience
-                  </Button>
-                </div>
-              </Card.Header>
-              <Card.Content>
-                {showAddExperience && (
-                  <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Add Experience
-                    </h4>
-                    <div className="space-y-4">
-                      <Input
-                        label="Job Title"
-                        name="title"
-                        value={newExperience.title}
-                        onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
-                        required
-                      />
-                      <Input
-                        label="Company"
-                        name="company"
-                        value={newExperience.company}
-                        onChange={(e) => setNewExperience({ ...newExperience, company: e.target.value })}
-                        required
-                      />
-                      <Input
-                        label="Period"
-                        name="period"
-                        value={newExperience.period}
-                        onChange={(e) => setNewExperience({ ...newExperience, period: e.target.value })}
-                        placeholder="e.g., 2020 - Present"
-                      />
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                          Description
-                        </label>
-                        <textarea
-                          name="description"
-                          value={newExperience.description}
-                          onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
-                          placeholder="Describe your role and achievements..."
-                        />
-                      </div>
-                      <div className="flex space-x-3">
-                        <Button onClick={addExperience} icon={<Plus className="h-4 w-4" />}>
-                          Add Experience
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setShowAddExperience(false)}
-                          icon={<X className="h-4 w-4" />}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {experiences.length > 0 ? (
-                  <div className="space-y-6">
-                    {experiences.map((exp) => (
-                      <div key={exp.id} className="flex items-start space-x-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-                        <div className="p-2 bg-primary-100 dark:bg-primary-900/50 rounded-lg">
-                          <Briefcase className="h-5 w-5 text-primary-600" />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-gray-900 dark:text-white">
-                            {exp.title}
-                          </h4>
-                          <p className="text-primary-600 dark:text-primary-400 font-medium">
-                            {exp.company}
-                          </p>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {exp.period}
-                          </p>
-                          {exp.description && (
-                            <p className="text-sm text-gray-700 dark:text-gray-300 mt-2">
-                              {exp.description}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => deleteExperience(exp.id)}
-                          icon={<Trash2 className="h-4 w-4" />}
-                          className="text-error-600 hover:text-error-700"
-                          data-testid={`delete-experience-${exp.id}`}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    No experience added yet. Click "Add Experience" to get started.
-                  </p>
-                )}
-              </Card.Content>
-            </Card>
-
-            {/* Interests Section */}
-            <Card>
-              <Card.Header>
-                <div className="flex items-center justify-between">
-                  <Card.Title>Interests</Card.Title>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setShowAddInterest(true)}
-                    icon={<Plus className="h-4 w-4" />}
-                  >
-                    Add Interest
-                  </Button>
-                </div>
-              </Card.Header>
-              <Card.Content>
-                {showAddInterest && (
-                  <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
-                    <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Add Interest
-                    </h4>
-                    <div className="space-y-4">
-                      <Input
-                        label="Interest"
-                        value={newInterest}
-                        onChange={(e) => setNewInterest(e.target.value)}
-                        placeholder="e.g., Machine Learning, Photography"
-                        required
-                      />
-                      <div className="flex space-x-3">
-                        <Button onClick={addInterest} icon={<Plus className="h-4 w-4" />}>
-                          Add Interest
-                        </Button>
-                        <Button
-                          variant="secondary"
-                          onClick={() => setShowAddInterest(false)}
-                          icon={<X className="h-4 w-4" />}
-                        >
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                {interests.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {interests.map((interest) => (
-                      <Badge
-                        key={interest.id}
-                        variant="outline"
-                        removable
-                        onRemove={() => deleteInterest(interest.id)}
-                        data-testid={`remove-interest-${interest.id}`}
-                      >
-                        {interest.interest}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    No interests added yet. Click "Add Interest" to get started.
-                  </p>
-                )}
-              </Card.Content>
-            </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+                No experience added yet. Click "Add Experience" to get started.
+              </div>
+            )}
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Profile Stats */}
-            <Card>
-              <Card.Header>
-                <Card.Title>Profile Stats</Card.Title>
-              </Card.Header>
-              <Card.Content>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Profile Views</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">1,234</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Connections</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">
-                      {profileData.connections || 0}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Events Attended</span>
-                    <span className="font-semibold text-gray-900 dark:text-white">23</span>
-                  </div>
-                </div>
-              </Card.Content>
-            </Card>
+          {/* Interests Section */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                Interests
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAddInterest(true)}
+                icon={<Plus className="h-4 w-4" />}
+              >
+                Add Interest
+              </Button>
+            </div>
 
-            {/* Quick Actions */}
-            <Card>
-              <Card.Header>
-                <Card.Title>Quick Actions</Card.Title>
-              </Card.Header>
-              <Card.Content>
-                <div className="space-y-3">
-                  <Button variant="outline" fullWidth icon={<MessageCircle className="h-4 w-4" />}>
-                    Send Message
-                  </Button>
-                  <Button variant="outline" fullWidth icon={<User className="h-4 w-4" />}>
-                    Connect
-                  </Button>
-                  <Button variant="outline" fullWidth icon={<Share2 className="h-4 w-4" />}>
-                    Share Profile
-                  </Button>
+            {showAddInterest && (
+              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Add Interest
+                </h4>
+                <div className="space-y-4">
+                  <Input
+                    label="Interest"
+                    value={newInterest}
+                    onChange={(e) => setNewInterest(e.target.value)}
+                    placeholder="e.g., Machine Learning, Photography"
+                    required
+                  />
+                  <div className="flex space-x-3">
+                    <Button onClick={addInterest} icon={<Plus className="h-4 w-4" />}>
+                      Add Interest
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowAddInterest(false)}
+                      icon={<X className="h-4 w-4" />}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 </div>
-              </Card.Content>
-            </Card>
+              </div>
+            )}
+
+            {interests.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {interests.map((interest) => (
+                  <Badge
+                    key={interest.id}
+                    variant="outline"
+                    removable
+                    onRemove={() => deleteInterest(interest.id)}
+                    data-testid={`remove-interest-${interest.id}`}
+                  >
+                    {interest.interest}
+                  </Badge>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+                No interests added yet. Click "Add Interest" to get started.
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Contact Information */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Contact Information
+            </h3>
+            <div className="space-y-4">
+              {renderContactField(
+                "Email",
+                profileData.email,
+                Mail,
+                false,
+                visibility.showEmail
+              )}
+              {renderContactField(
+                "Phone",
+                profileData.phone,
+                Phone,
+                false,
+                visibility.showPhone
+              )}
+              {renderContactField(
+                "LinkedIn",
+                profileData.linkedIn,
+                Linkedin,
+                true,
+                visibility.showLinkedIn
+              )}
+              {renderContactField(
+                "Facebook",
+                profileData.facebook,
+                Facebook,
+                true,
+                visibility.showFacebook
+              )}
+              {renderContactField(
+                "Website",
+                profileData.website,
+                Globe,
+                true,
+                visibility.showWebsite
+              )}
+            </div>
+
+            {/* Show message if no contact info is visible */}
+            {!visibility.showEmail &&
+              !visibility.showPhone &&
+              !visibility.showLinkedIn &&
+              !visibility.showFacebook &&
+              !visibility.showWebsite && (
+                <div className="text-gray-500 dark:text-gray-400 text-center py-4 text-sm">
+                  Contact information is private
+                </div>
+              )}
+          </div>
+
+          {/* Profile Stats */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Profile Stats
+            </h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Profile Views</span>
+                <span className="font-semibold text-gray-900 dark:text-white">1,234</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Connections</span>
+                <span className="font-semibold text-gray-900 dark:text-white">
+                  {profileData.connections || 0}
+                </span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Events Attended</span>
+                <span className="font-semibold text-gray-900 dark:text-white">23</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Quick Actions */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Quick Actions
+            </h3>
+            <div className="space-y-3">
+              <Button variant="outline" fullWidth icon={<MessageCircle className="h-4 w-4" />}>
+                Send Message
+              </Button>
+              <Button variant="outline" fullWidth icon={<User className="h-4 w-4" />}>
+                Connect
+              </Button>
+              <Button variant="outline" fullWidth icon={<Share2 className="h-4 w-4" />}>
+                Share Profile
+              </Button>
+            </div>
           </div>
         </div>
       </div>

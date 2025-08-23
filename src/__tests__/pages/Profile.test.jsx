@@ -26,7 +26,8 @@ jest.mock('../../context/UnifiedAuthContext', () => ({
       showFacebook: true
     },
     isAuthenticated: true,
-    loading: false
+    loading: false,
+    signOut: jest.fn()
   })
 }));
 
@@ -83,21 +84,21 @@ describe('Profile', () => {
     // Clear all mocks
     jest.clearAllMocks();
 
-    // Mock API responses
+    // Default API responses
     apiClient.get.mockImplementation((url) => {
-      if (url.includes('/profile/')) {
+      if (url === '/profile') {
         return Promise.resolve({
           data: {
             data: mockUser
           }
         });
-      } else if (url.includes('/experiences/')) {
+      } else if (url === '/experiences') {
         return Promise.resolve({
           data: {
             data: mockExperiences
           }
         });
-      } else if (url.includes('/interests/')) {
+      } else if (url === '/interests') {
         return Promise.resolve({
           data: {
             data: mockInterests
@@ -170,7 +171,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       expect(editButton).toBeInTheDocument();
     });
   });
@@ -179,7 +180,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -195,7 +196,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -213,14 +214,14 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
     await waitFor(() => {
       expect(screen.getByText('Basic Information')).toBeInTheDocument();
       expect(screen.getByText('Bio')).toBeInTheDocument();
-      expect(screen.getByText('Contact Information')).toBeInTheDocument();
+      expect(screen.getAllByText('Contact Information')).toHaveLength(2); // One in edit mode, one in sidebar
     });
   });
 
@@ -228,7 +229,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -238,7 +239,7 @@ describe('Profile', () => {
       expect(screen.getByText('Email Address')).toBeInTheDocument();
       expect(screen.getByText('Phone Number')).toBeInTheDocument();
       expect(screen.getByText('LinkedIn Profile')).toBeInTheDocument();
-      expect(screen.getByText('Website')).toBeInTheDocument();
+      expect(screen.getAllByText('Website')).toHaveLength(2); // One in edit mode, one in sidebar
       expect(screen.getByText('Facebook Profile')).toBeInTheDocument();
     });
   });
@@ -247,7 +248,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -265,7 +266,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -281,9 +282,9 @@ describe('Profile', () => {
     await waitFor(() => {
       expect(screen.getByText('test@example.com')).toBeInTheDocument();
       expect(screen.getByText('+1-555-123-4567')).toBeInTheDocument();
-      expect(screen.getByText('LinkedIn Profile')).toBeInTheDocument();
+      expect(screen.getByText('LinkedIn')).toBeInTheDocument();
       expect(screen.getByText('Website')).toBeInTheDocument();
-      expect(screen.getByText('Facebook Profile')).toBeInTheDocument();
+      expect(screen.getByText('Facebook')).toBeInTheDocument();
     });
   });
 
@@ -354,7 +355,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -375,7 +376,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -385,7 +386,7 @@ describe('Profile', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('Edit')).toBeInTheDocument();
+      expect(screen.getByText('Edit Profile')).toBeInTheDocument();
       expect(screen.queryByText('Save Changes')).not.toBeInTheDocument();
     });
   });
@@ -393,8 +394,8 @@ describe('Profile', () => {
   test('shows loading spinner initially', () => {
     render(<Profile />);
     
-    // Check for the loading spinner by its class
-    expect(document.querySelector('.animate-spin')).toBeInTheDocument();
+    // Check for the loading state by its class
+    expect(document.querySelector('.animate-pulse')).toBeInTheDocument();
   });
 
   test('handles API errors gracefully', async () => {
@@ -404,7 +405,7 @@ describe('Profile', () => {
 
     await waitFor(() => {
       // Should not crash and should show some content
-      expect(screen.getByText('Your Name')).toBeInTheDocument();
+      expect(screen.getByText('Test User')).toBeInTheDocument();
     });
   });
 
@@ -412,7 +413,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -437,7 +438,7 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
 
@@ -452,7 +453,7 @@ describe('Profile', () => {
   test('displays experience description field with proper styling', async () => {
     render(<Profile />);
     await waitFor(() => {
-      const editButton = screen.getByText('Edit');
+      const editButton = screen.getByText('Edit Profile');
       fireEvent.click(editButton);
     });
     await waitFor(() => {
@@ -474,19 +475,28 @@ describe('Profile', () => {
       description: 'Single description'
     };
 
+    // Mock API to return single experience object for experiences endpoint
     apiClient.get.mockImplementation((url) => {
-      if (url.includes('/experiences/')) {
+      if (url === '/experiences') {
         return Promise.resolve({
           data: {
             data: singleExperience
           }
         });
+      } else if (url === '/profile') {
+        return Promise.resolve({
+          data: {
+            data: mockUser
+          }
+        });
+      } else if (url === '/interests') {
+        return Promise.resolve({
+          data: {
+            data: mockInterests
+          }
+        });
       }
-      return Promise.resolve({
-        data: {
-          data: mockUser
-        }
-      });
+      return Promise.resolve({ data: { data: [] } });
     });
 
     render(<Profile />);
@@ -503,19 +513,28 @@ describe('Profile', () => {
       interest: 'Single Interest'
     };
 
+    // Mock API to return single interest object for interests endpoint
     apiClient.get.mockImplementation((url) => {
-      if (url.includes('/interests/')) {
+      if (url === '/interests') {
         return Promise.resolve({
           data: {
             data: singleInterest
           }
         });
+      } else if (url === '/profile') {
+        return Promise.resolve({
+          data: {
+            data: mockUser
+          }
+        });
+      } else if (url === '/experiences') {
+        return Promise.resolve({
+          data: {
+            data: mockExperiences
+          }
+        });
       }
-      return Promise.resolve({
-        data: {
-          data: mockUser
-        }
-      });
+      return Promise.resolve({ data: { data: [] } });
     });
 
     render(<Profile />);
@@ -526,19 +545,28 @@ describe('Profile', () => {
   });
 
   test('handles empty experiences array gracefully', async () => {
+    // Mock API to return empty array for experiences
     apiClient.get.mockImplementation((url) => {
-      if (url.includes('/experiences/')) {
+      if (url === '/experiences') {
         return Promise.resolve({
           data: {
             data: []
           }
         });
+      } else if (url === '/profile') {
+        return Promise.resolve({
+          data: {
+            data: mockUser
+          }
+        });
+      } else if (url === '/interests') {
+        return Promise.resolve({
+          data: {
+            data: mockInterests
+          }
+        });
       }
-      return Promise.resolve({
-        data: {
-          data: mockUser
-        }
-      });
+      return Promise.resolve({ data: { data: [] } });
     });
 
     render(<Profile />);
@@ -549,19 +577,28 @@ describe('Profile', () => {
   });
 
   test('handles empty interests array gracefully', async () => {
+    // Mock API to return empty array for interests
     apiClient.get.mockImplementation((url) => {
-      if (url.includes('/interests/')) {
+      if (url === '/interests') {
         return Promise.resolve({
           data: {
             data: []
           }
         });
+      } else if (url === '/profile') {
+        return Promise.resolve({
+          data: {
+            data: mockUser
+          }
+        });
+      } else if (url === '/experiences') {
+        return Promise.resolve({
+          data: {
+            data: mockExperiences
+          }
+        });
       }
-      return Promise.resolve({
-        data: {
-          data: mockUser
-        }
-      });
+      return Promise.resolve({ data: { data: [] } });
     });
 
     render(<Profile />);
@@ -577,8 +614,8 @@ describe('Profile', () => {
     render(<Profile />);
 
     await waitFor(() => {
-      expect(screen.getByText('Your Name')).toBeInTheDocument();
-      expect(screen.getByText('Your Profession')).toBeInTheDocument();
+      expect(screen.getByText('Test User')).toBeInTheDocument();
+      expect(screen.getByText('Software Engineer')).toBeInTheDocument();
     });
   });
 
@@ -599,7 +636,7 @@ describe('Profile', () => {
     };
 
     apiClient.get.mockImplementation((url) => {
-      if (url.includes('/profile/')) {
+      if (url === '/profile') {
         return Promise.resolve({
           data: {
             data: incompleteProfile
@@ -617,7 +654,128 @@ describe('Profile', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Test User')).toBeInTheDocument();
-      expect(screen.getByText('Your Profession')).toBeInTheDocument();
+      expect(screen.getByText('Software Engineer')).toBeInTheDocument();
+    });
+  });
+
+  test('displays user information from API response', async () => {
+    // Mock API response with complete profile data
+    apiClient.get.mockImplementation((url) => {
+      if (url === '/profile') {
+        return Promise.resolve({
+          data: {
+            data: {
+              userId: 'USER_123456',
+              name: 'API Test User',
+              profession: 'API Software Engineer',
+              location: 'API New York, NY',
+              bio: 'API bio from backend',
+              phone: '+1-555-API-1234',
+              linkedIn: 'https://linkedin.com/in/apitestuser',
+              website: 'https://apitestuser.dev',
+              batch: '2021',
+              facebook: 'https://facebook.com/apitestuser',
+              email: 'api@test.com',
+              connections: 200,
+              showPhone: true,
+              showLinkedIn: true,
+              showWebsite: true,
+              showEmail: true,
+              showFacebook: true
+            }
+          }
+        });
+      } else if (url === '/experiences') {
+        return Promise.resolve({
+          data: {
+            data: mockExperiences
+          }
+        });
+      } else if (url === '/interests') {
+        return Promise.resolve({
+          data: {
+            data: mockInterests
+          }
+        });
+      }
+      return Promise.resolve({ data: { data: [] } });
+    });
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      // Should show API data instead of user context data
+      expect(screen.getByText('API Test User')).toBeInTheDocument();
+      expect(screen.getByText('API Software Engineer')).toBeInTheDocument();
+      expect(screen.getByText('API New York, NY')).toBeInTheDocument();
+      expect(screen.getByText('API bio from backend')).toBeInTheDocument();
+      expect(screen.getByText('Batch 2021')).toBeInTheDocument();
+    });
+  });
+
+  test('handles invalid API response structure gracefully', async () => {
+    // Mock API to return invalid response structure
+    apiClient.get.mockImplementation((url) => {
+      if (url === '/profile') {
+        return Promise.resolve({
+          data: null // Invalid structure
+        });
+      } else if (url === '/experiences') {
+        return Promise.resolve({
+          data: {
+            data: mockExperiences
+          }
+        });
+      } else if (url === '/interests') {
+        return Promise.resolve({
+          data: {
+            data: mockInterests
+          }
+        });
+      }
+      return Promise.resolve({ data: { data: [] } });
+    });
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      // Should fall back to user context data
+      expect(screen.getByText('Test User')).toBeInTheDocument();
+      expect(screen.getByText('Software Engineer')).toBeInTheDocument();
+    });
+  });
+
+  test('handles missing data property in API response', async () => {
+    // Mock API to return response without data property
+    apiClient.get.mockImplementation((url) => {
+      if (url === '/profile') {
+        return Promise.resolve({
+          data: {
+            // Missing data property
+          }
+        });
+      } else if (url === '/experiences') {
+        return Promise.resolve({
+          data: {
+            data: mockExperiences
+          }
+        });
+      } else if (url === '/interests') {
+        return Promise.resolve({
+          data: {
+            data: mockInterests
+          }
+        });
+      }
+      return Promise.resolve({ data: { data: [] } });
+    });
+
+    render(<Profile />);
+
+    await waitFor(() => {
+      // Should fall back to user context data
+      expect(screen.getByText('Test User')).toBeInTheDocument();
+      expect(screen.getByText('Software Engineer')).toBeInTheDocument();
     });
   });
 });

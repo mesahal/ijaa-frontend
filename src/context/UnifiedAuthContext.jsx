@@ -98,7 +98,9 @@ export const UnifiedAuthProvider = ({ children }) => {
     // Cleanup event listeners
     return () => {
       window.removeEventListener('auth:logout', handleAutoLogout);
-      unsubscribe();
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
     };
   }, []);
 
