@@ -1,491 +1,518 @@
-import React, { useState } from "react";
-import { useNavigate, Link, useLocation } from "react-router-dom";
+import React, { useState, useCallback } from 'react';
 import {
   Calendar,
-  Clock,
-  MapPin,
-  Users,
-  Filter,
-  Search,
   Plus,
-  Star,
-  Video,
-  DollarSign,
-} from "lucide-react";
-import MyEvents from "./MyEvents";
+  Loader2,
+  AlertCircle,
+  Search,
+  Filter,
+  Users,
+  MapPin,
+  Clock,
+} from 'lucide-react';
 
+// Import custom hooks
+import { useEvents } from '../hooks/events/useEvents';
+import { useEventActions } from '../hooks/events/useEventActions';
+import { useEventSearch } from '../hooks/events/useEventSearch';
+import { useEventInvitations } from '../hooks/events/useEventInvitations';
+
+// Import components
+import EventCard from '../components/events/EventCard';
+import EventTabs from '../components/events/EventTabs';
+import EventFilters from '../components/events/EventFilters';
+import EventForm from '../components/events/EventForm';
+import EventDetailsModal from '../components/events/EventDetailsModal';
+import InviteModal from '../components/events/InviteModal';
+import ParticipantsModal from '../components/events/ParticipantsModal';
+import SearchModal from '../components/events/SearchModal';
+
+// Import UI components
+import { Button, Card, Badge } from '../components/ui';
+
+// Import constants
+import { EVENT_TYPES, EVENT_PRIVACY, PARTICIPATION_STATUS } from '../utils/eventApi';
+
+// Constants
+const EVENT_TYPE_OPTIONS = [
+  { value: EVENT_TYPES.NETWORKING, label: "Networking" },
+  { value: EVENT_TYPES.WORKSHOP, label: "Workshop" },
+  { value: EVENT_TYPES.CONFERENCE, label: "Conference" },
+  { value: EVENT_TYPES.SOCIAL, label: "Social" },
+  { value: EVENT_TYPES.CAREER, label: "Career" },
+  { value: EVENT_TYPES.MENTORSHIP, label: "Mentorship" },
+];
+
+const INITIAL_EVENT_FORM = {
+  title: "",
+  description: "",
+  startDate: "",
+  endDate: "",
+  location: "",
+  eventType: EVENT_TYPES.NETWORKING,
+  isOnline: false,
+  meetingLink: "",
+  maxParticipants: 50,
+  organizerName: "",
+  organizerEmail: "",
+  privacy: EVENT_PRIVACY.PUBLIC,
+  inviteMessage: "",
+};
+
+/**
+ * Events Page Component
+ * Main page for managing and viewing events
+ * Uses custom hooks for state management and business logic
+ */
 const Events = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [filterType, setFilterType] = useState("all");
-  const [filterLocation, setFilterLocation] = useState("all");
-  const [activeTab, setActiveTab] = useState("browse");
+  // Custom hooks
+  const {
+    events,
+    myEvents,
+    loading: eventsLoading,
+    error: eventsError,
+    activeTab,
+    loadEvents,
+    refreshEvents,
+    handleTabChange,
+    getCurrentEvents,
+  } = useEvents();
 
-  // Check if we should show My Events tab based on URL
-  React.useEffect(() => {
-    if (location.pathname === "/my-events") {
-      setActiveTab("my-events");
-    }
-  }, [location.pathname]);
+  const {
+    loading: actionsLoading,
+    error: actionsError,
+    handleCreateEvent,
+    handleDeleteEvent,
+    handleRsvp,
+    handleCancelRsvp,
+    clearError: clearActionsError,
+  } = useEventActions(refreshEvents);
 
-  const events = [
-    {
-      id: 1,
-      title: "Annual Alumni Reunion 2025",
-      date: "2025-03-15",
-      time: "10:00 AM",
-      location: "IIT JU Campus",
-      type: "reunion",
-      price: 0,
-      attendees: 150,
-      maxAttendees: 200,
-      isVirtual: false,
-      featured: true,
-      image:
-        "https://images.pexels.com/photos/1181533/pexels-photo-1181533.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1",
-      description:
-        "Join us for our biggest alumni gathering of the year! Reconnect with old friends, network with professionals, and celebrate our shared journey.",
-      organizer: "Alumni Association",
-      registered: false,
-    },
-    {
-      id: 2,
-      title: "Career Development Workshop",
-      date: "2025-03-22",
-      time: "2:00 PM",
-      location: "Virtual Event",
-      type: "workshop",
-      price: 500,
-      attendees: 89,
-      maxAttendees: 100,
-      isVirtual: true,
-      featured: false,
-      image:
-        "https://images.pexels.com/photos/1181396/pexels-photo-1181396.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1",
-      description:
-        "Enhance your career prospects with our comprehensive workshop covering resume building, interview skills, and networking strategies.",
-      organizer: "Career Services",
-      registered: true,
-    },
-    {
-      id: 3,
-      title: "Tech Talk: Future of AI",
-      date: "2025-04-05",
-      time: "6:00 PM",
-      location: "Engineering Auditorium",
-      type: "seminar",
-      price: 0,
-      attendees: 75,
-      maxAttendees: 120,
-      isVirtual: false,
-      featured: false,
-      image:
-        "https://images.pexels.com/photos/1181244/pexels-photo-1181244.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1",
-      description:
-        "Explore the latest developments in artificial intelligence with industry experts and researchers.",
-      organizer: "CSE Department Alumni",
-      registered: false,
-    },
-    {
-      id: 4,
-      title: "Alumni Sports Tournament",
-      date: "2025-04-12",
-      time: "9:00 AM",
-      location: "University Sports Complex",
-      type: "sports",
-      price: 200,
-      attendees: 45,
-      maxAttendees: 80,
-      isVirtual: false,
-      featured: false,
-      image:
-        "https://images.pexels.com/photos/1181304/pexels-photo-1181304.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1",
-      description:
-        "Friendly competition in cricket, football, and badminton. Relive your university sports days!",
-      organizer: "Sports Committee",
-      registered: false,
-    },
-    {
-      id: 5,
-      title: "Startup Pitch Competition",
-      date: "2025-04-20",
-      time: "11:00 AM",
-      location: "Business Incubator",
-      type: "competition",
-      price: 1000,
-      attendees: 32,
-      maxAttendees: 50,
-      isVirtual: false,
-      featured: true,
-      image:
-        "https://images.pexels.com/photos/1181467/pexels-photo-1181467.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1",
-      description:
-        "Present your startup ideas to a panel of investors and win funding opportunities.",
-      organizer: "Entrepreneurship Cell",
-      registered: false,
-    },
-    {
-      id: 6,
-      title: "Virtual Networking Mixer",
-      date: "2025-05-03",
-      time: "7:00 PM",
-      location: "Online Platform",
-      type: "networking",
-      price: 0,
-      attendees: 125,
-      maxAttendees: 200,
-      isVirtual: true,
-      featured: false,
-      image:
-        "https://images.pexels.com/photos/1181435/pexels-photo-1181435.jpeg?auto=compress&cs=tinysrgb&w=400&h=250&dpr=1",
-      description:
-        "Connect with alumni from around the world in our virtual networking event.",
-      organizer: "Global Alumni Network",
-      registered: false,
-    },
-  ];
+  const {
+    searchQuery,
+    filterType,
+    loading: searchLoading,
+    error: searchError,
+    handleSearchQueryChange,
+    handleFilterTypeChange,
+    searchEvents,
+    clearSearch,
+    getFilteredEvents,
+  } = useEventSearch();
 
-  const filteredEvents = events.filter((event) => {
-    const matchesSearch =
-      event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || event.type === filterType;
-    const matchesLocation =
-      filterLocation === "all" ||
-      (filterLocation === "virtual" && event.isVirtual) ||
-      (filterLocation === "physical" && !event.isVirtual);
+  const {
+    myParticipations,
+    myInvitations,
+    invitationCounts,
+    loading: invitationsLoading,
+    error: invitationsError,
+    sendInvitations,
+    acceptInvitation,
+    declineInvitation,
+    getEventParticipants,
+    clearError: clearInvitationsError,
+    getMyParticipationStatus,
+    getMyInvitationStatus,
+  } = useEventInvitations();
 
-    return matchesSearch && matchesType && matchesLocation;
+  // Local state for modals
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showParticipantsModal, setShowParticipantsModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
+  
+  // Selected items
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [eventForm, setEventForm] = useState(INITIAL_EVENT_FORM);
+  const [inviteForm, setInviteForm] = useState({ usernames: "", personalMessage: "" });
+  const [searchForm, setSearchForm] = useState({
+    location: "",
+    eventType: "",
+    startDate: "",
+    endDate: "",
+    isOnline: "",
+    organizerName: "",
+    title: "",
+    description: ""
   });
 
-  const handleRegister = (eventId) => {
-    navigate(`/events/${eventId}/register`);
-  };
+  // Combined loading and error states
+  const isLoading = eventsLoading || actionsLoading || searchLoading || invitationsLoading;
+  const error = eventsError || actionsError || searchError || invitationsError;
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
+  /**
+   * Handle tab change and clear search
+   */
+  const handleTabChangeWithClear = useCallback((tab) => {
+    handleTabChange(tab);
+    clearSearch();
+  }, [handleTabChange, clearSearch]);
+
+  /**
+   * Handle view event details
+   */
+  const handleViewEvent = useCallback((event) => {
+    setSelectedEvent(event);
+    setShowEventModal(true);
+  }, []);
+
+  /**
+   * Handle edit event - populate form with current values
+   */
+  const handleEditEvent = useCallback((event) => {
+    // Format dates for datetime-local input (YYYY-MM-DDTHH:MM)
+    const formatDateForInput = (dateString) => {
+      const date = new Date(dateString);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+
+    setEventForm({
+      title: event.title,
+      description: event.description,
+      startDate: formatDateForInput(event.startDate),
+      endDate: formatDateForInput(event.endDate),
+      location: event.location || "",
+      eventType: event.eventType,
+      isOnline: event.isOnline,
+      meetingLink: event.meetingLink || "",
+      maxParticipants: event.maxParticipants,
+      organizerName: event.organizerName,
+      organizerEmail: event.organizerEmail,
+      privacy: event.privacy || "PUBLIC",
+      inviteMessage: event.inviteMessage || "",
     });
-  };
+    
+    setSelectedEvent(event);
+    setShowEventModal(false);
+    setShowCreateModal(true);
+  }, []);
+
+  /**
+   * Handle create/update event form submission
+   */
+  const handleCreateEventSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    const result = await handleCreateEvent(eventForm, selectedEvent);
+    
+    if (result.success) {
+      setShowCreateModal(false);
+      setSelectedEvent(null);
+      setEventForm(INITIAL_EVENT_FORM);
+    }
+  }, [eventForm, selectedEvent, handleCreateEvent]);
+
+  /**
+   * Handle send invitations
+   */
+  const handleSendInvitationsSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    const result = await sendInvitations(selectedEvent.id, inviteForm.usernames, inviteForm.personalMessage);
+    
+    if (result.success) {
+      setShowInviteModal(false);
+      setInviteForm({ usernames: "", personalMessage: "" });
+      setSelectedEvent(null);
+    }
+  }, [selectedEvent, inviteForm, sendInvitations]);
+
+  /**
+   * Handle search events
+   */
+  const handleSearchEventsSubmit = useCallback(async (e) => {
+    e.preventDefault();
+    const result = await searchEvents(searchForm);
+    
+    if (result.success) {
+      setShowSearchModal(false);
+    }
+  }, [searchForm, searchEvents]);
+
+  /**
+   * Handle view participants
+   */
+  const handleViewParticipants = useCallback(async (eventId) => {
+    const result = await getEventParticipants(eventId);
+    
+    if (result.success) {
+      setShowParticipantsModal(true);
+    }
+  }, [getEventParticipants]);
+
+  /**
+   * Format date for display
+   */
+  const formatDate = useCallback((dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }, []);
+
+  /**
+   * Get event type label
+   */
+  const getEventTypeLabel = useCallback((eventType) => {
+    const type = EVENT_TYPE_OPTIONS.find(t => t.value === eventType);
+    return type ? type.label : eventType;
+  }, []);
+
+  // Get filtered events
+  const currentEvents = getCurrentEvents();
+  const displayEvents = getFilteredEvents(currentEvents) || [];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Alumni Events
-            </h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">
-              Discover and join upcoming alumni events
-            </p>
-          </div>
-          <Link
-            to="/events/create"
-            className="mt-4 sm:mt-0 bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center space-x-2"
-          >
-            <Plus className="h-5 w-5" />
-            <span>Create Event</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* Tabs */}
-      <div className="mb-8">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => {
-                setActiveTab("browse");
-                navigate("/events");
-              }}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "browse"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Browse Events
-            </button>
-            <button
-              onClick={() => {
-                setActiveTab("my-events");
-                navigate("/my-events");
-              }}
-              className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                activeTab === "my-events"
-                  ? "border-blue-500 text-blue-600"
-                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              My Events
-            </button>
-          </nav>
-        </div>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === "my-events" ? (
-        <MyEvents />
-      ) : (
-        <>
-          {/* Search and Filters */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6 mb-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Search */}
-              <div className="md:col-span-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                  <input
-                    type="text"
-                    placeholder="Search events..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Type Filter */}
-              <div>
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Types</option>
-                  <option value="reunion">Reunion</option>
-                  <option value="workshop">Workshop</option>
-                  <option value="seminar">Seminar</option>
-                  <option value="sports">Sports</option>
-                  <option value="competition">Competition</option>
-                  <option value="networking">Networking</option>
-                </select>
-              </div>
-
-              {/* Location Filter */}
-              <div>
-                <select
-                  value={filterLocation}
-                  onChange={(e) => setFilterLocation(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="all">All Locations</option>
-                  <option value="physical">In-Person</option>
-                  <option value="virtual">Virtual</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Featured Events */}
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              Featured Events
-            </h2>
-            <div className="grid md:grid-cols-2 gap-6">
-              {filteredEvents
-                .filter((event) => event.featured)
-                .map((event) => (
-                  <div
-                    key={event.id}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-xl transition-shadow"
-                  >
-                    <div className="relative">
-                      <img
-                        src={event.image}
-                        alt={event.title}
-                        className="w-full h-48 object-cover"
-                      />
-                      <div className="absolute top-4 left-4">
-                        <span className="bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-                          <Star className="h-4 w-4" />
-                          <span>Featured</span>
-                        </span>
-                      </div>
-                      {event.isVirtual && (
-                        <div className="absolute top-4 right-4">
-                          <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-1">
-                            <Video className="h-4 w-4" />
-                            <span>Virtual</span>
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium capitalize">
-                          {event.type}
-                        </span>
-                        {event.price > 0 && (
-                          <span className="flex items-center space-x-1 text-green-600 font-medium">
-                            <DollarSign className="h-4 w-4" />
-                            <span>{event.price} BDT</span>
-                          </span>
-                        )}
-                      </div>
-
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-3">
-                        {event.title}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                        {event.description}
-                      </p>
-
-                      <div className="space-y-2 mb-4">
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Calendar className="h-4 w-4" />
-                          <span>{formatDate(event.date)}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Clock className="h-4 w-4" />
-                          <span>{event.time}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <MapPin className="h-4 w-4" />
-                          <span>{event.location}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <Users className="h-4 w-4" />
-                          <span>
-                            {event.attendees}/{event.maxAttendees} registered
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500 dark:text-gray-400">
-                          by {event.organizer}
-                        </span>
-                        {event.registered ? (
-                          <span className="bg-green-100 text-green-800 px-4 py-2 rounded-lg font-medium">
-                            Registered
-                          </span>
-                        ) : (
-                          <button
-                            onClick={() => handleRegister(event.id)}
-                            className="bg-blue-600 text-white px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-                          >
-                            Register
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {/* All Events */}
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
-              All Events
-            </h2>
-            <div className="grid lg:grid-cols-2 gap-6">
-              {filteredEvents
-                .filter((event) => !event.featured)
-                .map((event) => (
-                  <div
-                    key={event.id}
-                    className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex">
-                      <div className="w-32 h-32 flex-shrink-0">
-                        <img
-                          src={event.image}
-                          alt={event.title}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-
-                      <div className="flex-1 p-6">
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center space-x-2">
-                            <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded text-xs font-medium capitalize">
-                              {event.type}
-                            </span>
-                            {event.isVirtual && (
-                              <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium flex items-center space-x-1">
-                                <Video className="h-3 w-3" />
-                                <span>Virtual</span>
-                              </span>
-                            )}
-                          </div>
-                          {event.price > 0 && (
-                            <span className="text-green-600 font-medium text-sm">
-                              {event.price} BDT
-                            </span>
-                          )}
-                        </div>
-
-                        <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
-                          {event.title}
-                        </h3>
-
-                        <div className="space-y-1 mb-3 text-xs text-gray-600 dark:text-gray-300">
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-3 w-3" />
-                            <span>
-                              {formatDate(event.date)} at {event.time}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <MapPin className="h-3 w-3" />
-                            <span>{event.location}</span>
-                          </div>
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-3 w-3" />
-                            <span>
-                              {event.attendees}/{event.maxAttendees} registered
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            by {event.organizer}
-                          </span>
-                          {event.registered ? (
-                            <span className="bg-green-100 text-green-800 px-3 py-1 rounded text-xs font-medium">
-                              Registered
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleRegister(event.id)}
-                              className="bg-blue-600 text-white px-4 py-1 rounded text-xs font-medium hover:bg-blue-700 transition-colors"
-                            >
-                              Register
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </div>
-
-          {filteredEvents.length === 0 && (
-            <div className="text-center py-12">
-              <Calendar className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                No events found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Try adjusting your search or filters to find more events.
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-8">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                Events
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 mt-2">
+                Discover and manage alumni events
               </p>
             </div>
-          )}
-        </>
+            <Button
+              onClick={() => setShowCreateModal(true)}
+              variant="primary"
+              size="lg"
+              icon={<Plus className="h-5 w-5" />}
+            >
+              Create Event
+            </Button>
+          </div>
+        </div>
+
+        {/* Error Display */}
+        {error && (
+          <Card className="mb-6 border-error-200 dark:border-error-700">
+            <div className="p-4">
+              <div className="flex items-center space-x-3">
+                <AlertCircle className="h-5 w-5 text-error-500 flex-shrink-0" />
+                <p className="text-error-700 dark:text-error-300">{error}</p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Tabs */}
+        <EventTabs
+          activeTab={activeTab}
+          onTabChange={handleTabChangeWithClear}
+          invitationCounts={invitationCounts}
+        />
+
+        {/* Search and Filters */}
+        <EventFilters
+          searchQuery={searchQuery}
+          onSearchChange={handleSearchQueryChange}
+          filterType={filterType}
+          onFilterChange={handleFilterTypeChange}
+          onAdvancedSearch={() => setShowSearchModal(true)}
+          eventTypeOptions={EVENT_TYPE_OPTIONS}
+        />
+
+        {/* Events Grid */}
+        {isLoading ? (
+          <Card className="p-12">
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+              <span className="ml-3 text-gray-600 dark:text-gray-400">Loading events...</span>
+            </div>
+          </Card>
+        ) : (displayEvents && displayEvents.length === 0) ? (
+          <Card className="p-12">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="h-8 w-8 text-gray-400" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                No events found
+              </h3>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                {activeTab === "my-events" 
+                  ? "You haven't created any events yet." 
+                  : "No events match your search criteria."}
+              </p>
+              {activeTab === "my-events" && (
+                <Button
+                  onClick={() => setShowCreateModal(true)}
+                  variant="primary"
+                  icon={<Plus className="h-4 w-4" />}
+                >
+                  Create Your First Event
+                </Button>
+              )}
+            </div>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {displayEvents && displayEvents.map((event) => {
+              const isMyEvent = activeTab === "my-events";
+               
+              return (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  isMyEvent={isMyEvent}
+                  onView={handleViewEvent}
+                  onEdit={handleEditEvent}
+                  onDelete={handleDeleteEvent}
+                  getEventTypeLabel={getEventTypeLabel}
+                  formatDate={formatDate}
+                />
+              );
+            })}
+          </div>
+        )}
+
+        {/* Quick Stats */}
+        {displayEvents && displayEvents.length > 0 && (
+          <Card className="mt-8 p-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/20 rounded-lg flex items-center justify-center">
+                  <Calendar className="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Total Events</p>
+                  <p className="text-xl font-semibold text-gray-900 dark:text-white">{displayEvents.length}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-success-100 dark:bg-success-900/20 rounded-lg flex items-center justify-center">
+                  <Users className="h-5 w-5 text-success-600 dark:text-success-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Upcoming</p>
+                  <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {displayEvents.filter(e => new Date(e.startDate) > new Date()).length}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-warning-100 dark:bg-warning-900/20 rounded-lg flex items-center justify-center">
+                  <MapPin className="h-5 w-5 text-warning-600 dark:text-warning-400" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Online Events</p>
+                  <p className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {displayEvents.filter(e => e.isOnline).length}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
+
+      {/* Modals */}
+      {showCreateModal && (
+        <EventForm
+          isOpen={showCreateModal}
+          onClose={() => {
+            setShowCreateModal(false);
+            setSelectedEvent(null);
+            setEventForm(INITIAL_EVENT_FORM);
+          }}
+          onSubmit={handleCreateEventSubmit}
+          formData={eventForm}
+          setFormData={setEventForm}
+          selectedEvent={selectedEvent}
+          loading={isLoading}
+          eventTypeOptions={EVENT_TYPE_OPTIONS}
+        />
+      )}
+
+      {showEventModal && selectedEvent && (
+        <EventDetailsModal
+          isOpen={showEventModal}
+          onClose={() => {
+            setShowEventModal(false);
+            setSelectedEvent(null);
+          }}
+          event={selectedEvent}
+          isMyEvent={activeTab === "my-events"}
+          onEdit={handleEditEvent}
+          onViewParticipants={handleViewParticipants}
+          onInvite={() => {
+            setShowEventModal(false);
+            setShowInviteModal(true);
+          }}
+          getMyParticipationStatus={getMyParticipationStatus}
+          getMyInvitationStatus={getMyInvitationStatus}
+          onRsvp={handleRsvp}
+          onCancelRsvp={handleCancelRsvp}
+          onAcceptInvitation={acceptInvitation}
+          onDeclineInvitation={declineInvitation}
+          formatDate={formatDate}
+          getEventTypeLabel={getEventTypeLabel}
+          participationStatus={PARTICIPATION_STATUS}
+        />
+      )}
+
+      {showInviteModal && selectedEvent && (
+        <InviteModal
+          isOpen={showInviteModal}
+          onClose={() => {
+            setShowInviteModal(false);
+            setInviteForm({ usernames: "", personalMessage: "" });
+          }}
+          onSubmit={handleSendInvitationsSubmit}
+          formData={inviteForm}
+          setFormData={setInviteForm}
+          loading={isLoading}
+        />
+      )}
+
+      {showParticipantsModal && (
+        <ParticipantsModal
+          isOpen={showParticipantsModal}
+          onClose={() => setShowParticipantsModal(false)}
+          loading={isLoading}
+        />
+      )}
+
+      {showSearchModal && (
+        <SearchModal
+          isOpen={showSearchModal}
+          onClose={() => {
+            setShowSearchModal(false);
+            setSearchForm({
+              location: "",
+              eventType: "",
+              startDate: "",
+              endDate: "",
+              isOnline: "",
+              organizerName: "",
+              title: "",
+              description: ""
+            });
+          }}
+          onSubmit={handleSearchEventsSubmit}
+          formData={searchForm}
+          setFormData={setSearchForm}
+          loading={isLoading}
+          eventTypeOptions={EVENT_TYPE_OPTIONS}
+        />
       )}
     </div>
   );
 };
 
-export default Events;
+export default Events; 

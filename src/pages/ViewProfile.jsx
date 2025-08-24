@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import axios from "axios";
+import apiClient from "../utils/apiClient";
 import {
   ArrowLeft,
   MapPin,
@@ -19,12 +19,13 @@ import {
   Calendar,
   Tag,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
+import { PhotoDisplay } from "../components/PhotoManager";
+import { getProfilePhotoUrl, getCoverPhotoUrl } from "../utils/photoApi";
 
 const ViewProfile = () => {
-  const API_BASE = process.env.REACT_APP_API_BASE_URL;
   const { userId } = useParams();
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
@@ -33,14 +34,28 @@ const ViewProfile = () => {
   const [interests, setInterests] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionLoading, setConnectionLoading] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(null);
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState(null);
+
+  const fetchPhotos = async () => {
+    try {
+      const [profileData, coverData] = await Promise.all([
+        getProfilePhotoUrl(userId),
+        getCoverPhotoUrl(userId)
+      ]);
+      
+      // Handle the new response format
+      setProfilePhotoUrl(profileData.photoUrl);
+      setCoverPhotoUrl(coverData.photoUrl);
+    } catch (error) {
+      console.error('Failed to load photos:', error);
+      // Don't throw error, just log it - photos are optional
+    }
+  };
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/profile/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await apiClient.get(`/profile/${userId}`);
 
       const profile = response.data.data;
       console.log("Fetched Profile:", profile);
@@ -58,15 +73,21 @@ const ViewProfile = () => {
 
   const fetchExperiences = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/experiences/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await apiClient.get(`/experiences/${userId}`);
 
       // Handle both array and object response
       const experiencesData = response.data.data || [];
-      setExperiences(Array.isArray(experiencesData) ? experiencesData : []);
+      console.log("Fetched Experiences:", experiencesData);
+      
+      // Ensure we have an array of experience objects
+      if (Array.isArray(experiencesData)) {
+        setExperiences(experiencesData);
+      } else if (experiencesData && typeof experiencesData === 'object') {
+        // If it's a single object, wrap it in an array
+        setExperiences([experiencesData]);
+      } else {
+        setExperiences([]);
+      }
     } catch (err) {
       console.error("Failed to fetch experiences", err);
       setExperiences([]);
@@ -75,20 +96,37 @@ const ViewProfile = () => {
 
   const fetchInterests = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/interests/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      const response = await apiClient.get(`/interests/${userId}`);
 
-      // Handle both array and object response, and extract interest strings
+      // Handle both array and object response
       const interestsData = response.data.data || [];
-      const processedInterests = Array.isArray(interestsData)
-        ? interestsData.map((item) =>
-            typeof item === "string" ? item : item.interest
-          )
-        : [];
-      setInterests(processedInterests);
+      console.log("Fetched Interests:", interestsData);
+      
+      // Ensure we have an array of interest objects
+      if (Array.isArray(interestsData)) {
+        // Map to ensure each item has the correct structure
+        const processedInterests = interestsData.map((item) => {
+          if (typeof item === "string") {
+            return { id: Math.random(), interest: item };
+          } else if (item && typeof item === "object") {
+            return {
+              id: item.id || Math.random(),
+              interest: item.interest || item.name || "Unknown Interest"
+            };
+          }
+          return { id: Math.random(), interest: "Unknown Interest" };
+        });
+        setInterests(processedInterests);
+      } else if (interestsData && typeof interestsData === 'object') {
+        // If it's a single object, wrap it in an array
+        const processedInterest = {
+          id: interestsData.id || Math.random(),
+          interest: interestsData.interest || interestsData.name || "Unknown Interest"
+        };
+        setInterests([processedInterest]);
+      } else {
+        setInterests([]);
+      }
     } catch (err) {
       console.error("Failed to fetch interests", err);
       setInterests([]);
@@ -100,15 +138,9 @@ const ViewProfile = () => {
 
     setConnectionLoading(true);
     try {
-      const response = await axios.post(
-        `${API_BASE}/connections/request`,
-        { recipientUsername: userId }, // Use username instead of recipientId
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      const response = await apiClient.post(`/connections/request`, {
+        recipientUsername: userId,
+      });
 
       if (response.data.code === "200" || response.data.code === 200) {
         setIsConnected(true);
@@ -127,7 +159,8 @@ const ViewProfile = () => {
   };
 
   const handleMessage = () => {
-    navigate(`/chat/${userId}`);
+    // Chat functionality removed
+    alert("Chat feature has been removed from this application.");
   };
 
   const handleGoBack = () => {
@@ -139,6 +172,7 @@ const ViewProfile = () => {
       fetchProfile();
       fetchExperiences();
       fetchInterests();
+      fetchPhotos();
     }
   }, [userId, user?.token]);
 
@@ -211,9 +245,10 @@ const ViewProfile = () => {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
         {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
-          <img
-            src="/cover-image.jpg"
+          <PhotoDisplay
+            photoUrl={coverPhotoUrl}
             alt="Cover"
+            type="cover"
             className="w-full h-full object-cover"
           />
         </div>
@@ -221,17 +256,11 @@ const ViewProfile = () => {
         <div className="px-4 sm:px-8 pb-8 relative">
           {/* Profile Picture */}
           <div className="absolute -top-16 left-4 sm:left-8">
-            <img
-              src={
-                profileData.avatar ||
-                "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1"
-              }
+            <PhotoDisplay
+              photoUrl={profilePhotoUrl}
               alt={profileData.name}
+              type="profile"
               className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
-              onError={(e) => {
-                e.target.src =
-                  "https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=1";
-              }}
             />
           </div>
 
@@ -371,11 +400,11 @@ const ViewProfile = () => {
               <div className="flex flex-wrap gap-2">
                 {interests.map((interest, index) => (
                   <div
-                    key={index}
+                    key={interest.id || index}
                     className="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-3 py-1 rounded-full text-sm flex items-center gap-1"
                   >
                     <Tag className="h-3 w-3" />
-                    <span>{interest}</span>
+                    <span>{interest.interest}</span>
                   </div>
                 ))}
               </div>

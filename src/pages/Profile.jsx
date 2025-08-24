@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import apiClient from "../utils/apiClient";
 import {
   Camera,
   Edit3,
@@ -17,15 +17,30 @@ import {
   Plus,
   Trash2,
   Facebook,
+  Calendar,
+  User,
+  Award,
+  MessageCircle,
+  Share2,
+  MoreHorizontal,
+  Bookmark,
+  Heart,
+  Star,
+  CheckCircle,
+  ExternalLink,
+  Users,
 } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
+import { useUnifiedAuth } from "../context/UnifiedAuthContext";
+import { Card, Button, Avatar, Badge, Input } from "../components/ui";
+import {
+  PhotoDisplay,
+  ProfilePhotoUploadButton,
+  CoverPhotoUploadButton,
+  usePhotoManager,
+} from "../components/PhotoManager";
 
 const Profile = () => {
-  const API_BASE =
-    process.env.REACT_APP_API_BASE_URL ||
-    "http://localhost:8000/ijaa/api/v1/user";
-
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -45,6 +60,30 @@ const Profile = () => {
 
   const [errors, setErrors] = useState({});
 
+  const handlePhotoUpdate = (type, photoUrl) => {
+    // This will be called by the photo manager when photos are updated
+    console.log(`Photo updated: ${type}`, photoUrl);
+  };
+
+  // Photo management
+  const {
+    profilePhotoUrl,
+    coverPhotoUrl,
+    loading: photoLoading,
+    error: photoError,
+    handleFileUpload,
+    reloadPhotos,
+  } = usePhotoManager({
+    userId: user?.userId,
+    onPhotoUpdate: handlePhotoUpdate,
+  });
+  // Set loading to false if photo loading fails
+  useEffect(() => {
+    if (photoError && loading) {
+      setLoading(false);
+    }
+  }, [photoError, loading]);
+
   const validateFields = () => {
     const requiredFields = ["name", "profession", "location", "bio"];
     const newErrors = {};
@@ -59,24 +98,95 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await axios.get(`${API_BASE}/profile/${user?.userId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      console.log("Fetching profile for user:", user?.userId);
+
+      if (!user?.userId) {
+        console.error("No user ID available");
+        setLoading(false);
+        return;
+      }
+
+      const response = await apiClient.get(`/profile/${user?.userId}`);
+      console.log("Profile API Response:", response);
+
+      if (!response.data || !response.data.data) {
+        console.error("Invalid profile response structure:", response);
+        throw new Error("Invalid profile response structure");
+      }
 
       const profile = response.data.data;
       console.log("Fetched Profile:", profile);
-      setProfileData(profile);
+
+      if (!profile) {
+        console.error("No profile data received");
+        throw new Error("No profile data received");
+      }
+
+      // Ensure all required fields are present with proper fallbacks
+      const profileWithDefaults = {
+        userId: profile.userId || user?.userId,
+        name: profile.name || user?.name || "",
+        profession: profile.profession || user?.profession || "",
+        location: profile.location || user?.location || "",
+        bio: profile.bio || user?.bio || "",
+        phone: profile.phone || user?.phone || "",
+        linkedIn: profile.linkedIn || user?.linkedIn || "",
+        website: profile.website || user?.website || "",
+        batch: profile.batch || user?.batch || "",
+        facebook: profile.facebook || user?.facebook || "",
+        email: profile.email || user?.email || "",
+        connections: profile.connections || user?.connections || 0,
+        showPhone: profile.showPhone !== undefined ? profile.showPhone : true,
+        showLinkedIn:
+          profile.showLinkedIn !== undefined ? profile.showLinkedIn : true,
+        showWebsite:
+          profile.showWebsite !== undefined ? profile.showWebsite : true,
+        showEmail: profile.showEmail !== undefined ? profile.showEmail : true,
+        showFacebook:
+          profile.showFacebook !== undefined ? profile.showFacebook : true,
+        ...profile, // Spread any additional fields
+      };
+
+      console.log("Profile with defaults:", profileWithDefaults);
+      setProfileData(profileWithDefaults);
       setVisibility({
-        showPhone: profile.showPhone,
-        showLinkedIn: profile.showLinkedIn,
-        showWebsite: profile.showWebsite,
-        showEmail: profile.showEmail,
-        showFacebook: profile.showFacebook,
+        showPhone: profileWithDefaults.showPhone,
+        showLinkedIn: profileWithDefaults.showLinkedIn,
+        showWebsite: profileWithDefaults.showWebsite,
+        showEmail: profileWithDefaults.showEmail,
+        showFacebook: profileWithDefaults.showFacebook,
       });
     } catch (err) {
       console.error("Failed to fetch profile", err);
+      // Set default profile data on error, using user context data as fallback
+      const defaultProfile = {
+        userId: user?.userId,
+        name: user?.name || "",
+        profession: user?.profession || "",
+        location: user?.location || "",
+        bio: user?.bio || "",
+        phone: user?.phone || "",
+        linkedIn: user?.linkedIn || "",
+        website: user?.website || "",
+        batch: user?.batch || "",
+        facebook: user?.facebook || "",
+        email: user?.email || "",
+        connections: user?.connections || 0,
+        showPhone: true,
+        showLinkedIn: true,
+        showWebsite: true,
+        showEmail: true,
+        showFacebook: true,
+      };
+      console.log("Setting default profile data:", defaultProfile);
+      setProfileData(defaultProfile);
+      setVisibility({
+        showPhone: true,
+        showLinkedIn: true,
+        showWebsite: true,
+        showEmail: true,
+        showFacebook: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -84,53 +194,84 @@ const Profile = () => {
 
   const fetchExperiences = async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE}/experiences/${user?.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
-      setExperiences(response.data.data || []);
+      const response = await apiClient.get(`/experiences/${user?.userId}`);
+      console.log("Experiences API Response:", response);
+
+      if (!response.data || !response.data.data) {
+        console.error("Invalid experiences response structure:", response);
+        setExperiences([]);
+        return;
+      }
+
+      const experiencesData = response.data.data;
+      console.log("Fetched Experiences:", experiencesData);
+
+      // Handle different response formats
+      if (Array.isArray(experiencesData)) {
+        setExperiences(experiencesData);
+      } else if (experiencesData && typeof experiencesData === "object") {
+        // If it's a single object, wrap it in an array
+        setExperiences([experiencesData]);
+      } else {
+        setExperiences([]);
+      }
     } catch (err) {
       console.error("Failed to fetch experiences", err);
+      setExperiences([]);
     }
   };
 
   const fetchInterests = async () => {
     try {
-      const response = await axios.get(
-        `${API_BASE}/interests/${user?.userId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
-      setInterests(response.data.data || []);
+      const response = await apiClient.get(`/interests/${user?.userId}`);
+      console.log("Interests API Response:", response);
+
+      if (!response.data || !response.data.data) {
+        console.error("Invalid interests response structure:", response);
+        setInterests([]);
+        return;
+      }
+
+      const interestsData = response.data.data;
+      console.log("Fetched Interests:", interestsData);
+
+      // Handle different response formats
+      if (Array.isArray(interestsData)) {
+        setInterests(interestsData);
+      } else if (interestsData && typeof interestsData === "object") {
+        // If it's a single object, wrap it in an array
+        setInterests([interestsData]);
+      } else {
+        setInterests([]);
+      }
     } catch (err) {
       console.error("Failed to fetch interests", err);
+      setInterests([]);
     }
   };
 
   const updateSection = async (sectionName, payload) => {
     try {
-      // Add userId to payload for backend
-      const payloadWithUserId = {
-        ...payload,
-        userId: user?.userId,
-      };
+      let endpoint;
+      let requestPayload;
 
-      const response = await axios.put(
-        `${API_BASE}/${sectionName}`,
-        payloadWithUserId,
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      if (sectionName === "profile") {
+        // For profile update, use PUT /profile endpoint
+        endpoint = "/profile";
+        requestPayload = {
+          ...payload,
+          userId: user?.userId,
+        };
+      } else if (sectionName === "visibility") {
+        // For visibility update, use PUT /visibility endpoint
+        endpoint = "/visibility";
+        requestPayload = payload; // Don't include userId for visibility
+      } else {
+        endpoint = `/${sectionName}`;
+        requestPayload = payload;
+      }
+
+      const response = await apiClient.put(endpoint, requestPayload);
 
       const updatedProfile = response.data.data;
       setProfileData(updatedProfile);
@@ -155,17 +296,15 @@ const Profile = () => {
     }
 
     try {
-      // Add userId to experience data
-      const experienceWithUserId = {
-        ...newExperience,
-        userId: user?.userId,
+      // According to API docs: POST /experiences with { title, company, period, description }
+      const experienceData = {
+        title: newExperience.title,
+        company: newExperience.company,
+        period: newExperience.period,
+        description: newExperience.description,
       };
 
-      await axios.post(`${API_BASE}/experiences`, experienceWithUserId, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      await apiClient.post(`/experiences`, experienceData);
 
       setNewExperience({ title: "", company: "", period: "", description: "" });
       setShowAddExperience(false);
@@ -178,12 +317,8 @@ const Profile = () => {
 
   const deleteExperience = async (experienceId) => {
     try {
-      // Backend expects userId in URL path: /experiences/{userId}
-      await axios.delete(`${API_BASE}/experiences/${experienceId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      // According to API docs: DELETE /experiences/{experienceId}
+      await apiClient.delete(`/experiences/${experienceId}`);
       fetchExperiences();
     } catch (err) {
       console.error("Failed to delete experience", err);
@@ -198,16 +333,8 @@ const Profile = () => {
     }
 
     try {
-      // Backend expects { interest: "value" } in request body
-      await axios.post(
-        `${API_BASE}/interests`,
-        { interest: newInterest.trim() },
-        {
-          headers: {
-            Authorization: `Bearer ${user?.token}`,
-          },
-        }
-      );
+      // According to API docs: POST /interests with { interest: "value" }
+      await apiClient.post(`/interests`, { interest: newInterest.trim() });
 
       // Refresh the interests list
       fetchInterests();
@@ -225,12 +352,8 @@ const Profile = () => {
 
   const deleteInterest = async (interestId) => {
     try {
-      // Backend expects userId in URL path: /interests/{userId}
-      await axios.delete(`${API_BASE}/interests/${interestId}`, {
-        headers: {
-          Authorization: `Bearer ${user?.token}`,
-        },
-      });
+      // According to API docs: DELETE /interests/{interestId}
+      await apiClient.delete(`/interests/${interestId}`);
 
       fetchInterests();
     } catch (err) {
@@ -248,161 +371,135 @@ const Profile = () => {
     }
   };
 
-  const handleExperienceChange = (e) => {
-    const { name, value } = e.target;
-    setNewExperience({ ...newExperience, [name]: value });
+  const toggleVisibility = (field) => {
+    setVisibility((prev) => ({
+      ...prev,
+      [field]: !prev[field],
+    }));
   };
 
   const handleSave = async () => {
-    if (!validateFields()) return;
+    if (!validateFields()) {
+      return;
+    }
 
-    // Combine profile data with visibility settings
-    const payload = {
+    // Update both profile data and visibility settings
+    const updatedProfileData = {
       ...profileData,
       ...visibility,
     };
 
-    await updateSection("basic", payload);
+    await updateSection("profile", updatedProfileData);
   };
 
-  const handleCancel = () => {
-    setIsEditing(false);
-    setErrors({});
-    setShowAddExperience(false);
-    setShowAddInterest(false);
-    setNewExperience({ title: "", company: "", period: "", description: "" });
-    setNewInterest("");
-    // Reset to original data
-    fetchProfile();
-  };
+  const renderContactField = (
+    label,
+    value,
+    Icon,
+    isLink = false,
+    isVisible = true
+  ) => {
+    // Don't show if value doesn't exist or visibility is false
+    if (!value || !isVisible) return null;
 
-  const toggleVisibility = async (field) => {
-    const updated = { ...visibility, [field]: !visibility[field] };
-    setVisibility(updated);
-
-    if (!isEditing) {
-      await updateSection("visibility", updated);
-    }
+    return (
+      <div className="flex items-start gap-3">
+        <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-gray-900 dark:text-white">
+            {label}
+          </p>
+          {isLink ? (
+            <a
+              href={value}
+              className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate block"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {label === "Website"
+                ? "Visit Website"
+                : label === "Facebook"
+                ? "View Profile"
+                : "View Profile"}
+            </a>
+          ) : (
+            <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
+              {value}
+            </p>
+          )}
+        </div>
+      </div>
+    );
   };
 
   useEffect(() => {
-    if (user?.userId && user?.token) {
+    if (user?.userId) {
       fetchProfile();
       fetchExperiences();
       fetchInterests();
+
+      // Set a timeout to prevent infinite loading
+      const timeout = setTimeout(() => {
+        if (loading) {
+          setLoading(false);
+        }
+      }, 10000); // 10 seconds timeout
+
+      return () => clearTimeout(timeout);
     }
-  }, [user?.userId, user?.token]);
+  }, [user?.userId]); // Removed loading from dependency array to prevent infinite loop
 
-  if (loading)
+  if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-screen">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600"></div>
-      </div>
-    );
-
-  const renderField = (
-    label,
-    name,
-    Icon,
-    isLink = false,
-    visibilityKey = null
-  ) => {
-    const value = profileData[name];
-    const showVisibilityToggle =
-      visibilityKey &&
-      [
-        "showPhone",
-        "showLinkedIn",
-        "showWebsite",
-        "showEmail",
-        "showFacebook",
-      ].includes(visibilityKey);
-
-    if (!value && !isEditing) return null;
-
-    return (
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-3 flex-1 min-w-0">
-          <Icon className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-0.5 flex-shrink-0" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium text-gray-900 dark:text-white">
-              {label}
-            </p>
-            {isEditing ? (
-              <div>
-                <input
-                  type="text"
-                  name={name}
-                  value={value || ""}
-                  onChange={handleInputChange}
-                  className="text-sm text-gray-600 dark:text-gray-300 bg-white dark:bg-gray-800 border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                />
-                {errors[name] && (
-                  <p className="text-xs text-red-500 mt-1">{errors[name]}</p>
-                )}
-              </div>
-            ) : isLink ? (
-              <a
-                href={value}
-                className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 truncate block"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {label === "Website"
-                  ? "Visit Website"
-                  : label === "Facebook"
-                  ? "View Profile"
-                  : "View Profile"}
-              </a>
-            ) : (
-              <p className="text-sm text-gray-600 dark:text-gray-300 truncate">
-                {value}
-              </p>
-            )}
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="animate-pulse">
+          <div className="bg-gray-300 h-48 rounded-t-2xl"></div>
+          <div className="bg-white dark:bg-gray-800 p-8 rounded-b-2xl">
+            <div className="h-6 bg-gray-300 rounded w-1/4 mb-4"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
+            <div className="h-4 bg-gray-300 rounded w-1/4"></div>
           </div>
         </div>
-        {showVisibilityToggle && (
-          <button
-            onClick={() => toggleVisibility(visibilityKey)}
-            className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 flex-shrink-0 ml-2"
-          >
-            {visibility[visibilityKey] ? (
-              <Eye className="h-4 w-4" />
-            ) : (
-              <EyeOff className="h-4 w-4" />
-            )}
-          </button>
-        )}
       </div>
     );
-  };
+  }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
         {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
-          <img
-            src="/cover-image.jpg"
+          <PhotoDisplay
+            photoUrl={coverPhotoUrl}
             alt="Cover"
+            type="cover"
             className="w-full h-full object-cover"
           />
-          <button className="absolute top-4 right-4 bg-white/20 text-white p-2 rounded-lg">
-            <Camera className="h-5 w-5" />
-          </button>
+          <CoverPhotoUploadButton
+            userId={user?.userId}
+            onPhotoUpdate={handlePhotoUpdate}
+            onFileUpload={handleFileUpload}
+            isEditing={isEditing}
+          />
         </div>
 
         <div className="px-4 sm:px-8 pb-8 relative">
           {/* Profile Picture */}
           <div className="absolute -top-16 left-4 sm:left-8">
-            <img
-              src={user?.avatar || "/dp.jpg"}
-              alt={profileData.name}
-              className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
-            />
-            <button className="absolute bottom-2 right-2 bg-blue-600 text-white p-2 rounded-full">
-              <Camera className="h-4 w-4" />
-            </button>
+            <div className="relative">
+              <PhotoDisplay
+                photoUrl={profilePhotoUrl}
+                alt={profileData.name || "Profile"}
+                type="profile"
+                className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
+              />
+              <ProfilePhotoUploadButton
+                userId={user?.userId}
+                onPhotoUpdate={handlePhotoUpdate}
+                onFileUpload={handleFileUpload}
+                isEditing={isEditing}
+              />
+            </div>
           </div>
 
           {/* Header Content */}
@@ -410,135 +507,63 @@ const Profile = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div className="space-y-2 flex-1">
                 {/* Name */}
-                {isEditing ? (
-                  <div>
-                    <input
-                      type="text"
-                      name="name"
-                      value={profileData.name || ""}
-                      onChange={handleInputChange}
-                      className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white bg-transparent border-b-2 border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                      placeholder="Your Name"
-                    />
-                    {errors.name && (
-                      <p className="text-sm text-red-500 mt-1">{errors.name}</p>
-                    )}
-                  </div>
-                ) : (
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    {profileData.name || "Your Name"}
-                  </h1>
-                )}
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
+                  {profileData.name || "Your Name"}
+                </h1>
 
                 {/* Profession */}
-                {isEditing ? (
-                  <div>
-                    <input
-                      type="text"
-                      name="profession"
-                      value={profileData.profession || ""}
-                      onChange={handleInputChange}
-                      className="text-lg text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none w-full"
-                      placeholder="Your Profession"
-                    />
-                    {errors.profession && (
-                      <p className="text-sm text-red-500 mt-1">
-                        {errors.profession}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <p className="text-lg text-gray-600 dark:text-gray-300">
-                    {profileData.profession || "Your Profession"}
-                  </p>
-                )}
+                <p className="text-lg text-gray-600 dark:text-gray-300">
+                  {profileData.profession || "Your Profession"}
+                </p>
 
                 {/* Location and Batch */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
-                  {isEditing ? (
+                  {profileData.location && (
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      <input
-                        type="text"
-                        name="location"
-                        value={profileData.location || ""}
-                        onChange={handleInputChange}
-                        className="bg-transparent border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
-                        placeholder="Location"
-                      />
-                      {errors.location && (
-                        <p className="text-xs text-red-500 ml-2">
-                          {errors.location}
-                        </p>
-                      )}
+                      <span>{profileData.location}</span>
                     </div>
-                  ) : (
-                    profileData.location && (
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{profileData.location}</span>
-                      </div>
-                    )
                   )}
 
-                  {/* Batch field - now editable */}
-                  {isEditing ? (
+                  {profileData.batch && (
                     <div className="flex items-center gap-1">
                       <GraduationCap className="h-4 w-4" />
-                      <select
-                        name="batch"
-                        value={profileData.batch || ""}
-                        onChange={handleInputChange}
-                        className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-b border-gray-300 dark:border-gray-600 focus:border-blue-500 outline-none"
-                      >
-                        <option value="">Select Batch</option>
-                        {Array.from({ length: 16 }, (_, i) => i + 1).map(
-                          (batch) => (
-                            <option key={batch} value={batch.toString()}>
-                              {batch}
-                            </option>
-                          )
-                        )}
-                      </select>
+                      <span>Batch {profileData.batch}</span>
                     </div>
-                  ) : (
-                    profileData.batch && (
-                      <div className="flex items-center gap-1">
-                        <GraduationCap className="h-4 w-4" />
-                        <span>Batch {profileData.batch}</span>
-                      </div>
-                    )
                   )}
+
+                  <div className="flex items-center gap-1">
+                    <Users className="h-4 w-4" />
+                    <span>{profileData.connections || 0} connections</span>
+                  </div>
                 </div>
               </div>
 
               {/* Action Buttons */}
               <div className="flex gap-2">
-                {isEditing ? (
-                  <>
-                    <button
-                      onClick={handleSave}
-                      className="bg-green-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <Save className="h-4 w-4" />
-                      <span>Save</span>
-                    </button>
-                    <button
-                      onClick={handleCancel}
-                      className="bg-gray-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <X className="h-4 w-4" />
-                      <span>Cancel</span>
-                    </button>
-                  </>
-                ) : (
-                  <button
+                {!isEditing ? (
+                  <Button
                     onClick={() => setIsEditing(true)}
-                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 w-full sm:w-auto"
+                    icon={<Edit3 className="h-4 w-4" />}
                   >
-                    <Edit3 className="h-4 w-4" />
-                    <span>Edit Profile</span>
-                  </button>
+                    Edit Profile
+                  </Button>
+                ) : (
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleSave}
+                      icon={<Save className="h-4 w-4" />}
+                    >
+                      Save Changes
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setIsEditing(false)}
+                      icon={<X className="h-4 w-4" />}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -555,237 +580,449 @@ const Profile = () => {
               About
             </h2>
             {isEditing ? (
-              <div>
-                <textarea
-                  name="bio"
-                  value={profileData.bio || ""}
-                  onChange={handleInputChange}
-                  rows={4}
-                  className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                  placeholder="Tell us about yourself..."
-                />
-                {errors.bio && (
-                  <p className="text-sm text-red-500 mt-2">{errors.bio}</p>
-                )}
+              <div className="space-y-6">
+                {/* Basic Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Basic Information
+                  </h4>
+                  <Input
+                    label="Full Name"
+                    name="name"
+                    value={profileData.name || ""}
+                    onChange={handleInputChange}
+                    error={errors.name}
+                    required
+                  />
+                  <Input
+                    label="Profession"
+                    name="profession"
+                    value={profileData.profession || ""}
+                    onChange={handleInputChange}
+                    error={errors.profession}
+                    required
+                  />
+                  <Input
+                    label="Location"
+                    name="location"
+                    value={profileData.location || ""}
+                    onChange={handleInputChange}
+                    error={errors.location}
+                    leftIcon={<MapPin className="h-4 w-4" />}
+                    required
+                  />
+                  <Input
+                    label="Batch"
+                    name="batch"
+                    value={profileData.batch || ""}
+                    onChange={handleInputChange}
+                    leftIcon={<GraduationCap className="h-4 w-4" />}
+                    placeholder="e.g., 2020"
+                  />
+                </div>
+
+                {/* Bio Section */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Bio
+                  </h4>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      About Me <span className="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      name="bio"
+                      value={profileData.bio || ""}
+                      onChange={handleInputChange}
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                      placeholder="Tell us about yourself..."
+                    />
+                    {errors.bio && (
+                      <p className="mt-1 text-sm text-red-600">{errors.bio}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Contact Information */}
+                <div className="space-y-4">
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Contact Information
+                  </h4>
+
+                  {/* Email */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Email Address
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility("showEmail")}
+                        icon={
+                          visibility.showEmail ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showEmail ? "Visible" : "Hidden"}
+                      </Button>
+                    </div>
+                    <Input
+                      name="email"
+                      value={profileData.email || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Mail className="h-4 w-4" />}
+                      placeholder="your.email@example.com"
+                    />
+                  </div>
+
+                  {/* Phone */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Phone Number
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility("showPhone")}
+                        icon={
+                          visibility.showPhone ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showPhone ? "Visible" : "Hidden"}
+                      </Button>
+                    </div>
+                    <Input
+                      name="phone"
+                      value={profileData.phone || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Phone className="h-4 w-4" />}
+                      placeholder="+1-555-123-4567"
+                    />
+                  </div>
+
+                  {/* LinkedIn */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        LinkedIn Profile
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility("showLinkedIn")}
+                        icon={
+                          visibility.showLinkedIn ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showLinkedIn ? "Visible" : "Hidden"}
+                      </Button>
+                    </div>
+                    <Input
+                      name="linkedIn"
+                      value={profileData.linkedIn || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Linkedin className="h-4 w-4" />}
+                      placeholder="https://linkedin.com/in/yourprofile"
+                    />
+                  </div>
+
+                  {/* Website */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Website
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility("showWebsite")}
+                        icon={
+                          visibility.showWebsite ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showWebsite ? "Visible" : "Hidden"}
+                      </Button>
+                    </div>
+                    <Input
+                      name="website"
+                      value={profileData.website || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Globe className="h-4 w-4" />}
+                      placeholder="https://yourwebsite.com"
+                    />
+                  </div>
+
+                  {/* Facebook */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                        Facebook Profile
+                      </label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleVisibility("showFacebook")}
+                        icon={
+                          visibility.showFacebook ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        {visibility.showFacebook ? "Visible" : "Hidden"}
+                      </Button>
+                    </div>
+                    <Input
+                      name="facebook"
+                      value={profileData.facebook || ""}
+                      onChange={handleInputChange}
+                      leftIcon={<Facebook className="h-4 w-4" />}
+                      placeholder="https://facebook.com/yourprofile"
+                    />
+                  </div>
+                </div>
               </div>
             ) : (
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {profileData.bio || "No bio available"}
+                {profileData.bio ||
+                  "No bio available. Click edit to add your bio."}
               </p>
             )}
           </div>
 
           {/* Experience Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Experience
               </h2>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowAddExperience(true)}
-                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                icon={<Plus className="h-4 w-4" />}
               >
-                <Plus className="h-4 w-4" />
                 Add Experience
-              </button>
+              </Button>
             </div>
 
-            {/* Add Experience Form */}
             {showAddExperience && (
-              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Add New Experience
-                </h3>
+              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Add Experience
+                </h4>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input
-                      type="text"
-                      name="title"
-                      value={newExperience.title}
-                      onChange={handleExperienceChange}
-                      placeholder="Job Title"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                    />
-                    <input
-                      type="text"
-                      name="company"
-                      value={newExperience.company}
-                      onChange={handleExperienceChange}
-                      placeholder="Company Name"
-                      className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                    />
-                  </div>
-                  <input
-                    type="text"
+                  <Input
+                    label="Job Title"
+                    name="title"
+                    value={newExperience.title}
+                    onChange={(e) =>
+                      setNewExperience({
+                        ...newExperience,
+                        title: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                  <Input
+                    label="Company"
+                    name="company"
+                    value={newExperience.company}
+                    onChange={(e) =>
+                      setNewExperience({
+                        ...newExperience,
+                        company: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                  <Input
+                    label="Period"
                     name="period"
                     value={newExperience.period}
-                    onChange={handleExperienceChange}
-                    placeholder="Time Period (e.g., Jan 2020 - Present)"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
+                    onChange={(e) =>
+                      setNewExperience({
+                        ...newExperience,
+                        period: e.target.value,
+                      })
+                    }
+                    placeholder="e.g., 2020 - Present"
                   />
-                  <textarea
-                    name="description"
-                    value={newExperience.description}
-                    onChange={handleExperienceChange}
-                    rows={3}
-                    placeholder="Job Description"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                  />
-                  <div className="flex gap-2">
-                    <button
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      name="description"
+                      value={newExperience.description}
+                      onChange={(e) =>
+                        setNewExperience({
+                          ...newExperience,
+                          description: e.target.value,
+                        })
+                      }
+                      rows={3}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                      placeholder="Describe your role and achievements..."
+                    />
+                  </div>
+                  <div className="flex space-x-3">
+                    <Button
                       onClick={addExperience}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      icon={<Plus className="h-4 w-4" />}
                     >
                       Add Experience
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAddExperience(false);
-                        setNewExperience({
-                          title: "",
-                          company: "",
-                          period: "",
-                          description: "",
-                        });
-                      }}
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowAddExperience(false)}
+                      icon={<X className="h-4 w-4" />}
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Experience List */}
             {experiences.length > 0 ? (
               <div className="space-y-4">
-                {experiences.map((exp, index) => (
+                {experiences.map((exp) => (
                   <div
-                    key={exp.id || index}
-                    className="flex items-start justify-between p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
+                    key={exp.id}
+                    className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
                   >
-                    <div className="flex items-start gap-3">
-                      <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-1" />
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                          {exp.title}
-                        </h3>
-                        <p className="text-gray-600 dark:text-gray-300">
-                          {exp.company}
+                    <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-1" />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                        {exp.title}
+                      </h3>
+                      <p className="text-gray-600 dark:text-gray-300">
+                        {exp.company}
+                      </p>
+                      {exp.period && (
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {exp.period}
                         </p>
-                        {exp.period && (
-                          <p className="text-sm text-gray-500 dark:text-gray-400">
-                            {exp.period}
-                          </p>
-                        )}
-                        {exp.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-                            {exp.description}
-                          </p>
-                        )}
-                      </div>
+                      )}
+                      {exp.description && (
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                          {exp.description}
+                        </p>
+                      )}
                     </div>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => deleteExperience(exp.id)}
-                      className="text-red-600 hover:text-red-700 p-1"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      icon={<Trash2 className="h-4 w-4" />}
+                      className="text-error-600 hover:text-error-700"
+                      data-testid={`delete-experience-${exp.id}`}
+                    />
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                No experience added yet
+                No experience added yet. Click "Add Experience" to get started.
               </div>
             )}
           </div>
 
           {/* Interests Section */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                 Interests
               </h2>
-              <button
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={() => setShowAddInterest(true)}
-                className="text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+                icon={<Plus className="h-4 w-4" />}
               >
-                <Plus className="h-4 w-4" />
                 Add Interest
-              </button>
+              </Button>
             </div>
 
-            {/* Add Interest Form */}
             {showAddInterest && (
-              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Add New Interest
-                </h3>
+              <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
+                <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Add Interest
+                </h4>
                 <div className="space-y-4">
-                  <input
-                    type="text"
+                  <Input
+                    label="Interest"
                     value={newInterest}
                     onChange={(e) => setNewInterest(e.target.value)}
-                    placeholder="Enter interest (e.g., Java, React, Machine Learning)"
-                    className="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 outline-none"
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        addInterest();
-                      }
-                    }}
+                    placeholder="e.g., Machine Learning, Photography"
+                    required
                   />
-                  <div className="flex gap-2">
-                    <button
+                  <div className="flex space-x-3">
+                    <Button
                       onClick={addInterest}
-                      className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                      icon={<Plus className="h-4 w-4" />}
                     >
                       Add Interest
-                    </button>
-                    <button
-                      onClick={() => {
-                        setShowAddInterest(false);
-                        setNewInterest("");
-                      }}
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setShowAddInterest(false)}
+                      icon={<X className="h-4 w-4" />}
                     >
                       Cancel
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
             )}
 
-            {/* Interests List */}
             {interests.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {interests.map((interest, index) => (
-                  <div
-                    key={interest.id || index}
-                    className="bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+                {interests.map((interest) => (
+                  <Badge
+                    key={interest.id}
+                    variant="outline"
+                    removable
+                    onRemove={() => deleteInterest(interest.id)}
+                    data-testid={`remove-interest-${interest.id}`}
                   >
-                    <span>
-                      {typeof interest === "string"
-                        ? interest
-                        : interest.interest}
-                    </span>
-                    <button
-                      onClick={() =>
-                        deleteInterest(
-                          typeof interest === "string" ? interest : interest.id
-                        )
-                      }
-                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
+                    {interest.interest}
+                  </Badge>
                 ))}
               </div>
             ) : (
               <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                No interests added yet
+                No interests added yet. Click "Add Interest" to get started.
               </div>
             )}
           </div>
@@ -799,85 +1036,95 @@ const Profile = () => {
               Contact Information
             </h3>
             <div className="space-y-4">
-              {renderField("Email", "email", Mail, false, "showEmail")}
-              {renderField("Phone", "phone", Phone, false, "showPhone")}
-              {renderField(
+              {renderContactField(
+                "Email",
+                profileData.email,
+                Mail,
+                false,
+                visibility.showEmail
+              )}
+              {renderContactField(
+                "Phone",
+                profileData.phone,
+                Phone,
+                false,
+                visibility.showPhone
+              )}
+              {renderContactField(
                 "LinkedIn",
-                "linkedIn",
+                profileData.linkedIn,
                 Linkedin,
                 true,
-                "showLinkedIn"
+                visibility.showLinkedIn
               )}
-              {renderField(
+              {renderContactField(
                 "Facebook",
-                "facebook",
+                profileData.facebook,
                 Facebook,
                 true,
-                "showFacebook"
+                visibility.showFacebook
               )}
-              {renderField("Website", "website", Globe, true, "showWebsite")}
+              {renderContactField(
+                "Website",
+                profileData.website,
+                Globe,
+                true,
+                visibility.showWebsite
+              )}
             </div>
+
+            {/* Show message if no contact info is visible */}
+            {!visibility.showEmail &&
+              !visibility.showPhone &&
+              !visibility.showLinkedIn &&
+              !visibility.showFacebook &&
+              !visibility.showWebsite && (
+                <div className="text-gray-500 dark:text-gray-400 text-center py-4 text-sm">
+                  Contact information is private
+                </div>
+              )}
           </div>
 
           {/* Profile Stats */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          {/* <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Profile Stats
             </h3>
             <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Profile Views
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  156
-                </span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Profile Views</span>
+                <span className="font-semibold text-gray-900 dark:text-white">1,234</span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Connections
-                </span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Connections</span>
                 <span className="font-semibold text-gray-900 dark:text-white">
                   {profileData.connections || 0}
                 </span>
               </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Groups Joined
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  8
-                </span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">
-                  Events Attended
-                </span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  12
-                </span>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Events Attended</span>
+                <span className="font-semibold text-gray-900 dark:text-white">23</span>
               </div>
             </div>
-          </div>
+          </div> */}
 
-          {/* Profile Completion */}
-          <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl border border-green-200 dark:border-green-800 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-              Profile Completion
+          {/* Quick Actions */}
+          {/* <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Quick Actions
             </h3>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              85% complete
-            </p>
-            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2 mb-4">
-              <div
-                className="bg-green-500 h-2 rounded-full"
-                style={{ width: "85%" }}
-              ></div>
+            <div className="space-y-3">
+              <Button variant="outline" fullWidth icon={<MessageCircle className="h-4 w-4" />}>
+                Send Message
+              </Button>
+              <Button variant="outline" fullWidth icon={<User className="h-4 w-4" />}>
+                Connect
+              </Button>
+              <Button variant="outline" fullWidth icon={<Share2 className="h-4 w-4" />}>
+                Share Profile
+              </Button>
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Add more details to improve your profile visibility
-            </p>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
