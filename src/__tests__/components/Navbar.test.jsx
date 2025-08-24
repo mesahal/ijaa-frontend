@@ -3,9 +3,9 @@ import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
 import Navbar from '../../components/Navbar';
 import { mockUser } from '../utils/test-utils';
 
-// Mock the useAuth hook
-jest.mock('../../context/AuthContext', () => ({
-  useAuth: () => ({
+// Mock the useUnifiedAuth hook
+jest.mock('../../context/UnifiedAuthContext', () => ({
+  useUnifiedAuth: () => ({
     user: mockUser,
     signOut: jest.fn()
   })
@@ -16,6 +16,16 @@ jest.mock('../../context/ThemeContext', () => ({
   useTheme: () => ({
     isDark: false,
     toggleTheme: jest.fn()
+  })
+}));
+
+// Mock the useCurrentUserPhoto hook
+jest.mock('../../hooks/useCurrentUserPhoto', () => ({
+  useCurrentUserPhoto: () => ({
+    profilePhotoUrl: 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/abc123.jpg',
+    loading: false,
+    error: null,
+    hasPhoto: true
   })
 }));
 
@@ -40,11 +50,13 @@ describe('Navbar Component', () => {
     expect(screen.getByText('Search')).toBeInTheDocument();
   });
 
-  test('renders user profile section', () => {
+  test('renders user profile section with profile photo', () => {
     render(<Navbar />);
     
     expect(screen.getByText('Test User')).toBeInTheDocument();
-    expect(screen.getByAltText('Test User')).toBeInTheDocument();
+    const avatar = screen.getByAltText('Test User');
+    expect(avatar).toBeInTheDocument();
+    expect(avatar).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/abc123.jpg');
   });
 
   test('renders theme toggle button', () => {

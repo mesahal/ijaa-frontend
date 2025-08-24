@@ -27,4 +27,3 @@ export const toast = {
 };
 
 export const ToastContainer = () => null;
-export const toast as any = toast;

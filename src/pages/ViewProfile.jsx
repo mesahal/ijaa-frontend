@@ -20,6 +20,8 @@ import {
   Tag,
 } from "lucide-react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
+import { PhotoDisplay } from "../components/PhotoManager";
+import { getProfilePhotoUrl, getCoverPhotoUrl } from "../utils/photoApi";
 
 const ViewProfile = () => {
   const { userId } = useParams();
@@ -32,6 +34,24 @@ const ViewProfile = () => {
   const [interests, setInterests] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionLoading, setConnectionLoading] = useState(false);
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState(null);
+  const [coverPhotoUrl, setCoverPhotoUrl] = useState(null);
+
+  const fetchPhotos = async () => {
+    try {
+      const [profileData, coverData] = await Promise.all([
+        getProfilePhotoUrl(userId),
+        getCoverPhotoUrl(userId)
+      ]);
+      
+      // Handle the new response format
+      setProfilePhotoUrl(profileData.photoUrl);
+      setCoverPhotoUrl(coverData.photoUrl);
+    } catch (error) {
+      console.error('Failed to load photos:', error);
+      // Don't throw error, just log it - photos are optional
+    }
+  };
 
   const fetchProfile = async () => {
     try {
@@ -152,6 +172,7 @@ const ViewProfile = () => {
       fetchProfile();
       fetchExperiences();
       fetchInterests();
+      fetchPhotos();
     }
   }, [userId, user?.token]);
 
@@ -224,9 +245,10 @@ const ViewProfile = () => {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
         {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
-          <img
-            src="/cover-image.jpg"
+          <PhotoDisplay
+            photoUrl={coverPhotoUrl}
             alt="Cover"
+            type="cover"
             className="w-full h-full object-cover"
           />
         </div>
@@ -234,13 +256,11 @@ const ViewProfile = () => {
         <div className="px-4 sm:px-8 pb-8 relative">
           {/* Profile Picture */}
           <div className="absolute -top-16 left-4 sm:left-8">
-            <img
-              src={profileData.avatar || "/dp.png"}
+            <PhotoDisplay
+              photoUrl={profilePhotoUrl}
               alt={profileData.name}
+              type="profile"
               className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
-              onError={(e) => {
-                e.target.src = "/dp.png"; // Fallback image if avatar fails to load
-              }}
             />
           </div>
 

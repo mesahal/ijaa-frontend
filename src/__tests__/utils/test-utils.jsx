@@ -43,10 +43,126 @@ jest.mock('../../utils/sessionManager', () => ({
   onStorageChange: jest.fn(() => jest.fn())
 }));
 
+// Mock photoApi
+jest.mock('../../utils/photoApi', () => ({
+  uploadProfilePhoto: jest.fn(() => Promise.resolve({ fileUrl: 'https://example.com/profile.jpg' })),
+  uploadCoverPhoto: jest.fn(() => Promise.resolve({ fileUrl: 'https://example.com/cover.jpg' })),
+  getProfilePhotoUrl: jest.fn(() => Promise.resolve({ 
+    photoUrl: '/uploads/profile/test.jpg', 
+    hasPhoto: true,
+    exists: true 
+  })),
+  getCoverPhotoUrl: jest.fn(() => Promise.resolve({ 
+    photoUrl: '/uploads/cover/test.jpg', 
+    hasPhoto: true,
+    exists: true 
+  })),
+  deleteProfilePhoto: jest.fn(() => Promise.resolve()),
+  deleteCoverPhoto: jest.fn(() => Promise.resolve()),
+  validateImageFile: jest.fn(() => true),
+  handlePhotoApiError: jest.fn((error) => error.message || 'Photo operation failed')
+}));
+
+// Mock apiClient
+jest.mock('../../utils/apiClient', () => {
+  const mockApiClient = {
+    get: jest.fn((url) => {
+      console.log('Mock API call to:', url);
+      if (url.includes('/profile/')) {
+        console.log('Returning profile data');
+        return Promise.resolve({
+          data: {
+            message: "Profile fetched successfully",
+            code: "200",
+            data: {
+              userId: 'USER_123456',
+              username: 'testuser',
+              name: 'Test User',
+              profession: 'Software Engineer',
+              location: 'New York, NY',
+              bio: 'A passionate developer',
+              phone: '+1-555-123-4567',
+              linkedIn: 'https://linkedin.com/in/testuser',
+              website: 'https://testuser.dev',
+              batch: '2020',
+              facebook: 'https://facebook.com/testuser',
+              email: 'test@example.com',
+              connections: 150,
+              showPhone: true,
+              showLinkedIn: true,
+              showWebsite: true,
+              showEmail: true,
+              showFacebook: true
+            }
+          }
+        });
+      } else if (url.includes('/experiences/')) {
+        console.log('Returning experiences data');
+        return Promise.resolve({
+          data: {
+            message: "Experiences fetched successfully",
+            code: "200",
+            data: [
+              {
+                id: 1,
+                title: 'Senior Developer',
+                company: 'Tech Corp',
+                period: '2022-2024',
+                description: 'Led development team'
+              }
+            ]
+          }
+        });
+      } else if (url.includes('/interests/')) {
+        console.log('Returning interests data');
+        return Promise.resolve({
+          data: {
+            message: "Interests fetched successfully",
+            code: "200",
+            data: [
+              {
+                id: 1,
+                interest: 'Machine Learning'
+              }
+            ]
+          }
+        });
+      }
+      console.log('Returning default empty data for:', url);
+      return Promise.resolve({ data: { data: [] } });
+    }),
+    put: jest.fn(() => Promise.resolve({ data: { data: {} } })),
+    post: jest.fn(() => Promise.resolve({ data: { data: {} } })),
+    delete: jest.fn(() => Promise.resolve({ data: { data: {} } }))
+  };
+  
+  return mockApiClient;
+});
+
 // Mock the UnifiedAuthContext
 jest.mock('../../context/UnifiedAuthContext', () => ({
   useUnifiedAuth: () => ({
-    user: null,
+    user: {
+      userId: 'USER_123456',
+      username: 'testuser',
+      name: 'Test User',
+      email: 'test@example.com',
+      token: 'mock-jwt-token',
+      profession: 'Software Engineer',
+      location: 'New York, NY',
+      bio: 'A passionate developer',
+      phone: '+1-555-123-4567',
+      linkedIn: 'https://linkedin.com/in/testuser',
+      website: 'https://testuser.dev',
+      batch: '2020',
+      facebook: 'https://facebook.com/testuser',
+      connections: 150,
+      showPhone: true,
+      showLinkedIn: true,
+      showWebsite: true,
+      showEmail: true,
+      showFacebook: true
+    },
     admin: null,
     loading: false,
     signIn: jest.fn(),
@@ -54,11 +170,31 @@ jest.mock('../../context/UnifiedAuthContext', () => ({
     signOut: jest.fn(),
     adminSignIn: jest.fn(),
     adminSignOut: jest.fn(),
-    isAuthenticated: () => false,
-    isUser: () => false,
+    isAuthenticated: () => true,
+    isUser: () => true,
     isAdmin: () => false,
-    getCurrentUser: () => null,
-    getCurrentUserType: () => null,
+    getCurrentUser: () => ({
+      userId: 'USER_123456',
+      username: 'testuser',
+      name: 'Test User',
+      email: 'test@example.com',
+      token: 'mock-jwt-token',
+      profession: 'Software Engineer',
+      location: 'New York, NY',
+      bio: 'A passionate developer',
+      phone: '+1-555-123-4567',
+      linkedIn: 'https://linkedin.com/in/testuser',
+      website: 'https://testuser.dev',
+      batch: '2020',
+      facebook: 'https://facebook.com/testuser',
+      connections: 150,
+      showPhone: true,
+      showLinkedIn: true,
+      showWebsite: true,
+      showEmail: true,
+      showFacebook: true
+    }),
+    getCurrentUserType: () => 'user',
   }),
   UnifiedAuthProvider: ({ children }) => <>{children}</>
 }));

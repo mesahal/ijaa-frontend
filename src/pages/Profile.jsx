@@ -32,6 +32,12 @@ import {
 } from "lucide-react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { Card, Button, Avatar, Badge, Input } from "../components/ui";
+import {
+  PhotoDisplay,
+  ProfilePhotoUploadButton,
+  CoverPhotoUploadButton,
+  usePhotoManager,
+} from "../components/PhotoManager";
 
 const Profile = () => {
   const { user } = useUnifiedAuth();
@@ -54,6 +60,30 @@ const Profile = () => {
 
   const [errors, setErrors] = useState({});
 
+  const handlePhotoUpdate = (type, photoUrl) => {
+    // This will be called by the photo manager when photos are updated
+    console.log(`Photo updated: ${type}`, photoUrl);
+  };
+
+  // Photo management
+  const {
+    profilePhotoUrl,
+    coverPhotoUrl,
+    loading: photoLoading,
+    error: photoError,
+    handleFileUpload,
+    reloadPhotos,
+  } = usePhotoManager({
+    userId: user?.userId,
+    onPhotoUpdate: handlePhotoUpdate,
+  });
+  // Set loading to false if photo loading fails
+  useEffect(() => {
+    if (photoError && loading) {
+      setLoading(false);
+    }
+  }, [photoError, loading]);
+
   const validateFields = () => {
     const requiredFields = ["name", "profession", "location", "bio"];
     const newErrors = {};
@@ -69,13 +99,13 @@ const Profile = () => {
   const fetchProfile = async () => {
     try {
       console.log("Fetching profile for user:", user?.userId);
-      
+
       if (!user?.userId) {
         console.error("No user ID available");
         setLoading(false);
         return;
       }
-      
+
       const response = await apiClient.get(`/profile/${user?.userId}`);
       console.log("Profile API Response:", response);
 
@@ -86,12 +116,12 @@ const Profile = () => {
 
       const profile = response.data.data;
       console.log("Fetched Profile:", profile);
-      
+
       if (!profile) {
         console.error("No profile data received");
         throw new Error("No profile data received");
       }
-      
+
       // Ensure all required fields are present with proper fallbacks
       const profileWithDefaults = {
         userId: profile.userId || user?.userId,
@@ -107,13 +137,16 @@ const Profile = () => {
         email: profile.email || user?.email || "",
         connections: profile.connections || user?.connections || 0,
         showPhone: profile.showPhone !== undefined ? profile.showPhone : true,
-        showLinkedIn: profile.showLinkedIn !== undefined ? profile.showLinkedIn : true,
-        showWebsite: profile.showWebsite !== undefined ? profile.showWebsite : true,
+        showLinkedIn:
+          profile.showLinkedIn !== undefined ? profile.showLinkedIn : true,
+        showWebsite:
+          profile.showWebsite !== undefined ? profile.showWebsite : true,
         showEmail: profile.showEmail !== undefined ? profile.showEmail : true,
-        showFacebook: profile.showFacebook !== undefined ? profile.showFacebook : true,
-        ...profile // Spread any additional fields
+        showFacebook:
+          profile.showFacebook !== undefined ? profile.showFacebook : true,
+        ...profile, // Spread any additional fields
       };
-      
+
       console.log("Profile with defaults:", profileWithDefaults);
       setProfileData(profileWithDefaults);
       setVisibility({
@@ -163,7 +196,7 @@ const Profile = () => {
     try {
       const response = await apiClient.get(`/experiences/${user?.userId}`);
       console.log("Experiences API Response:", response);
-      
+
       if (!response.data || !response.data.data) {
         console.error("Invalid experiences response structure:", response);
         setExperiences([]);
@@ -172,11 +205,11 @@ const Profile = () => {
 
       const experiencesData = response.data.data;
       console.log("Fetched Experiences:", experiencesData);
-      
+
       // Handle different response formats
       if (Array.isArray(experiencesData)) {
         setExperiences(experiencesData);
-      } else if (experiencesData && typeof experiencesData === 'object') {
+      } else if (experiencesData && typeof experiencesData === "object") {
         // If it's a single object, wrap it in an array
         setExperiences([experiencesData]);
       } else {
@@ -192,7 +225,7 @@ const Profile = () => {
     try {
       const response = await apiClient.get(`/interests/${user?.userId}`);
       console.log("Interests API Response:", response);
-      
+
       if (!response.data || !response.data.data) {
         console.error("Invalid interests response structure:", response);
         setInterests([]);
@@ -201,11 +234,11 @@ const Profile = () => {
 
       const interestsData = response.data.data;
       console.log("Fetched Interests:", interestsData);
-      
+
       // Handle different response formats
       if (Array.isArray(interestsData)) {
         setInterests(interestsData);
-      } else if (interestsData && typeof interestsData === 'object') {
+      } else if (interestsData && typeof interestsData === "object") {
         // If it's a single object, wrap it in an array
         setInterests([interestsData]);
       } else {
@@ -339,9 +372,9 @@ const Profile = () => {
   };
 
   const toggleVisibility = (field) => {
-    setVisibility(prev => ({
+    setVisibility((prev) => ({
       ...prev,
-      [field]: !prev[field]
+      [field]: !prev[field],
     }));
   };
 
@@ -353,7 +386,7 @@ const Profile = () => {
     // Update both profile data and visibility settings
     const updatedProfileData = {
       ...profileData,
-      ...visibility
+      ...visibility,
     };
 
     await updateSection("profile", updatedProfileData);
@@ -404,8 +437,17 @@ const Profile = () => {
       fetchProfile();
       fetchExperiences();
       fetchInterests();
+
+      // Set a timeout to prevent infinite loading
+      const timeout = setTimeout(() => {
+        if (loading) {
+          setLoading(false);
+        }
+      }, 10000); // 10 seconds timeout
+
+      return () => clearTimeout(timeout);
     }
-  }, [user?.userId]);
+  }, [user?.userId]); // Removed loading from dependency array to prevent infinite loop
 
   if (loading) {
     return (
@@ -427,10 +469,17 @@ const Profile = () => {
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
         {/* Cover Photo */}
         <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
-          <img
-            src="/cover-image.jpg"
+          <PhotoDisplay
+            photoUrl={coverPhotoUrl}
             alt="Cover"
+            type="cover"
             className="w-full h-full object-cover"
+          />
+          <CoverPhotoUploadButton
+            userId={user?.userId}
+            onPhotoUpdate={handlePhotoUpdate}
+            onFileUpload={handleFileUpload}
+            isEditing={isEditing}
           />
         </div>
 
@@ -438,23 +487,18 @@ const Profile = () => {
           {/* Profile Picture */}
           <div className="absolute -top-16 left-4 sm:left-8">
             <div className="relative">
-              <img
-                src={profileData.profilePicture || "/dp.png"}
+              <PhotoDisplay
+                photoUrl={profilePhotoUrl}
                 alt={profileData.name || "Profile"}
+                type="profile"
                 className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg object-cover"
-                onError={(e) => {
-                  e.target.src = "/dp.png"; // Fallback image if avatar fails to load
-                }}
               />
-              {isEditing && (
-                <Button
-                  size="sm"
-                  className="absolute bottom-0 right-0 rounded-full p-2"
-                  aria-label="Change photo"
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
-              )}
+              <ProfilePhotoUploadButton
+                userId={user?.userId}
+                onPhotoUpdate={handlePhotoUpdate}
+                onFileUpload={handleFileUpload}
+                isEditing={isEditing}
+              />
             </div>
           </div>
 
@@ -506,7 +550,10 @@ const Profile = () => {
                   </Button>
                 ) : (
                   <div className="flex gap-2">
-                    <Button onClick={handleSave} icon={<Save className="h-4 w-4" />}>
+                    <Button
+                      onClick={handleSave}
+                      icon={<Save className="h-4 w-4" />}
+                    >
                       Save Changes
                     </Button>
                     <Button
@@ -536,7 +583,9 @@ const Profile = () => {
               <div className="space-y-6">
                 {/* Basic Information */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Basic Information</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Basic Information
+                  </h4>
                   <Input
                     label="Full Name"
                     name="name"
@@ -574,7 +623,9 @@ const Profile = () => {
 
                 {/* Bio Section */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Bio</h4>
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Bio
+                  </h4>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       About Me <span className="text-red-500">*</span>
@@ -587,14 +638,18 @@ const Profile = () => {
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
                       placeholder="Tell us about yourself..."
                     />
-                    {errors.bio && <p className="mt-1 text-sm text-red-600">{errors.bio}</p>}
+                    {errors.bio && (
+                      <p className="mt-1 text-sm text-red-600">{errors.bio}</p>
+                    )}
                   </div>
                 </div>
 
                 {/* Contact Information */}
                 <div className="space-y-4">
-                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">Contact Information</h4>
-                  
+                  <h4 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Contact Information
+                  </h4>
+
                   {/* Email */}
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
@@ -605,11 +660,17 @@ const Profile = () => {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleVisibility('showEmail')}
-                        icon={visibility.showEmail ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        onClick={() => toggleVisibility("showEmail")}
+                        icon={
+                          visibility.showEmail ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
                         className="text-gray-500 hover:text-gray-700"
                       >
-                        {visibility.showEmail ? 'Visible' : 'Hidden'}
+                        {visibility.showEmail ? "Visible" : "Hidden"}
                       </Button>
                     </div>
                     <Input
@@ -631,11 +692,17 @@ const Profile = () => {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleVisibility('showPhone')}
-                        icon={visibility.showPhone ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        onClick={() => toggleVisibility("showPhone")}
+                        icon={
+                          visibility.showPhone ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
                         className="text-gray-500 hover:text-gray-700"
                       >
-                        {visibility.showPhone ? 'Visible' : 'Hidden'}
+                        {visibility.showPhone ? "Visible" : "Hidden"}
                       </Button>
                     </div>
                     <Input
@@ -657,11 +724,17 @@ const Profile = () => {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleVisibility('showLinkedIn')}
-                        icon={visibility.showLinkedIn ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        onClick={() => toggleVisibility("showLinkedIn")}
+                        icon={
+                          visibility.showLinkedIn ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
                         className="text-gray-500 hover:text-gray-700"
                       >
-                        {visibility.showLinkedIn ? 'Visible' : 'Hidden'}
+                        {visibility.showLinkedIn ? "Visible" : "Hidden"}
                       </Button>
                     </div>
                     <Input
@@ -683,11 +756,17 @@ const Profile = () => {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleVisibility('showWebsite')}
-                        icon={visibility.showWebsite ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        onClick={() => toggleVisibility("showWebsite")}
+                        icon={
+                          visibility.showWebsite ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
                         className="text-gray-500 hover:text-gray-700"
                       >
-                        {visibility.showWebsite ? 'Visible' : 'Hidden'}
+                        {visibility.showWebsite ? "Visible" : "Hidden"}
                       </Button>
                     </div>
                     <Input
@@ -709,11 +788,17 @@ const Profile = () => {
                         type="button"
                         variant="ghost"
                         size="sm"
-                        onClick={() => toggleVisibility('showFacebook')}
-                        icon={visibility.showFacebook ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
+                        onClick={() => toggleVisibility("showFacebook")}
+                        icon={
+                          visibility.showFacebook ? (
+                            <Eye className="h-4 w-4" />
+                          ) : (
+                            <EyeOff className="h-4 w-4" />
+                          )
+                        }
                         className="text-gray-500 hover:text-gray-700"
                       >
-                        {visibility.showFacebook ? 'Visible' : 'Hidden'}
+                        {visibility.showFacebook ? "Visible" : "Hidden"}
                       </Button>
                     </div>
                     <Input
@@ -728,7 +813,8 @@ const Profile = () => {
               </div>
             ) : (
               <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {profileData.bio || "No bio available. Click edit to add your bio."}
+                {profileData.bio ||
+                  "No bio available. Click edit to add your bio."}
               </p>
             )}
           </div>
@@ -759,21 +845,36 @@ const Profile = () => {
                     label="Job Title"
                     name="title"
                     value={newExperience.title}
-                    onChange={(e) => setNewExperience({ ...newExperience, title: e.target.value })}
+                    onChange={(e) =>
+                      setNewExperience({
+                        ...newExperience,
+                        title: e.target.value,
+                      })
+                    }
                     required
                   />
                   <Input
                     label="Company"
                     name="company"
                     value={newExperience.company}
-                    onChange={(e) => setNewExperience({ ...newExperience, company: e.target.value })}
+                    onChange={(e) =>
+                      setNewExperience({
+                        ...newExperience,
+                        company: e.target.value,
+                      })
+                    }
                     required
                   />
                   <Input
                     label="Period"
                     name="period"
                     value={newExperience.period}
-                    onChange={(e) => setNewExperience({ ...newExperience, period: e.target.value })}
+                    onChange={(e) =>
+                      setNewExperience({
+                        ...newExperience,
+                        period: e.target.value,
+                      })
+                    }
                     placeholder="e.g., 2020 - Present"
                   />
                   <div>
@@ -783,14 +884,22 @@ const Profile = () => {
                     <textarea
                       name="description"
                       value={newExperience.description}
-                      onChange={(e) => setNewExperience({ ...newExperience, description: e.target.value })}
+                      onChange={(e) =>
+                        setNewExperience({
+                          ...newExperience,
+                          description: e.target.value,
+                        })
+                      }
                       rows={3}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
                       placeholder="Describe your role and achievements..."
                     />
                   </div>
                   <div className="flex space-x-3">
-                    <Button onClick={addExperience} icon={<Plus className="h-4 w-4" />}>
+                    <Button
+                      onClick={addExperience}
+                      icon={<Plus className="h-4 w-4" />}
+                    >
                       Add Experience
                     </Button>
                     <Button
@@ -808,7 +917,10 @@ const Profile = () => {
             {experiences.length > 0 ? (
               <div className="space-y-4">
                 {experiences.map((exp) => (
-                  <div key={exp.id} className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-600 rounded-lg">
+                  <div
+                    key={exp.id}
+                    className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
+                  >
                     <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-1" />
                     <div className="flex-1">
                       <h3 className="text-lg font-medium text-gray-900 dark:text-white">
@@ -876,7 +988,10 @@ const Profile = () => {
                     required
                   />
                   <div className="flex space-x-3">
-                    <Button onClick={addInterest} icon={<Plus className="h-4 w-4" />}>
+                    <Button
+                      onClick={addInterest}
+                      icon={<Plus className="h-4 w-4" />}
+                    >
                       Add Interest
                     </Button>
                     <Button
@@ -971,7 +1086,7 @@ const Profile = () => {
           </div>
 
           {/* Profile Stats */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          {/* <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Profile Stats
             </h3>
@@ -991,10 +1106,10 @@ const Profile = () => {
                 <span className="font-semibold text-gray-900 dark:text-white">23</span>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* Quick Actions */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+          {/* <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Quick Actions
             </h3>
@@ -1009,7 +1124,7 @@ const Profile = () => {
                 Share Profile
               </Button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>

@@ -20,6 +20,7 @@ import {
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import apiClient from "../utils/apiClient";
 import { Button, Input, Card, Avatar, Badge } from "../components/ui";
+import UserCard from "../components/UserCard";
 
 const Search = () => {
   // const { user } = useUnifiedAuth(); // Unused variable
@@ -421,125 +422,14 @@ const Search = () => {
         {/* Alumni Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {alumni.map((person) => (
-            <Card
+            <UserCard
               key={person.userId}
-              className="hover:shadow-md transition-shadow cursor-pointer flex flex-col h-full"
-              onClick={() => handleViewProfile(person.userId)}
-            >
-              <div className="p-6">
-                {/* Header Section - Fixed Height */}
-                <div className="flex items-start space-x-4 mb-4">
-                  <Avatar
-                    size="lg"
-                    src={person.avatar || "/dp.png"}
-                    alt={person.name}
-                  />
-
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                      {person.name || "Unknown"}
-                    </h3>
-                    <p className="text-primary-600 font-medium truncate">
-                      {person.profession || "Not specified"}
-                    </p>
-                  </div>
-
-                  {person.isConnected && (
-                    <Badge variant="success" size="sm">
-                      Connected
-                    </Badge>
-                  )}
-                </div>
-
-                {/* Info Section - Fixed Height */}
-                <div className="space-y-2 mb-4">
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                    <GraduationCap className="h-4 w-4 flex-shrink-0" />
-                    <span className="truncate">
-                      {person.batch
-                        ? `Batch ${person.batch}`
-                        : "Batch not specified"}
-                    </span>
-                  </div>
-                  {person.location && (
-                    <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                      <MapPin className="h-4 w-4 flex-shrink-0" />
-                      <span className="truncate">{person.location}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                    <Users className="h-4 w-4 flex-shrink-0" />
-                    <span>{person.connections || 0} connections</span>
-                  </div>
-                </div>
-
-                {/* Bio Section - Flexible but constrained height */}
-                <div className="flex-1 mb-4">
-                  {person.bio && (
-                    <p className="text-gray-700 dark:text-gray-300 text-sm line-clamp-3 leading-relaxed">
-                      {person.bio}
-                    </p>
-                  )}
-                </div>
-
-                {/* Interests Section - Fixed Height */}
-                <div className="mb-6 h-8 flex items-start">
-                  {person.interests && person.interests.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {person.interests.slice(0, 2).map((interest, index) => (
-                        <Badge
-                          key={index}
-                          variant="secondary"
-                          size="sm"
-                          className="max-w-20 truncate"
-                        >
-                          <Tag className="h-3 w-3 flex-shrink-0 mr-1" />
-                          {interest}
-                        </Badge>
-                      ))}
-                      {person.interests.length > 2 && (
-                        <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1 flex items-center">
-                          +{person.interests.length - 2}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Action Buttons - Fixed at bottom */}
-                <div className="flex space-x-3 mt-auto">
-                  {person.isConnected ? (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      fullWidth
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMessage(person.userId);
-                      }}
-                      icon={<MessageCircle className="h-4 w-4" />}
-                      disabled={loading}
-                    >
-                      Message
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="primary"
-                      size="sm"
-                      fullWidth
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleConnect(person.userId);
-                      }}
-                      icon={<UserPlus className="h-4 w-4" />}
-                      disabled={loading}
-                    >
-                      Connect
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </Card>
+              user={person}
+              onConnect={handleConnect}
+              onMessage={handleMessage}
+              onViewProfile={handleViewProfile}
+              loading={loading}
+            />
           ))}
         </div>
 

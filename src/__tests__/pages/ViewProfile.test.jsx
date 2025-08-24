@@ -64,7 +64,14 @@ jest.mock('../../utils/apiClient', () => ({
   }
 }));
 
+// Mock photoApi functions
+jest.mock('../../utils/photoApi', () => ({
+  getProfilePhotoUrl: jest.fn(),
+  getCoverPhotoUrl: jest.fn()
+}));
+
 import apiClient from '../../utils/apiClient';
+import { getProfilePhotoUrl, getCoverPhotoUrl } from '../../utils/photoApi';
 
 describe('ViewProfile', () => {
   const mockProfileData = {
@@ -144,6 +151,19 @@ describe('ViewProfile', () => {
       data: {
         code: "200"
       }
+    });
+
+    // Mock photo API responses
+    getProfilePhotoUrl.mockResolvedValue({
+      photoUrl: 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/abc123.jpg',
+      hasPhoto: true,
+      exists: true
+    });
+
+    getCoverPhotoUrl.mockResolvedValue({
+      photoUrl: 'http://localhost:8000/ijaa/api/v1/users/test-user/cover-photo/file/def456.png',
+      hasPhoto: true,
+      exists: true
     });
   });
 
@@ -386,6 +406,90 @@ describe('ViewProfile', () => {
     await waitFor(() => {
       const coverImage = screen.getByAltText(/cover/i);
       expect(coverImage).toHaveClass('w-full', 'h-48', 'object-cover');
+    });
+  });
+
+  test('loads and displays profile photo from API', async () => {
+    render(<ViewProfile />);
+
+    await waitFor(() => {
+      expect(getProfilePhotoUrl).toHaveBeenCalledWith('USER_789012');
+    });
+
+    await waitFor(() => {
+      const profilePhoto = screen.getByAltText('John Doe');
+      expect(profilePhoto).toBeInTheDocument();
+      expect(profilePhoto).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/abc123.jpg');
+    });
+  });
+
+  test('loads and displays cover photo from API', async () => {
+    render(<ViewProfile />);
+
+    await waitFor(() => {
+      expect(getCoverPhotoUrl).toHaveBeenCalledWith('USER_789012');
+    });
+
+    await waitFor(() => {
+      const coverPhoto = screen.getByAltText('Cover');
+      expect(coverPhoto).toBeInTheDocument();
+      expect(coverPhoto).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/cover-photo/file/def456.png');
+    });
+  });
+
+  test('handles profile photo loading error gracefully', async () => {
+    getProfilePhotoUrl.mockRejectedValue(new Error('Failed to load profile photo'));
+
+    render(<ViewProfile />);
+
+    await waitFor(() => {
+      // Should not crash and should still display the profile
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+  });
+
+  test('handles cover photo loading error gracefully', async () => {
+    getCoverPhotoUrl.mockRejectedValue(new Error('Failed to load cover photo'));
+
+    render(<ViewProfile />);
+
+    await waitFor(() => {
+      // Should not crash and should still display the profile
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+  });
+
+  test('handles no profile photo available', async () => {
+    getProfilePhotoUrl.mockResolvedValue({
+      photoUrl: null,
+      hasPhoto: false,
+      exists: false
+    });
+
+    render(<ViewProfile />);
+
+    await waitFor(() => {
+      const profilePhoto = screen.getByAltText('John Doe');
+      expect(profilePhoto).toBeInTheDocument();
+      // Should use fallback image
+      expect(profilePhoto).toHaveAttribute('src', '/dp.png');
+    });
+  });
+
+  test('handles no cover photo available', async () => {
+    getCoverPhotoUrl.mockResolvedValue({
+      photoUrl: null,
+      hasPhoto: false,
+      exists: false
+    });
+
+    render(<ViewProfile />);
+
+    await waitFor(() => {
+      const coverPhoto = screen.getByAltText('Cover');
+      expect(coverPhoto).toBeInTheDocument();
+      // Should use fallback image
+      expect(coverPhoto).toHaveAttribute('src', '/cover-image.jpg');
     });
   });
 });

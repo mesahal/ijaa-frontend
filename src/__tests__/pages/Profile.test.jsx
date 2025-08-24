@@ -41,6 +41,67 @@ jest.mock('../../utils/apiClient', () => ({
 
 import apiClient from '../../utils/apiClient';
 
+// Mock the PhotoManager components
+jest.mock('../../components/PhotoManager', () => {
+  let mockProfilePhotoUrl = 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/abc123.jpg';
+  let mockCoverPhotoUrl = 'http://localhost:8000/ijaa/api/v1/users/test-user/cover-photo/file/def456.png';
+
+  return {
+    PhotoDisplay: ({ photoUrl, alt, type, className }) => (
+      <img 
+        src={photoUrl || (type === 'profile' ? '/dp.png' : '/cover-image.jpg')} 
+        alt={alt} 
+        className={className}
+        data-testid={`${type}-photo`}
+      />
+    ),
+    ProfilePhotoUploadButton: ({ userId, onPhotoUpdate, isEditing, onFileUpload }) => {
+      if (!isEditing) return null;
+      return (
+        <button 
+          data-testid="profile-photo-upload"
+          onClick={() => {
+            const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+            if (onFileUpload) onFileUpload(file, 'profile');
+            if (onPhotoUpdate) {
+              mockProfilePhotoUrl = 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/new.jpg';
+              onPhotoUpdate('profile', mockProfilePhotoUrl);
+            }
+          }}
+        >
+          Upload Profile Photo
+        </button>
+      );
+    },
+    CoverPhotoUploadButton: ({ userId, onPhotoUpdate, isEditing, onFileUpload }) => {
+      if (!isEditing) return null;
+      return (
+        <button 
+          data-testid="cover-photo-upload"
+          onClick={() => {
+            const file = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
+            if (onFileUpload) onFileUpload(file, 'cover');
+            if (onPhotoUpdate) {
+              mockCoverPhotoUrl = 'http://localhost:8000/ijaa/api/v1/users/test-user/cover-photo/file/new.jpg';
+              onPhotoUpdate('cover', mockCoverPhotoUrl);
+            }
+          }}
+        >
+          Upload Cover Photo
+        </button>
+      );
+    },
+    usePhotoManager: ({ userId, onPhotoUpdate }) => ({
+      profilePhotoUrl: mockProfilePhotoUrl,
+      coverPhotoUrl: mockCoverPhotoUrl,
+      loading: false,
+      error: null,
+      handleFileUpload: jest.fn(),
+      reloadPhotos: jest.fn()
+    })
+  };
+});
+
 describe('Profile', () => {
   const mockUser = {
     userId: 'USER_123456',
@@ -778,4 +839,91 @@ describe('Profile', () => {
       expect(screen.getByText('Software Engineer')).toBeInTheDocument();
     });
   });
+
+  test('displays profile photo with correct URL from API', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const profilePhoto = screen.getByTestId('profile-photo');
+      expect(profilePhoto).toBeInTheDocument();
+      expect(profilePhoto).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/abc123.jpg');
+      expect(profilePhoto).toHaveAttribute('alt', 'Test User');
+    });
+  });
+
+  test('displays cover photo with correct URL from API', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const coverPhoto = screen.getByTestId('cover-photo');
+      expect(coverPhoto).toBeInTheDocument();
+      expect(coverPhoto).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/cover-photo/file/def456.png');
+      expect(coverPhoto).toHaveAttribute('alt', 'Cover');
+    });
+  });
+
+  test('shows photo upload buttons when in edit mode', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit Profile');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('profile-photo-upload')).toBeInTheDocument();
+      expect(screen.getByTestId('cover-photo-upload')).toBeInTheDocument();
+    });
+  });
+
+  test('does not show photo upload buttons when not in edit mode', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('profile-photo-upload')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('cover-photo-upload')).not.toBeInTheDocument();
+    });
+  });
+
+  test('handles profile photo upload', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit Profile');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      const uploadButton = screen.getByTestId('profile-photo-upload');
+      fireEvent.click(uploadButton);
+    });
+
+    // The mock should handle the upload and update the photo URL
+    await waitFor(() => {
+      const profilePhoto = screen.getByTestId('profile-photo');
+      expect(profilePhoto).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/new.jpg');
+    });
+  });
+
+  test('handles cover photo upload', async () => {
+    render(<Profile />);
+
+    await waitFor(() => {
+      const editButton = screen.getByText('Edit Profile');
+      fireEvent.click(editButton);
+    });
+
+    await waitFor(() => {
+      const uploadButton = screen.getByTestId('cover-photo-upload');
+      fireEvent.click(uploadButton);
+    });
+
+    // The mock should handle the upload and update the photo URL
+    await waitFor(() => {
+      const coverPhoto = screen.getByTestId('cover-photo');
+      expect(coverPhoto).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/cover-photo/file/new.jpg');
+    });
+  });
+
+
 });

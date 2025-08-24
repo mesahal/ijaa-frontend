@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { useTheme } from "../context/ThemeContext";
+import { useCurrentUserPhoto } from "../hooks/useCurrentUserPhoto";
 import { Button, Avatar, Badge } from "./ui";
 
 const Navbar = () => {
@@ -31,6 +32,7 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user, signOut } = useUnifiedAuth();
   const { isDark, toggleTheme } = useTheme();
+  const { profilePhotoUrl } = useCurrentUserPhoto();
 
   // Handle scroll effect
   useEffect(() => {
@@ -221,8 +223,8 @@ const Navbar = () => {
               >
                 <Avatar
                   size="sm"
-                  src={user?.profilePicture || `/dp.png`}
-                  alt={user?.name || "User"}
+                  src={profilePhotoUrl || `/dp.png`}
+                  alt={user?.name || user?.email || "User"}
                 />
                 <ChevronDown className="h-4 w-4 text-gray-400 ml-1" />
               </Button>
@@ -234,12 +236,12 @@ const Navbar = () => {
                     <div className="flex items-center space-x-3">
                       <Avatar
                         size="lg"
-                        src={user?.profilePicture || `/dp.png`}
-                        alt={user?.name || "User"}
+                        src={profilePhotoUrl || `/dp.png`}
+                        alt={user?.name || user?.email || "User"}
                       />
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {user?.name || "User"}
+                          {user?.name || user?.email || "User"}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {user?.email || "user@example.com"}
