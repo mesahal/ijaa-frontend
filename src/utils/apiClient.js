@@ -86,4 +86,14 @@ apiClient.interceptors.response.use(
   }
 );
 
+// User password change function
+export const changeUserPassword = async (passwordData) => {
+  try {
+    const response = await apiClient.post('/change-password', passwordData);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default apiClient; 

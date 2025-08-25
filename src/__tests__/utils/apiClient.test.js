@@ -359,4 +359,102 @@ describe('apiClient', () => {
       expect(result).toEqual(mockResponse);
     });
   });
+
+  describe('changeUserPassword', () => {
+    beforeEach(() => {
+      const mockToken = 'test-token';
+      const mockUser = JSON.stringify({ token: mockToken, username: 'testuser' });
+      localStorageMock.getItem.mockReturnValue(mockUser);
+    });
+
+    it('should call correct endpoint for changing user password', async () => {
+      const mockResponse = { 
+        data: { 
+          message: "Password changed successfully",
+          code: "200",
+          data: null
+        } 
+      };
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const passwordData = {
+        currentPassword: 'oldpass',
+        newPassword: 'newpass',
+        confirmPassword: 'newpass'
+      };
+
+      const { changeUserPassword } = require('../../utils/apiClient');
+      const result = await changeUserPassword(passwordData);
+
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/change-password', passwordData);
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should handle password change errors', async () => {
+      const errorMessage = 'Current password is incorrect';
+      const mockError = {
+        response: {
+          status: 400,
+          data: { message: errorMessage }
+        }
+      };
+      mockAxiosInstance.post.mockRejectedValue(mockError);
+
+      const passwordData = {
+        currentPassword: 'wrongpass',
+        newPassword: 'newpass',
+        confirmPassword: 'newpass'
+      };
+
+      const { changeUserPassword } = require('../../utils/apiClient');
+      
+      await expect(changeUserPassword(passwordData)).rejects.toEqual(mockError);
+    });
+
+    it('should return response data on successful password change', async () => {
+      const mockResponseData = { 
+        message: "Password changed successfully",
+        code: "200",
+        data: null
+      };
+      const mockResponse = { 
+        data: mockResponseData
+      };
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const passwordData = {
+        currentPassword: 'oldpass',
+        newPassword: 'newpass',
+        confirmPassword: 'newpass'
+      };
+
+      const { changeUserPassword } = require('../../utils/apiClient');
+      const result = await changeUserPassword(passwordData);
+
+      expect(result).toEqual(mockResponseData);
+    });
+
+    it('should include authentication headers in password change request', async () => {
+      const mockResponse = { 
+        data: { 
+          message: "Password changed successfully",
+          code: "200",
+          data: null
+        } 
+      };
+      mockAxiosInstance.post.mockResolvedValue(mockResponse);
+
+      const passwordData = {
+        currentPassword: 'oldpass',
+        newPassword: 'newpass',
+        confirmPassword: 'newpass'
+      };
+
+      const { changeUserPassword } = require('../../utils/apiClient');
+      await changeUserPassword(passwordData);
+
+      // The interceptor should have added the auth headers
+      expect(mockAxiosInstance.post).toHaveBeenCalledWith('/change-password', passwordData);
+    });
+  });
 }); 

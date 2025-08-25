@@ -32,14 +32,22 @@ jest.mock('../../context/UnifiedAuthContext', () => ({
 }));
 
 // Mock apiClient
-jest.mock('../../utils/apiClient', () => ({
+const mockApiClient = {
   get: jest.fn(),
   put: jest.fn(),
   post: jest.fn(),
   delete: jest.fn(),
+};
+
+const mockChangeUserPassword = jest.fn();
+
+jest.mock('../../utils/apiClient', () => ({
+  __esModule: true,
+  default: mockApiClient,
+  changeUserPassword: mockChangeUserPassword,
 }));
 
-import apiClient from '../../utils/apiClient';
+import apiClient, { changeUserPassword } from '../../utils/apiClient';
 
 // Mock the PhotoManager components
 jest.mock('../../components/PhotoManager', () => {
@@ -147,19 +155,19 @@ describe('Profile', () => {
 
     // Default API responses
     apiClient.get.mockImplementation((url) => {
-      if (url === '/profile') {
+      if (url === '/profile/USER_123456') {
         return Promise.resolve({
           data: {
             data: mockUser
           }
         });
-      } else if (url === '/experiences') {
+      } else if (url === '/experiences/USER_123456') {
         return Promise.resolve({
           data: {
             data: mockExperiences
           }
         });
-      } else if (url === '/interests') {
+      } else if (url === '/interests/USER_123456') {
         return Promise.resolve({
           data: {
             data: mockInterests
@@ -186,6 +194,9 @@ describe('Profile', () => {
         message: 'Deleted successfully'
       }
     });
+
+    // Mock changeUserPassword function
+    apiClient.changeUserPassword = jest.fn();
   });
 
   afterEach(() => {
@@ -922,6 +933,190 @@ describe('Profile', () => {
     await waitFor(() => {
       const coverPhoto = screen.getByTestId('cover-photo');
       expect(coverPhoto).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/cover-photo/file/new.jpg');
+    });
+  });
+
+  describe('Password Change Functionality', () => {
+    beforeEach(async () => {
+      apiClient.get.mockResolvedValue({ data: { data: mockUser } });
+      render(<Profile />);
+      await waitFor(() => {
+        expect(screen.getByText('Test User')).toBeInTheDocument();
+      });
+    });
+
+    it('should render password change section in sidebar', () => {
+      expect(screen.getByText('Change Password')).toBeInTheDocument();
+    });
+
+    it('should show password change form', () => {
+      expect(screen.getByPlaceholderText('Enter current password')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Enter new password')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Confirm new password')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /update password/i })).toBeInTheDocument();
+    });
+
+    it('should validate password form fields', async () => {
+      const submitButton = screen.getByRole('button', { name: /update password/i });
+      fireEvent.click(submitButton);
+
+      // Wait for validation to complete
+      await waitFor(() => {
+        const errorMessages = screen.getAllByText(/required|password/i);
+        expect(errorMessages.length).toBeGreaterThan(0);
+      });
+    });
+
+    it('should validate password length', async () => {
+      const currentPasswordInput = screen.getByPlaceholderText('Enter current password');
+      const newPasswordInput = screen.getByPlaceholderText('Enter new password');
+      const confirmPasswordInput = screen.getByPlaceholderText('Confirm new password');
+
+      fireEvent.change(currentPasswordInput, { target: { value: 'oldpass' } });
+      fireEvent.change(newPasswordInput, { target: { value: 'short' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'short' } });
+
+      const submitButton = screen.getByRole('button', { name: /update password/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('New password must be at least 8 characters')).toBeInTheDocument();
+      });
+    });
+
+    it('should validate password confirmation match', async () => {
+      const currentPasswordInput = screen.getByPlaceholderText('Enter current password');
+      const newPasswordInput = screen.getByPlaceholderText('Enter new password');
+      const confirmPasswordInput = screen.getByPlaceholderText('Confirm new password');
+
+      fireEvent.change(currentPasswordInput, { target: { value: 'oldpassword' } });
+      fireEvent.change(newPasswordInput, { target: { value: 'newpassword123' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'differentpassword' } });
+
+      const submitButton = screen.getByRole('button', { name: /update password/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('Passwords do not match')).toBeInTheDocument();
+      });
+    });
+
+    it('should validate that new password is different from current password', async () => {
+      const currentPasswordInput = screen.getByPlaceholderText('Enter current password');
+      const newPasswordInput = screen.getByPlaceholderText('Enter new password');
+      const confirmPasswordInput = screen.getByPlaceholderText('Confirm new password');
+
+      fireEvent.change(currentPasswordInput, { target: { value: 'samepassword' } });
+      fireEvent.change(newPasswordInput, { target: { value: 'samepassword' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'samepassword' } });
+
+      const submitButton = screen.getByRole('button', { name: /update password/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('New password must be different from current password')).toBeInTheDocument();
+      });
+    });
+
+    it('should successfully change password with valid data', async () => {
+      // Mock the changeUserPassword function
+      mockChangeUserPassword.mockResolvedValue({ success: true });
+
+      const currentPasswordInput = screen.getByPlaceholderText('Enter current password');
+      const newPasswordInput = screen.getByPlaceholderText('Enter new password');
+      const confirmPasswordInput = screen.getByPlaceholderText('Confirm new password');
+
+      fireEvent.change(currentPasswordInput, { target: { value: 'OldPassword123!' } });
+      fireEvent.change(newPasswordInput, { target: { value: 'NewPassword123!' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'NewPassword123!' } });
+
+      // Verify the form is filled correctly
+      expect(currentPasswordInput).toHaveValue('OldPassword123!');
+      expect(newPasswordInput).toHaveValue('NewPassword123!');
+      expect(confirmPasswordInput).toHaveValue('NewPassword123!');
+
+      const submitButton = screen.getByRole('button', { name: /update password/i });
+      fireEvent.click(submitButton);
+
+      // Wait for the form submission to complete
+      await waitFor(() => {
+        expect(mockChangeUserPassword).toHaveBeenCalledWith({
+          currentPassword: 'OldPassword123!',
+          newPassword: 'NewPassword123!',
+          confirmPassword: 'NewPassword123!'
+        });
+      }, { timeout: 3000 });
+    });
+
+    it('should validate password complexity requirements', async () => {
+      const currentPasswordInput = screen.getByPlaceholderText('Enter current password');
+      const newPasswordInput = screen.getByPlaceholderText('Enter new password');
+      const confirmPasswordInput = screen.getByPlaceholderText('Confirm new password');
+
+      // Test password without uppercase letter
+      fireEvent.change(currentPasswordInput, { target: { value: 'oldpassword' } });
+      fireEvent.change(newPasswordInput, { target: { value: 'newpassword123!' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'newpassword123!' } });
+
+      const submitButton = screen.getByRole('button', { name: /update password/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('New password must contain at least one uppercase letter')).toBeInTheDocument();
+      });
+    });
+
+    it('should validate password length maximum', async () => {
+      const currentPasswordInput = screen.getByPlaceholderText('Enter current password');
+      const newPasswordInput = screen.getByPlaceholderText('Enter new password');
+      const confirmPasswordInput = screen.getByPlaceholderText('Confirm new password');
+
+      // Test password that's too long
+      const longPassword = 'a'.repeat(129);
+      fireEvent.change(currentPasswordInput, { target: { value: 'oldpassword' } });
+      fireEvent.change(newPasswordInput, { target: { value: longPassword } });
+      fireEvent.change(confirmPasswordInput, { target: { value: longPassword } });
+
+      const submitButton = screen.getByRole('button', { name: /update password/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(screen.getByText('New password must be less than 128 characters')).toBeInTheDocument();
+      });
+    });
+
+
+
+    it('should clear form after successful password change', async () => {
+      mockChangeUserPassword.mockResolvedValue({ success: true });
+
+      const currentPasswordInput = screen.getByPlaceholderText('Enter current password');
+      const newPasswordInput = screen.getByPlaceholderText('Enter new password');
+      const confirmPasswordInput = screen.getByPlaceholderText('Confirm new password');
+
+      fireEvent.change(currentPasswordInput, { target: { value: 'OldPassword123!' } });
+      fireEvent.change(newPasswordInput, { target: { value: 'NewPassword123!' } });
+      fireEvent.change(confirmPasswordInput, { target: { value: 'NewPassword123!' } });
+
+      const submitButton = screen.getByRole('button', { name: /update password/i });
+      fireEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(currentPasswordInput).toHaveValue('');
+        expect(newPasswordInput).toHaveValue('');
+        expect(confirmPasswordInput).toHaveValue('');
+      });
+    });
+
+    it('should show password visibility toggle buttons', () => {
+      // Look for eye icons by their role and aria-label
+      const visibilityButtons = screen.getAllByRole('button');
+      const eyeButtons = visibilityButtons.filter(button => 
+        button.querySelector('svg') && 
+        button.querySelector('svg').getAttribute('class')?.includes('h-4 w-4')
+      );
+
+      expect(eyeButtons.length).toBeGreaterThan(0);
     });
   });
 

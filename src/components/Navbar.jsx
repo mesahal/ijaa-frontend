@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Home,
-  User,
   Search,
   Bell,
   Menu,
@@ -64,12 +63,7 @@ const Navbar = () => {
   ];
 
   const profileMenuItems = [
-    { icon: User, label: "Profile", action: () => navigate("/profile") },
-    {
-      icon: Settings,
-      label: "Settings",
-      action: () => navigate("/account-settings"),
-    },
+    { icon: Settings, label: "Settings", action: () => navigate("/profile") },
     {
       icon: HelpCircle,
       label: "Help",

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import apiClient from "../utils/apiClient";
+import apiClient, { changeUserPassword } from "../utils/apiClient";
 import {
   Camera,
   Edit3,
@@ -29,6 +29,9 @@ import {
   CheckCircle,
   ExternalLink,
   Users,
+  Lock,
+  Key,
+  Shield,
 } from "lucide-react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { Card, Button, Avatar, Badge, Input } from "../components/ui";
@@ -38,6 +41,7 @@ import {
   CoverPhotoUploadButton,
   usePhotoManager,
 } from "../components/PhotoManager";
+import { toast } from "react-toastify";
 
 const Profile = () => {
   const { user } = useUnifiedAuth();
@@ -75,6 +79,15 @@ const Profile = () => {
   const [showAddInterest, setShowAddInterest] = useState(false);
 
   const [errors, setErrors] = useState({});
+
+  // Password change state
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordErrors, setPasswordErrors] = useState({});
 
   const handlePhotoUpdate = (type, photoUrl) => {
     // This will be called by the photo manager when photos are updated
@@ -406,6 +419,99 @@ const Profile = () => {
     };
 
     await updateSection("profile", updatedProfileData);
+  };
+
+  // Password change functions
+  const handlePasswordChange = (e) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+
+    // Clear error when user starts typing
+    if (passwordErrors[name]) {
+      setPasswordErrors((prev) => ({
+        ...prev,
+        [name]: "",
+      }));
+    }
+  };
+
+
+
+  const validatePasswordForm = () => {
+    const errors = {};
+
+    // Current password validation
+    if (!passwordData.currentPassword) {
+      errors.currentPassword = "Current password is required";
+    }
+
+    // New password validation
+    if (!passwordData.newPassword) {
+      errors.newPassword = "New password is required";
+    } else if (passwordData.newPassword.length < 8) {
+      errors.newPassword = "New password must be at least 8 characters";
+    } else if (passwordData.newPassword.length > 128) {
+      errors.newPassword = "New password must be less than 128 characters";
+    } else if (!/(?=.*[a-z])/.test(passwordData.newPassword)) {
+      errors.newPassword = "New password must contain at least one lowercase letter";
+    } else if (!/(?=.*[A-Z])/.test(passwordData.newPassword)) {
+      errors.newPassword = "New password must contain at least one uppercase letter";
+    } else if (!/(?=.*\d)/.test(passwordData.newPassword)) {
+      errors.newPassword = "New password must contain at least one number";
+    } else if (!/(?=.*[!@#$%^&*(),.?":{}|<>])/.test(passwordData.newPassword)) {
+      errors.newPassword = "New password must contain at least one special character";
+    }
+
+    // Confirm password validation
+    if (!passwordData.confirmPassword) {
+      errors.confirmPassword = "Please confirm your new password";
+    } else if (passwordData.newPassword !== passwordData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match";
+    }
+
+    // Check if new password is different from current password
+    if (passwordData.currentPassword && passwordData.newPassword && 
+        passwordData.currentPassword === passwordData.newPassword) {
+      errors.newPassword = "New password must be different from current password";
+    }
+
+    setPasswordErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+
+
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!validatePasswordForm()) {
+      return;
+    }
+
+    try {
+      setPasswordLoading(true);
+
+      await changeUserPassword(passwordData);
+
+      // Reset form
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      setPasswordErrors({});
+
+      // Show success message
+      toast.success("Password changed successfully");
+    } catch (error) {
+      console.error("Failed to change password:", error);
+      toast.error(error.response?.data?.message || "Failed to change password");
+    } finally {
+      setPasswordLoading(false);
+    }
   };
 
   const renderContactField = (
@@ -1070,6 +1176,76 @@ const Profile = () => {
               </div>
             )}
           </div>
+
+          {/* Change Password */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+              Change Password
+            </h3>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <Input
+                label="Current Password"
+                type="password"
+                name="currentPassword"
+                value={passwordData.currentPassword}
+                onChange={handlePasswordChange}
+                placeholder="Enter current password"
+                error={passwordErrors.currentPassword}
+                leftIcon={<Key className="h-4 w-4" />}
+                required
+              />
+
+              <Input
+                label="New Password"
+                type="password"
+                name="newPassword"
+                value={passwordData.newPassword}
+                onChange={handlePasswordChange}
+                placeholder="Enter new password"
+                error={passwordErrors.newPassword}
+                leftIcon={<Lock className="h-4 w-4" />}
+                required
+              />
+
+              <Input
+                label="Confirm New Password"
+                type="password"
+                name="confirmPassword"
+                value={passwordData.confirmPassword}
+                onChange={handlePasswordChange}
+                placeholder="Confirm new password"
+                error={passwordErrors.confirmPassword}
+                leftIcon={<Lock className="h-4 w-4" />}
+                required
+              />
+
+              <Button
+                type="submit"
+                variant="primary"
+                size="lg"
+                fullWidth
+                loading={passwordLoading}
+                icon={<Save className="h-4 w-4" />}
+                iconPosition="left"
+              >
+                {passwordLoading ? "Changing Password..." : "Update Password"}
+              </Button>
+            </form>
+
+            {/* Security Tips */}
+            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                <Shield className="h-4 w-4 mr-2 text-gray-600 dark:text-gray-400" />
+                Security Tips
+              </h4>
+              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <p>• Use at least 8 characters</p>
+                <p>• Include uppercase, lowercase, numbers, and symbols</p>
+                <p>• Don't share your password with anyone</p>
+                <p>• Change your password regularly</p>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Sidebar */}
@@ -1128,47 +1304,6 @@ const Profile = () => {
                 </div>
               )}
           </div>
-
-          {/* Profile Stats */}
-          {/* <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Profile Stats
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Profile Views</span>
-                <span className="font-semibold text-gray-900 dark:text-white">1,234</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Connections</span>
-                <span className="font-semibold text-gray-900 dark:text-white">
-                  {profileData.connections || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Events Attended</span>
-                <span className="font-semibold text-gray-900 dark:text-white">23</span>
-              </div>
-            </div>
-          </div> */}
-
-          {/* Quick Actions */}
-          {/* <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Quick Actions
-            </h3>
-            <div className="space-y-3">
-              <Button variant="outline" fullWidth icon={<MessageCircle className="h-4 w-4" />}>
-                Send Message
-              </Button>
-              <Button variant="outline" fullWidth icon={<User className="h-4 w-4" />}>
-                Connect
-              </Button>
-              <Button variant="outline" fullWidth icon={<Share2 className="h-4 w-4" />}>
-                Share Profile
-              </Button>
-            </div>
-          </div> */}
         </div>
       </div>
     </div>

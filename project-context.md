@@ -483,6 +483,33 @@ All endpoints use version `v1`. Future updates will use `v2`, `v3`, etc., ensuri
   - `src/__tests__/pages/Profile.test.jsx` - Updated profile photo tests
   - `src/__tests__/pages/ViewProfile.test.jsx` - Updated view profile photo tests
 
+### User Password Change API Integration (Latest)
+- **API Endpoint**: `POST /api/v1/user/change-password` (updated from PUT to POST to match backend)
+- **Request Format**: JSON with `currentPassword`, `newPassword`, `confirmPassword`
+- **Response Format**: `{ message: "Password changed successfully", code: "200", data: null }`
+- **Authentication**: Requires JWT token in Authorization header and X-USER_ID header
+- **Validation**: Comprehensive password validation including length (8-128 chars), complexity (lowercase, uppercase, number, special char), and confirmation matching
+- **Integration**: Integrated into Profile page with admin-style UI and validation
+- **Testing**: Comprehensive test coverage for API function and component integration
+- **Curl Example**: 
+  ```bash
+  curl -X 'POST' \
+    'http://localhost:8000/ijaa/api/v1/user/change-password' \
+    -H 'accept: application/json' \
+    -H 'Authorization: Bearer <JWT_TOKEN>' \
+    -H 'Content-Type: application/json' \
+    -d '{
+      "currentPassword": "oldPassword",
+      "newPassword": "newPassword123!",
+      "confirmPassword": "newPassword123!"
+    }'
+  ```
+- **Files Modified**:
+  - `src/utils/apiClient.js` - Updated changeUserPassword function to use POST method
+  - `src/pages/Profile.jsx` - Integrated password change form with admin-style UI
+  - `src/__tests__/utils/changeUserPassword.test.js` - New comprehensive API tests
+  - `src/__tests__/pages/Profile.test.jsx` - Updated component tests for password functionality
+
 ---
 
 This summary provides a complete, shareable context for the `ijaa-frontend` React project, suitable for onboarding, prompt engineering, or integration with AI tools. The project has been cleaned up to remove unnecessary documentation files and build artifacts, maintaining only essential project files and comprehensive test coverage.

@@ -11,7 +11,7 @@ import Profile from "./pages/Profile";
 import ViewProfile from "./pages/ViewProfile";
 import Search from "./pages/Search";
 import Events from "./pages/Events";
-import AccountSettings from "./pages/AccountSettings";
+
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import NotFound from "./pages/NotFound";
@@ -168,14 +168,7 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/account-settings"
-          element={
-            <ProtectedRoute>
-              <AccountSettings />
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/notifications"
           element={
