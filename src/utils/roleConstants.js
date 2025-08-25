@@ -25,6 +25,8 @@ export const permissions = {
   canManageFeatureFlags: (user) => user?.role === ADMIN_ROLE,
   canManageAnnouncements: (user) => user?.role === ADMIN_ROLE,
   canManageReports: (user) => user?.role === ADMIN_ROLE,
+  canManageSettings: (user) => user?.role === ADMIN_ROLE,
+  canManageSystem: (user) => user?.role === ADMIN_ROLE,
   
   // User permissions
   canAccessUserFeatures: (user) => user?.role === USER_ROLE || user?.role === ADMIN_ROLE,

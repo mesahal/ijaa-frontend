@@ -176,7 +176,7 @@ const AdminNavbar = () => {
                     {admin?.name || admin?.email}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Administrator
+                    ADMIN
                   </p>
                 </div>
                 <ChevronDown
@@ -190,7 +190,7 @@ const AdminNavbar = () => {
                 <div className="absolute right-0 mt-3 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 py-2 z-50 backdrop-blur-sm">
                   <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
                     <p className="font-medium text-gray-900 dark:text-white">
-                      Administrator
+                      {admin?.name || admin?.email}
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {admin?.email}
@@ -202,7 +202,7 @@ const AdminNavbar = () => {
                     onClick={() => setShowProfileMenu(false)}
                   >
                     <Settings className="h-4 w-4" />
-                    <span>Admin Settings</span>
+                    <span>Settings</span>
                   </Link>
                   <hr className="my-2 border-gray-200 dark:border-gray-700" />
                   <button

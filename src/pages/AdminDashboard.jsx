@@ -14,6 +14,12 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
+  ArrowUpRight,
+  ArrowDownRight,
+  BarChart3,
+  Zap,
+  Target,
+  Award,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { Card, Badge, Button } from "../components/ui";
@@ -68,7 +74,7 @@ const AdminDashboard = () => {
       }
 
       const data = await response.json();
-      
+
       // Check if data has the expected structure
       if (data && data.data) {
         setStats(data.data);
@@ -89,7 +95,7 @@ const AdminDashboard = () => {
     } catch (error) {
       console.error("Dashboard error:", error);
       toast.error("Failed to load dashboard data");
-      
+
       // Set default stats on error
       setStats({
         totalUsers: 0,
@@ -112,145 +118,101 @@ const AdminDashboard = () => {
       title: "Total Users",
       value: stats.totalUsers,
       icon: Users,
-      color: "primary",
+      gradient: "from-blue-500 to-indigo-600",
+      bgGradient:
+        "from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20",
+      iconBg: "bg-blue-500/10",
+      iconColor: "text-blue-600 dark:text-blue-400",
       description: "All registered users",
-      trend: "+12%",
-      trendType: "up"
     },
     {
       title: "Active Users",
       value: stats.activeUsers,
       icon: UserCheck,
-      color: "success",
+      gradient: "from-emerald-500 to-teal-600",
+      bgGradient:
+        "from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20",
+      iconBg: "bg-emerald-500/10",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
       description: "Currently active users",
-      trend: "+8%",
-      trendType: "up"
     },
     {
       title: "Blocked Users",
       value: stats.blockedUsers,
       icon: UserX,
-      color: "error",
+      gradient: "from-red-500 to-pink-600",
+      bgGradient:
+        "from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20",
+      iconBg: "bg-red-500/10",
+      iconColor: "text-red-600 dark:text-red-400",
       description: "Suspended accounts",
-      trend: "-3%",
-      trendType: "down"
     },
     {
       title: "Total Admins",
       value: stats.totalAdmins,
       icon: Shield,
-      color: "secondary",
+      gradient: "from-purple-500 to-violet-600",
+      bgGradient:
+        "from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20",
+      iconBg: "bg-purple-500/10",
+      iconColor: "text-purple-600 dark:text-purple-400",
       description: "Administrator accounts",
-      trend: "+2",
-      trendType: "up"
     },
     {
       title: "Active Admins",
       value: stats.activeAdmins,
       icon: ShieldCheck,
-      color: "primary",
+      gradient: "from-cyan-500 to-blue-600",
+      bgGradient:
+        "from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20",
+      iconBg: "bg-cyan-500/10",
+      iconColor: "text-cyan-600 dark:text-cyan-400",
       description: "Currently active admins",
-      trend: "100%",
-      trendType: "up"
     },
     {
       title: "Total Announcements",
       value: stats.totalAnnouncements,
       icon: Megaphone,
-      color: "warning",
+      gradient: "from-orange-500 to-amber-600",
+      bgGradient:
+        "from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20",
+      iconBg: "bg-orange-500/10",
+      iconColor: "text-orange-600 dark:text-orange-400",
       description: "All announcements",
-      trend: "+5",
-      trendType: "up"
     },
     {
       title: "Active Announcements",
       value: stats.activeAnnouncements,
       icon: Megaphone,
-      color: "success",
+      gradient: "from-yellow-500 to-orange-600",
+      bgGradient:
+        "from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20",
+      iconBg: "bg-yellow-500/10",
+      iconColor: "text-yellow-600 dark:text-yellow-400",
       description: "Currently active announcements",
-      trend: "+3",
-      trendType: "up"
     },
     {
       title: "Total Reports",
       value: stats.totalReports,
       icon: FileText,
-      color: "secondary",
+      gradient: "from-slate-500 to-gray-600",
+      bgGradient:
+        "from-slate-50 to-gray-50 dark:from-slate-900/20 dark:to-gray-900/20",
+      iconBg: "bg-slate-500/10",
+      iconColor: "text-slate-600 dark:text-slate-400",
       description: "All submitted reports",
-      trend: "+15%",
-      trendType: "up"
     },
     {
       title: "Pending Reports",
       value: stats.pendingReports,
       icon: TrendingUp,
-      color: "error",
+      gradient: "from-rose-500 to-red-600",
+      bgGradient:
+        "from-rose-50 to-red-50 dark:from-rose-900/20 dark:to-red-900/20",
+      iconBg: "bg-rose-500/10",
+      iconColor: "text-rose-600 dark:text-rose-400",
       description: "Reports awaiting review",
-      trend: "+7",
-      trendType: "up"
     },
-  ];
-
-  const recentActivities = [
-    {
-      id: 1,
-      type: "user_registration",
-      message: "New user registered: john.doe@example.com",
-      time: "2 minutes ago",
-      status: "success"
-    },
-    {
-      id: 2,
-      type: "report_submitted",
-      message: "New report submitted for review",
-      time: "5 minutes ago",
-      status: "warning"
-    },
-    {
-      id: 3,
-      type: "user_blocked",
-      message: "User account blocked: spam@example.com",
-      time: "10 minutes ago",
-      status: "error"
-    },
-    {
-      id: 4,
-      type: "announcement_published",
-      message: "New announcement published: Alumni Meet 2025",
-      time: "15 minutes ago",
-      status: "success"
-    }
-  ];
-
-  const quickActions = [
-    {
-      title: "Manage Users",
-      description: "View and manage user accounts",
-      icon: Users,
-      color: "primary",
-      path: "/admin/users"
-    },
-    {
-      title: "Review Reports",
-      description: "Handle pending reports",
-      icon: FileText,
-      color: "error",
-      path: "/admin/reports"
-    },
-    {
-      title: "Create Announcement",
-      description: "Publish new announcements",
-      icon: Megaphone,
-      color: "warning",
-      path: "/admin/announcements"
-    },
-    {
-      title: "System Settings",
-      description: "Configure system settings",
-      icon: Shield,
-      color: "secondary",
-      path: "/admin/settings"
-    }
   ];
 
   // Check if admin is available
@@ -260,7 +222,9 @@ const AdminDashboard = () => {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Loading admin data...</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              Loading admin data...
+            </p>
           </div>
         </div>
       </AdminLayout>
@@ -279,150 +243,92 @@ const AdminDashboard = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-              Admin Dashboard
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400 mt-1">
-              Welcome back, {admin?.name || admin?.email}
-            </p>
+      <div className="space-y-8">
+        {/* Enhanced Header */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 p-8 text-white shadow-xl">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
+              <p className="text-primary-100 text-lg">
+                Welcome back, {admin?.name || admin?.email}
+              </p>
+              <p className="text-primary-200 text-sm mt-1">
+                Here's what's happening with your platform today
+              </p>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-primary-200 text-sm">Last Updated</p>
+                <p className="font-semibold">
+                  {new Date().toLocaleTimeString()}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={fetchDashboardData}
+                icon={<Activity className="h-4 w-4" />}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+              >
+                Refresh Data
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={fetchDashboardData}
-            icon={<Activity className="h-4 w-4" />}
-          >
-            Refresh Data
-          </Button>
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Enhanced Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {statCards.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`p-3 rounded-lg bg-${stat.color}-100 dark:bg-${stat.color}-900/20`}>
-                      <Icon className={`h-6 w-6 text-${stat.color}-600 dark:text-${stat.color}-400`} />
-                    </div>
-                    <Badge 
-                      variant={stat.trendType === "up" ? "success" : "error"} 
-                      size="sm"
+              <Card
+                key={index}
+                className={`group relative overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-2xl border-0 ${stat.bgGradient}`}
+                interactive
+              >
+                {/* Gradient overlay */}
+                <div
+                  className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity duration-300`}
+                ></div>
+
+                <div className="relative p-6">
+                  {/* Header with icon and trend */}
+                  <div className="flex items-center justify-between mb-6">
+                    <div
+                      className={`p-3 rounded-xl ${stat.iconBg} backdrop-blur-sm`}
                     >
-                      {stat.trend}
-                    </Badge>
+                      <Icon className={`h-7 w-7 ${stat.iconColor}`} />
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">
+
+                  {/* Content */}
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wide">
                       {stat.title}
                     </p>
-                    <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+                    <p className="text-3xl font-bold text-gray-900 dark:text-white">
                       {(stat.value || 0).toLocaleString()}
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       {stat.description}
                     </p>
                   </div>
+
+                  {/* Bottom accent */}
+                  <div
+                    className={`absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r ${stat.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-300`}
+                  ></div>
                 </div>
               </Card>
             );
           })}
         </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* System Overview */}
-          <div className="lg:col-span-2">
-            <Card>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  System Overview
-                </h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {[
-                    { label: "Total Users", value: stats.totalUsers, color: "primary" },
-                    { label: "Active Users", value: stats.activeUsers, color: "success" },
-                    { label: "Administrators", value: stats.totalAdmins, color: "secondary" },
-                    { label: "Pending Reports", value: stats.pendingReports, color: "error" }
-                  ].map((item, index) => (
-                    <div key={index} className="text-center p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                      <p className={`text-2xl font-bold text-${item.color}-600 dark:text-${item.color}-400`}>
-                        {item.value}
-                      </p>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{item.label}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </Card>
-          </div>
-
-          {/* Quick Actions */}
-          <div>
-            <Card>
-              <div className="p-6">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Quick Actions
-                </h3>
-                <div className="space-y-3">
-                  {quickActions.map((action, index) => {
-                    const Icon = action.icon;
-                    return (
-                      <Button
-                        key={index}
-                        variant="ghost"
-                        className="w-full justify-start h-auto p-3"
-                        as="a"
-                        href={action.path}
-                      >
-                        <Icon className={`h-5 w-5 text-${action.color}-600 dark:text-${action.color}-400 mr-3`} />
-                        <div className="text-left">
-                          <p className="font-medium text-gray-900 dark:text-white">{action.title}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{action.description}</p>
-                        </div>
-                      </Button>
-                    );
-                  })}
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        {/* Recent Activities */}
-        <Card>
-          <div className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Recent Activities
-            </h3>
-            <div className="space-y-4">
-              {recentActivities.map((activity) => (
-                <div key={activity.id} className="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                  <div className={`p-2 rounded-full bg-${activity.status}-100 dark:bg-${activity.status}-900/20`}>
-                    {activity.status === "success" && <CheckCircle className="h-4 w-4 text-success-600 dark:text-success-400" />}
-                    {activity.status === "warning" && <AlertTriangle className="h-4 w-4 text-warning-600 dark:text-warning-400" />}
-                    {activity.status === "error" && <UserX className="h-4 w-4 text-error-600 dark:text-error-400" />}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-900 dark:text-white">{activity.message}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
-                  </div>
-                  <Badge variant={activity.status} size="sm">
-                    {activity.type.replace("_", " ")}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
       </div>
     </AdminLayout>
   );
 };
 
-export default AdminDashboard; 
+export default AdminDashboard;

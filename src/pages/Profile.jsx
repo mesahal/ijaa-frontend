@@ -44,6 +44,22 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
+  // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
+  const getOrdinalSuffix = (num) => {
+    const j = num % 10;
+    const k = num % 100;
+    if (j === 1 && k !== 11) {
+      return "st";
+    }
+    if (j === 2 && k !== 12) {
+      return "nd";
+    }
+    if (j === 3 && k !== 13) {
+      return "rd";
+    }
+    return "th";
+  };
+
   const [profileData, setProfileData] = useState({});
   const [visibility, setVisibility] = useState({});
   const [experiences, setExperiences] = useState([]);
@@ -85,7 +101,7 @@ const Profile = () => {
   }, [photoError, loading]);
 
   const validateFields = () => {
-    const requiredFields = ["name", "profession", "location", "bio"];
+    const requiredFields = ["name", "profession", "location", "bio", "batch"];
     const newErrors = {};
     requiredFields.forEach((field) => {
       if (!profileData[field] || profileData[field].trim() === "") {
@@ -528,7 +544,7 @@ const Profile = () => {
                   {profileData.batch && (
                     <div className="flex items-center gap-1">
                       <GraduationCap className="h-4 w-4" />
-                      <span>Batch {profileData.batch}</span>
+                      <span> {profileData.batch}</span>
                     </div>
                   )}
 
@@ -611,14 +627,42 @@ const Profile = () => {
                     leftIcon={<MapPin className="h-4 w-4" />}
                     required
                   />
-                  <Input
-                    label="Batch"
-                    name="batch"
-                    value={profileData.batch || ""}
-                    onChange={handleInputChange}
-                    leftIcon={<GraduationCap className="h-4 w-4" />}
-                    placeholder="e.g., 2020"
-                  />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Batch <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <GraduationCap className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <select
+                        name="batch"
+                        value={profileData.batch || ""}
+                        onChange={handleInputChange}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                      >
+                        <option value="">Select your batch</option>
+                        {Array.from({ length: 20 }, (_, i) => i + 1).map(
+                          (batchNum) => (
+                            <option
+                              key={batchNum}
+                              value={`${batchNum}${getOrdinalSuffix(
+                                batchNum
+                              )} Batch`}
+                            >
+                              {batchNum}
+                              {getOrdinalSuffix(batchNum)} Batch
+                            </option>
+                          )
+                        )}
+                      </select>
+                    </div>
+                    {errors.batch && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.batch}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
                 {/* Bio Section */}

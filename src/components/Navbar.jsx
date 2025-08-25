@@ -13,14 +13,12 @@ import {
   Sun,
   Calendar,
   ChevronDown,
-  MessageCircle,
-  Users,
-  Bookmark,
   HelpCircle,
 } from "lucide-react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useCurrentUserPhoto } from "../hooks/useCurrentUserPhoto";
+import { useCurrentUserProfile } from "../hooks/useCurrentUserProfile";
 import { Button, Avatar, Badge } from "./ui";
 
 const Navbar = () => {
@@ -33,6 +31,7 @@ const Navbar = () => {
   const { user, signOut } = useUnifiedAuth();
   const { isDark, toggleTheme } = useTheme();
   const { profilePhotoUrl } = useCurrentUserPhoto();
+  const { profileData } = useCurrentUserProfile();
 
   // Handle scroll effect
   useEffect(() => {
@@ -65,7 +64,7 @@ const Navbar = () => {
   ];
 
   const profileMenuItems = [
-    { icon: User, label: "View Profile", action: () => navigate("/profile") },
+    { icon: User, label: "Profile", action: () => navigate("/profile") },
     {
       icon: Settings,
       label: "Settings",
@@ -73,7 +72,7 @@ const Navbar = () => {
     },
     {
       icon: HelpCircle,
-      label: "Help & Support",
+      label: "Help",
       action: () => navigate("/contact-support"),
     },
     { icon: LogOut, label: "Sign Out", action: handleSignOut, danger: true },
@@ -241,7 +240,10 @@ const Navbar = () => {
                       />
                       <div>
                         <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                          {user?.name || user?.email || "User"}
+                          {profileData?.name ||
+                            user?.name ||
+                            user?.email ||
+                            "User"}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
                           {user?.email || "user@example.com"}

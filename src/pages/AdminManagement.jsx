@@ -58,16 +58,16 @@ const AdminManagement = () => {
 
   const handleCreateAdmin = async (e) => {
     e.preventDefault();
-    
+
     if (!validateCreateForm()) {
       return;
     }
-    
+
     try {
       setActionLoading(true);
       const { confirmPassword, ...adminData } = createForm;
       await adminApi.createAdmin(adminData);
-      
+
       toast.success("Admin created successfully");
       setShowCreateModal(false);
       resetCreateForm();
@@ -110,45 +110,45 @@ const AdminManagement = () => {
 
   const handleFormChange = (e) => {
     const { name, value } = e.target;
-    setCreateForm(prev => ({
+    setCreateForm((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
-    
+
     // Clear error when user starts typing
     if (formErrors[name]) {
-      setFormErrors(prev => ({
+      setFormErrors((prev) => ({
         ...prev,
-        [name]: ""
+        [name]: "",
       }));
     }
   };
 
   const validateCreateForm = () => {
     const errors = {};
-    
+
     if (!createForm.name.trim()) {
       errors.name = "Name is required";
     }
-    
+
     if (!createForm.email.trim()) {
       errors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(createForm.email)) {
       errors.email = "Please enter a valid email address";
     }
-    
+
     if (!createForm.password) {
       errors.password = "Password is required";
     } else if (createForm.password.length < 8) {
       errors.password = "Password must be at least 8 characters";
     }
-    
+
     if (!createForm.confirmPassword) {
       errors.confirmPassword = "Please confirm your password";
     } else if (createForm.password !== createForm.confirmPassword) {
       errors.confirmPassword = "Passwords do not match";
     }
-    
+
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -167,12 +167,14 @@ const AdminManagement = () => {
   };
 
   // Filter admins based on search and status
-  const filteredAdmins = admins.filter(admin => {
-    const matchesSearch = admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         admin.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" ||
-                         (statusFilter === "active" && admin.active) ||
-                         (statusFilter === "inactive" && !admin.active);
+  const filteredAdmins = admins.filter((admin) => {
+    const matchesSearch =
+      admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      admin.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === "all" ||
+      (statusFilter === "active" && admin.active) ||
+      (statusFilter === "inactive" && !admin.active);
     return matchesSearch && matchesStatus;
   });
 
@@ -229,7 +231,7 @@ const AdminManagement = () => {
                   placeholder="Search admins..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
                 />
               </div>
 
@@ -238,7 +240,7 @@ const AdminManagement = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
                 >
                   <option value="all">All Status</option>
                   <option value="active">Active</option>
@@ -279,12 +281,15 @@ const AdminManagement = () => {
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredAdmins.map((admin) => (
-                  <tr key={admin.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <tr
+                    key={admin.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Avatar
                           size="lg"
-                          src={`/logo.png`}
+                          src={`/logo-2.jpg`}
                           alt={admin.name}
                           fallback={admin.name}
                         />
@@ -299,8 +304,14 @@ const AdminManagement = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge 
-                        variant={admin.role === "SUPER_ADMIN" ? "error" : admin.role === "ADMIN" ? "primary" : "success"}
+                      <Badge
+                        variant={
+                          admin.role === "SUPER_ADMIN"
+                            ? "error"
+                            : admin.role === "ADMIN"
+                            ? "primary"
+                            : "success"
+                        }
                         size="sm"
                       >
                         <Shield className="h-3 w-3 mr-1" />
@@ -308,7 +319,7 @@ const AdminManagement = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge 
+                      <Badge
                         variant={admin.active ? "success" : "error"}
                         size="sm"
                       >
@@ -321,35 +332,43 @@ const AdminManagement = () => {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {new Date(admin.createdAt).toLocaleDateString('en-US', {
-                        year: 'numeric',
-                        month: 'short',
-                        day: 'numeric'
+                      {new Date(admin.createdAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "short",
+                        day: "numeric",
                       })}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {admin.id !== currentAdmin?.id && (
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="flex items-center justify-end space-x-3">
                           {admin.active ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
                               onClick={() => handleDeactivateAdmin(admin.id)}
                               disabled={actionLoading}
-                              icon={<XCircle className="h-3 w-3" />}
+                              className="inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 hover:shadow-md transition-all duration-200 min-w-[100px] dark:bg-red-900/20 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30 dark:hover:border-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Deactivate Admin"
                             >
+                              {actionLoading ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                              ) : (
+                                <XCircle className="h-4 w-4 mr-2" />
+                              )}
                               Deactivate
-                            </Button>
+                            </button>
                           ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
+                            <button
                               onClick={() => handleActivateAdmin(admin.id)}
                               disabled={actionLoading}
-                              icon={<CheckCircle className="h-3 w-3" />}
+                              className="inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 hover:shadow-md transition-all duration-200 min-w-[100px] dark:bg-green-900/20 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30 dark:hover:border-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Activate Admin"
                             >
+                              {actionLoading ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                              ) : (
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                              )}
                               Activate
-                            </Button>
+                            </button>
                           )}
                         </div>
                       )}
@@ -367,13 +386,14 @@ const AdminManagement = () => {
                 <Shield className="h-12 w-12" />
               </div>
               <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                {searchTerm || statusFilter !== "all" ? "No admins found" : "No admins"}
+                {searchTerm || statusFilter !== "all"
+                  ? "No admins found"
+                  : "No admins"}
               </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {searchTerm || statusFilter !== "all" 
+                {searchTerm || statusFilter !== "all"
                   ? "Try adjusting your search or filter criteria."
-                  : "Get started by creating a new admin account."
-                }
+                  : "Get started by creating a new admin account."}
               </p>
               {!searchTerm && statusFilter === "all" && (
                 <div className="mt-6">

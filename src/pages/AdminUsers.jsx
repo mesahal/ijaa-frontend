@@ -301,7 +301,7 @@ const AdminUsers = () => {
                   placeholder="Search users..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
               </div>
             </div>
@@ -309,7 +309,7 @@ const AdminUsers = () => {
               <select
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
                 <option value="all">All Users</option>
                 <option value="active">Active</option>
@@ -392,7 +392,7 @@ const AdminUsers = () => {
                         {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <div className="flex items-center justify-end space-x-2">
+                        <div className="flex items-center justify-end space-x-3">
                           <button
                             onClick={() => {
                               if (isBlocked) {
@@ -402,27 +402,28 @@ const AdminUsers = () => {
                               }
                             }}
                             disabled={isBlockLoading}
-                            className={`p-2 rounded-md ${
+                            className={`inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200 min-w-[100px] ${
                               isBlocked
-                                ? "text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200"
-                                : "text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
-                            } ${isBlockLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            title={isBlocked ? "Unblock User" : "Block User"}
+                                ? "bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 dark:bg-green-900/20 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30 dark:hover:border-green-600"
+                                : "bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30 dark:hover:border-red-600"
+                            } ${isBlockLoading ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-md'}`}
+                            title={isBlocked ? "Activate User" : "Deactivate User"}
                           >
                             {isBlockLoading ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current"></div>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
                             ) : isBlocked ? (
-                              <UserCheck className="h-4 w-4" />
+                              <UserCheck className="h-4 w-4 mr-2" />
                             ) : (
-                              <UserX className="h-4 w-4" />
+                              <UserX className="h-4 w-4 mr-2" />
                             )}
+                            {isBlocked ? "Activate" : "Deactivate"}
                           </button>
                           <button
                             onClick={() => {
                               setSelectedUser(user);
                               setShowDeleteModal(true);
                             }}
-                            className="p-2 text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                            className="inline-flex items-center justify-center px-3 py-2 rounded-lg font-medium text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 hover:shadow-md transition-all duration-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30 dark:hover:border-red-600"
                             title="Delete User"
                           >
                             <Trash2 className="h-4 w-4" />
