@@ -51,13 +51,6 @@ const AdminFeatureFlags = () => {
     fetchFeatureFlags();
   }, []);
 
-  useEffect(() => {
-    if (featureFlags.length > 0) {
-      // Start with all dropdowns closed
-      setExpandedGroups(new Set());
-    }
-  }, [featureFlags]);
-
   const fetchFeatureFlags = async () => {
     try {
       setLoading(true);
@@ -70,12 +63,37 @@ const AdminFeatureFlags = () => {
     }
   };
 
-  const handleToggleFeature = async (featureName, enabled) => {
+  const handleToggleFeature = async (featureName, enabled, event) => {
+    // Prevent any form submission or page reload
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     try {
       setSaving(true);
       const updateData = { enabled };
       await adminApi.updateFeatureFlag(featureName, updateData);
-      fetchFeatureFlags();
+      
+      // Update the state directly instead of refetching to avoid page scroll
+      setFeatureFlags(prevFlags => 
+        prevFlags.map(flag => {
+          // Update parent flag
+          if (flag.name === featureName) {
+            return { ...flag, enabled };
+          }
+          // Update child flags
+          if (flag.children && flag.children.length > 0) {
+            return {
+              ...flag,
+              children: flag.children.map(child => 
+                child.name === featureName ? { ...child, enabled } : child
+              )
+            };
+          }
+          return flag;
+        })
+      );
     } catch (error) {
       console.error("Failed to update feature flag:", error);
     } finally {
@@ -312,7 +330,7 @@ const AdminFeatureFlags = () => {
         {/* Feature Flags List */}
         <div className="space-y-4">
           {processedFlags.map((flag) => (
-            <Card key={flag.id} className="overflow-hidden" interactive>
+            <Card key={flag.id} className="overflow-hidden">
               <div className={`px-6 py-4 ${flag.hasChildren ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 border-b border-gray-200 dark:border-gray-600' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'} transition-colors`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -353,8 +371,9 @@ const AdminFeatureFlags = () => {
                       {flag.enabled ? "Enabled" : "Disabled"}
                     </Badge>
                     <button
-                      onClick={() =>
-                        handleToggleFeature(flag.name, !flag.enabled)
+                      type="button"
+                      onClick={(e) =>
+                        handleToggleFeature(flag.name, !flag.enabled, e)
                       }
                       disabled={saving}
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 ${
@@ -401,7 +420,11 @@ const AdminFeatureFlags = () => {
               {flag.hasChildren && expandedGroups.has(flag.name) && (
                 <div className="divide-y divide-gray-100 dark:divide-gray-700">
                   {flag.children?.map((child) => (
-                    <div key={child.id} className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors">
+                    <div 
+                      key={child.id} 
+                      className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="text-xl ml-4">
@@ -427,8 +450,9 @@ const AdminFeatureFlags = () => {
                             {child.enabled ? "Enabled" : "Disabled"}
                           </Badge>
                           <button
-                            onClick={() =>
-                              handleToggleFeature(child.name, !child.enabled)
+                            type="button"
+                            onClick={(e) =>
+                              handleToggleFeature(child.name, !child.enabled, e)
                             }
                             disabled={saving}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 ${

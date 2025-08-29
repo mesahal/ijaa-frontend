@@ -93,30 +93,33 @@ export const featureFlagApi = {
   // 3.1 Check Feature Flag Status (Primary method) - Updated to use new endpoint
   checkFeatureFlag: async (featureName) => {
     try {
-      // Use the admin endpoint with user token for feature flag status
+      // Use the admin endpoint for feature flag status
       const encodedFeatureName = encodeURIComponent(featureName);
       
-      // Get user token from localStorage
+      // Try to get user token from localStorage (for authenticated requests)
       const userData = localStorage.getItem('alumni_user');
-      if (!userData) {
-        throw new Error('No user data found');
+      let headers = {
+        'Content-Type': 'application/json',
+        'accept': 'application/json'
+      };
+      
+      // If user data exists and has token, use it for authorization
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          if (user.token) {
+            headers['Authorization'] = `Bearer ${user.token}`;
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse user data:', parseError);
+          // Continue without authorization
+        }
       }
       
-      const user = JSON.parse(userData);
-      if (!user.token) {
-        throw new Error('No user token found');
-      }
-      
-      // Make direct request to admin endpoint with user token
+      // Make request to admin endpoint (works with or without authorization)
       const response = await axios.get(
         `http://localhost:8000/ijaa/api/v1/admin/feature-flags/${encodedFeatureName}/enabled`,
-        {
-          headers: {
-            'Authorization': `Bearer ${user.token}`,
-            'Content-Type': 'application/json',
-            'accept': 'application/json'
-          }
-        }
+        { headers }
       );
       
       return response.data;

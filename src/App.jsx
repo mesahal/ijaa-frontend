@@ -318,7 +318,7 @@ function AppRoutes() {
                   </div>
                 </div>
               }
-              defaultValue={false}
+              defaultValue={true}
             >
               <SignIn />
             </FeatureFlagWrapper>
@@ -352,7 +352,7 @@ function AppRoutes() {
                   </div>
                 </div>
               }
-              defaultValue={false}
+              defaultValue={true}
             >
               <SignUp />
             </FeatureFlagWrapper>

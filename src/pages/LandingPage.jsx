@@ -22,6 +22,7 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { Button, Card, Badge } from "../components/ui";
+import FeatureFlagWrapper from "../components/FeatureFlagWrapper";
 
 const LandingPage = () => {
   const features = [
@@ -153,15 +154,27 @@ const LandingPage = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              <Link
-                to="/signin"
-                className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
+              <FeatureFlagWrapper
+                featureName="user.login"
+                showFallback={false}
+                defaultValue={true}
               >
-                Sign In
-              </Link>
-              <Button asChild>
-                <Link to="/signup">Join Now</Link>
-              </Button>
+                <Link
+                  to="/signin"
+                  className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white font-medium transition-colors"
+                >
+                  Sign In
+                </Link>
+              </FeatureFlagWrapper>
+              <FeatureFlagWrapper
+                featureName="user.registration"
+                showFallback={false}
+                defaultValue={true}
+              >
+                <Button asChild>
+                  <Link to="/signup">Join Now</Link>
+                </Button>
+              </FeatureFlagWrapper>
             </div>
           </div>
         </div>
@@ -190,12 +203,24 @@ const LandingPage = () => {
               </div>
 
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button size="lg" asChild>
-                  <Link to="/signup">Get Started</Link>
-                </Button>
-                <Button variant="outline" size="lg" asChild>
-                  <Link to="/signin">Sign In</Link>
-                </Button>
+                <FeatureFlagWrapper
+                  featureName="user.registration"
+                  showFallback={false}
+                  defaultValue={true}
+                >
+                  <Button size="lg" asChild>
+                    <Link to="/signup">Get Started</Link>
+                  </Button>
+                </FeatureFlagWrapper>
+                <FeatureFlagWrapper
+                  featureName="user.login"
+                  showFallback={false}
+                  defaultValue={true}
+                >
+                  <Button variant="outline" size="lg" asChild>
+                    <Link to="/signin">Sign In</Link>
+                  </Button>
+                </FeatureFlagWrapper>
               </div>
 
               {/* Stats */}
@@ -309,17 +334,29 @@ const LandingPage = () => {
             professional network today.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" variant="secondary" asChild>
-              <Link to="/signup">Get Started</Link>
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-white text-white hover:bg-white hover:text-primary-600"
-              asChild
+            <FeatureFlagWrapper
+              featureName="user.registration"
+              showFallback={false}
+              defaultValue={true}
             >
-              <Link to="/signin">Sign In</Link>
-            </Button>
+              <Button size="lg" variant="secondary" asChild>
+                <Link to="/signup">Get Started</Link>
+              </Button>
+            </FeatureFlagWrapper>
+            <FeatureFlagWrapper
+              featureName="user.login"
+              showFallback={false}
+              defaultValue={true}
+            >
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white text-white hover:bg-white hover:text-primary-600"
+                asChild
+              >
+                <Link to="/signin">Sign In</Link>
+              </Button>
+            </FeatureFlagWrapper>
           </div>
         </div>
       </section>
@@ -354,12 +391,18 @@ const LandingPage = () => {
               <h4 className="font-semibold mb-4">Platform</h4>
               <ul className="space-y-2 text-gray-400">
                 <li>
-                  <Link
-                    to="/signup"
-                    className="hover:text-white transition-colors"
+                  <FeatureFlagWrapper
+                    featureName="user.registration"
+                    showFallback={false}
+                    defaultValue={true}
                   >
-                    Join Network
-                  </Link>
+                    <Link
+                      to="/signup"
+                      className="hover:text-white transition-colors"
+                    >
+                      Join Network
+                    </Link>
+                  </FeatureFlagWrapper>
                 </li>
                 <li>
                   <Link

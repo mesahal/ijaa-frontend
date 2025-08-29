@@ -224,6 +224,8 @@ src/
 - **Search Navigation**: Only shown when `alumni.search` feature flag is enabled
 - **Notifications Icon**: Only shown when `notifications` feature flag is enabled
 - **Help Menu Item**: Only shown when `reports` feature flag is enabled
+- **Landing Page Sign-In**: Only shown when `user.login` feature flag is enabled
+- **Landing Page Join Now**: Only shown when `user.registration` feature flag is enabled
 
 ### Feature Flag Behavior Patterns
 
@@ -310,6 +312,7 @@ NOTIFICATIONS: 'notifications'
 5. **Consistent Behavior**: All features follow the same enable/disable patterns
 6. **Performance**: Disabled features don't load unnecessary components
 7. **Maintenance**: Easy to add new feature flags following established patterns
+8. **Landing Page Protection**: Sign-in and "Join Now" buttons are protected by feature flags
 
 ### Technical Implementation Details
 - **FeatureFlagWrapper**: Reusable component for conditional rendering

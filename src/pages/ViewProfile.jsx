@@ -22,11 +22,16 @@ import {
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { PhotoDisplay } from "../components/PhotoManager";
 import { getProfilePhotoUrl, getCoverPhotoUrl } from "../utils/photoApi";
+import { useFeatureFlag } from "../hooks/useFeatureFlag";
 
 const ViewProfile = () => {
   const { userId } = useParams();
   const { user } = useUnifiedAuth();
   const navigate = useNavigate();
+
+  // Feature flag hooks at the top level
+  const { isEnabled: isExperiencesEnabled } = useFeatureFlag("user.experiences", false);
+  const { isEnabled: isInterestsEnabled } = useFeatureFlag("user.interests", false);
 
   const [loading, setLoading] = useState(true);
   const [profileData, setProfileData] = useState({});
@@ -349,71 +354,75 @@ const ViewProfile = () => {
           </div>
 
           {/* Experience Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-              Experience
-            </h2>
+          {isExperiencesEnabled && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                Experience
+              </h2>
 
-            {experiences.length > 0 ? (
-              <div className="space-y-4">
-                {experiences.map((exp, index) => (
-                  <div
-                    key={exp.id || index}
-                    className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
-                  >
-                    <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-1" />
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-                        {exp.title}
-                      </h3>
-                      <p className="text-gray-600 dark:text-gray-300">
-                        {exp.company}
-                      </p>
-                      {exp.period && (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {exp.period}
+              {experiences.length > 0 ? (
+                <div className="space-y-4">
+                  {experiences.map((exp, index) => (
+                    <div
+                      key={exp.id || index}
+                      className="flex items-start gap-3 p-4 border border-gray-200 dark:border-gray-600 rounded-lg"
+                    >
+                      <Briefcase className="h-5 w-5 text-gray-400 dark:text-gray-500 mt-1" />
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                          {exp.title}
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-300">
+                          {exp.company}
                         </p>
-                      )}
-                      {exp.description && (
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
-                          {exp.description}
-                        </p>
-                      )}
+                        {exp.period && (
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {exp.period}
+                          </p>
+                        )}
+                        {exp.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
+                            {exp.description}
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                No experience information available
-              </div>
-            )}
-          </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+                  No experience information available
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Interests Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-              Interests
-            </h2>
+          {isInterestsEnabled && (
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
+                Interests
+              </h2>
 
-            {interests.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {interests.map((interest, index) => (
-                  <div
-                    key={interest.id || index}
-                    className="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-3 py-1 rounded-full text-sm flex items-center gap-1"
-                  >
-                    <Tag className="h-3 w-3" />
-                    <span>{interest.interest}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                No interests information available
-              </div>
-            )}
-          </div>
+              {interests.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {interests.map((interest, index) => (
+                    <div
+                      key={interest.id || index}
+                      className="bg-purple-100 dark:bg-purple-900/50 text-purple-800 dark:text-purple-300 px-3 py-1 rounded-full text-sm flex items-center gap-1"
+                    >
+                      <Tag className="h-3 w-3" />
+                      <span>{interest.interest}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-gray-500 dark:text-gray-400 text-center py-8">
+                  No interests information available
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Sidebar */}
