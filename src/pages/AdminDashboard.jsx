@@ -245,21 +245,21 @@ const AdminDashboard = () => {
     <AdminLayout>
       <div className="space-y-8">
         {/* Enhanced Header */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-primary-600 via-primary-700 to-primary-800 p-8 text-white shadow-xl">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-violet-600 to-indigo-700 p-8 text-white shadow-xl">
           <div className="absolute inset-0 bg-black/10"></div>
           <div className="relative z-10 flex items-center justify-between">
             <div>
               <h1 className="text-4xl font-bold mb-2">Admin Dashboard</h1>
-              <p className="text-primary-100 text-lg">
+              <p className="text-purple-100 text-lg">
                 Welcome back, {admin?.name || admin?.email}
               </p>
-              <p className="text-primary-200 text-sm mt-1">
+              <p className="text-purple-200 text-sm mt-1">
                 Here's what's happening with your platform today
               </p>
             </div>
             <div className="flex items-center space-x-4">
               <div className="text-right">
-                <p className="text-primary-200 text-sm">Last Updated</p>
+                <p className="text-purple-200 text-sm">Last Updated</p>
                 <p className="font-semibold">
                   {new Date().toLocaleTimeString()}
                 </p>

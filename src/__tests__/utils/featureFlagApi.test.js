@@ -1,794 +1,420 @@
-import { featureFlagApi, FEATURE_FLAGS, FEATURE_FLAG_DESCRIPTIONS, isFeatureEnabled, getFeatureFlagsStatus } from '../../utils/featureFlagApi';
+// Mock the API client and admin API
+jest.mock('../../utils/apiClient', () => ({
+  default: {
+    get: jest.fn(),
+    post: jest.fn(),
+    put: jest.fn(),
+    delete: jest.fn()
+  }
+}));
+
+jest.mock('../../utils/adminApi', () => ({
+  adminApi: {
+    getFeatureFlags: jest.fn(),
+    getFeatureFlag: jest.fn(),
+    createFeatureFlag: jest.fn(),
+    updateFeatureFlag: jest.fn(),
+    deleteFeatureFlag: jest.fn(),
+    getEnabledFeatureFlags: jest.fn(),
+    getDisabledFeatureFlags: jest.fn(),
+    refreshFeatureFlagCache: jest.fn()
+  }
+}));
+import { featureFlagApi, FEATURE_FLAGS, FEATURE_FLAG_DESCRIPTIONS } from '../../utils/featureFlagApi';
+
+
+
 import apiClient from '../../utils/apiClient';
+import { adminApi } from '../../utils/adminApi';
 
-// Mock the apiClient
-jest.mock('../../utils/apiClient');
-
-// Mock fetch globally
-global.fetch = jest.fn();
-
-// Mock localStorage
-const localStorageMock = {
-  getItem: jest.fn(),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
-};
-global.localStorage = localStorageMock;
-
-describe('featureFlagApi - Complete Feature Flag System', () => {
+describe('featureFlagApi', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Group 1: Basic Feature Flag Management (Admin)', () => {
-    describe('1.1 Get All Feature Flags', () => {
-      it('should get all feature flags successfully', async () => {
-        const mockResponse = {
-          data: {
-            message: "Feature flags retrieved successfully",
-            code: "200",
-            data: [
-              {
-                id: 1,
-                featureName: "NEW_UI",
-                enabled: true,
-                description: "Enable new user interface with modern design",
-                createdAt: "2024-12-01T10:00:00",
-                updatedAt: "2024-12-01T10:00:00"
-              },
-              {
-                id: 2,
-                featureName: "CHAT_FEATURE",
-                enabled: false,
-                description: "Enable real-time chat functionality between alumni",
-                createdAt: "2024-12-01T10:00:00",
-                updatedAt: "2024-12-01T10:00:00"
-              }
-            ]
+  describe('Basic Feature Flag Management (Admin)', () => {
+    it('should get all feature flags', async () => {
+      const mockResponse = {
+        data: [
+          {
+            id: 1,
+            name: 'events',
+            displayName: 'Events System',
+            enabled: true,
+            description: 'Event management system',
+            parentId: null
           }
-        };
+        ]
+      };
+      adminApi.getFeatureFlags.mockResolvedValue(mockResponse);
 
-        apiClient.get.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.getAllFeatureFlags();
-
-        expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags');
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when getting all feature flags', async () => {
-        const error = new Error('Network error');
-        apiClient.get.mockRejectedValue(error);
-
-        await expect(featureFlagApi.getAllFeatureFlags()).rejects.toThrow('Network error');
-      });
+      const result = await featureFlagApi.getAllFeatureFlags();
+      expect(result).toEqual(mockResponse);
+      expect(adminApi.getFeatureFlags).toHaveBeenCalled();
     });
 
-    describe('1.2 Get Feature Flag by Name', () => {
-      it('should get a specific feature flag by name', async () => {
-        const mockResponse = {
-          data: {
-            message: "Feature flag retrieved successfully",
-            code: "200",
-            data: {
-              id: 1,
-              featureName: "NEW_UI",
-              enabled: true,
-              description: "Enable new user interface with modern design",
-              createdAt: "2024-12-01T10:00:00",
-              updatedAt: "2024-12-01T10:00:00"
-            }
-          }
-        };
+    it('should get feature flag by name', async () => {
+      const mockResponse = {
+        data: {
+          id: 1,
+          name: 'events.creation',
+          displayName: 'Event Creation',
+          enabled: true,
+          description: 'Event creation functionality',
+          parentId: 1
+        }
+      };
+      adminApi.getFeatureFlag.mockResolvedValue(mockResponse);
 
-        apiClient.get.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.getFeatureFlag('NEW_UI');
-
-        expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/NEW_UI');
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when getting feature flag by name', async () => {
-        const error = new Error('Feature flag not found');
-        apiClient.get.mockRejectedValue(error);
-
-        await expect(featureFlagApi.getFeatureFlag('NON_EXISTENT')).rejects.toThrow('Feature flag not found');
-      });
+      const result = await featureFlagApi.getFeatureFlag('events.creation');
+      expect(result).toEqual(mockResponse);
+      expect(adminApi.getFeatureFlag).toHaveBeenCalledWith('events.creation');
     });
 
-    describe('1.3 Create Feature Flag', () => {
-      it('should create a new feature flag successfully', async () => {
-        const featureFlagData = {
-          featureName: "NEW_FEATURE",
-          description: "Enable new feature for testing"
-        };
+    it('should create feature flag', async () => {
+      const featureFlagData = {
+        name: 'events.creation',
+        displayName: 'Event Creation',
+        description: 'Event creation functionality',
+        parentId: 1,
+        enabled: false
+      };
+      const mockResponse = { data: { ...featureFlagData, id: 1 } };
+      adminApi.createFeatureFlag.mockResolvedValue(mockResponse);
 
-        const mockResponse = {
-          data: {
-            message: "Feature flag created successfully",
-            code: "201",
-            data: {
-              id: 3,
-              featureName: "NEW_FEATURE",
-              enabled: false,
-              description: "Enable new feature for testing",
-              createdAt: "2024-12-01T10:00:00",
-              updatedAt: "2024-12-01T10:00:00"
-            }
-          }
-        };
-
-        apiClient.post.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.createFeatureFlag(featureFlagData);
-
-        expect(apiClient.post).toHaveBeenCalledWith('/admin/feature-flags', featureFlagData);
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when creating feature flag', async () => {
-        const featureFlagData = {
-          featureName: "NEW_FEATURE",
-          description: "Enable new feature for testing"
-        };
-
-        const error = new Error('Feature flag already exists');
-        apiClient.post.mockRejectedValue(error);
-
-        await expect(featureFlagApi.createFeatureFlag(featureFlagData)).rejects.toThrow('Feature flag already exists');
-      });
+      const result = await featureFlagApi.createFeatureFlag(featureFlagData);
+      expect(result).toEqual(mockResponse);
+      expect(adminApi.createFeatureFlag).toHaveBeenCalledWith(featureFlagData);
     });
 
-    describe('1.4 Update Feature Flag', () => {
-      it('should update a feature flag successfully', async () => {
-        const featureFlagData = {
+    it('should update feature flag', async () => {
+      const updateData = { enabled: true };
+      const mockResponse = { data: { name: 'events.creation', enabled: true } };
+      adminApi.updateFeatureFlag.mockResolvedValue(mockResponse);
+
+      const result = await featureFlagApi.updateFeatureFlag('events.creation', updateData);
+      expect(result).toEqual(mockResponse);
+      expect(adminApi.updateFeatureFlag).toHaveBeenCalledWith('events.creation', updateData);
+    });
+
+    it('should delete feature flag', async () => {
+      adminApi.deleteFeatureFlag.mockResolvedValue({ data: null });
+
+      await featureFlagApi.deleteFeatureFlag('events.creation');
+      expect(adminApi.deleteFeatureFlag).toHaveBeenCalledWith('events.creation');
+    });
+  });
+
+  describe('Feature Flag Status Management (Admin)', () => {
+    it('should get enabled feature flags', async () => {
+      const mockResponse = {
+        data: [
+          { name: 'events', enabled: true },
+          { name: 'events.creation', enabled: true }
+        ]
+      };
+      adminApi.getEnabledFeatureFlags.mockResolvedValue(mockResponse);
+
+      const result = await featureFlagApi.getEnabledFeatureFlags();
+      expect(result).toEqual(mockResponse);
+      expect(adminApi.getEnabledFeatureFlags).toHaveBeenCalled();
+    });
+
+    it('should get disabled feature flags', async () => {
+      const mockResponse = {
+        data: [
+          { name: 'events.creation', enabled: false }
+        ]
+      };
+      adminApi.getDisabledFeatureFlags.mockResolvedValue(mockResponse);
+
+      const result = await featureFlagApi.getDisabledFeatureFlags();
+      expect(result).toEqual(mockResponse);
+      expect(adminApi.getDisabledFeatureFlags).toHaveBeenCalled();
+    });
+
+    it('should refresh feature flag cache', async () => {
+      const mockResponse = { data: { message: 'Cache refreshed' } };
+      adminApi.refreshFeatureFlagCache.mockResolvedValue(mockResponse);
+
+      const result = await featureFlagApi.refreshFeatureFlagCache();
+      expect(result).toEqual(mockResponse);
+      expect(adminApi.refreshFeatureFlagCache).toHaveBeenCalled();
+    });
+  });
+
+  describe('Feature Flag Status Checking (User)', () => {
+    it('should check feature flag status', async () => {
+      const mockResponse = {
+        data: {
+          name: 'events.creation',
           enabled: true
-        };
+        }
+      };
+      apiClient.get.mockResolvedValue(mockResponse);
 
-        const mockResponse = {
-          data: {
-            message: "Feature flag updated successfully",
-            code: "200",
-            data: {
-              id: 1,
-              featureName: "NEW_UI",
-              enabled: true,
-              description: "Enable new user interface with modern design",
-              createdAt: "2024-12-01T10:00:00",
-              updatedAt: "2024-12-01T11:00:00"
-            }
-          }
-        };
+      const result = await featureFlagApi.checkFeatureFlag('events.creation');
+      expect(result).toEqual(mockResponse.data);
+      expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/events.creation/enabled');
+    });
 
-        apiClient.put.mockResolvedValue(mockResponse);
+    it('should check multiple feature flags', async () => {
+      const mockResponses = [
+        { data: { name: 'events', enabled: true } },
+        { data: { name: 'events.creation', enabled: false } }
+      ];
+      
+      apiClient.get
+        .mockResolvedValueOnce(mockResponses[0])
+        .mockResolvedValueOnce(mockResponses[1]);
 
-        const result = await featureFlagApi.updateFeatureFlag('NEW_UI', featureFlagData);
-
-        expect(apiClient.put).toHaveBeenCalledWith('/admin/feature-flags/NEW_UI', featureFlagData);
-        expect(result).toEqual(mockResponse.data);
+      const result = await featureFlagApi.checkMultipleFeatureFlags(['events', 'events.creation']);
+      expect(result).toEqual({
+        events: true,
+        'events.creation': false
       });
+    });
 
-      it('should handle errors when updating feature flag', async () => {
-        const featureFlagData = {
+    it('should handle errors in multiple feature flag check', async () => {
+      apiClient.get
+        .mockRejectedValueOnce(new Error('API Error'))
+        .mockResolvedValueOnce({ data: { name: 'events.creation', enabled: true } });
+
+      const consoleSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await featureFlagApi.checkMultipleFeatureFlags(['events', 'events.creation']);
+      expect(result).toEqual({
+        'events.creation': true
+      });
+      expect(consoleSpy).toHaveBeenCalled();
+
+      consoleSpy.mockRestore();
+    });
+
+    it('should check feature flag with caching', async () => {
+      const mockResponse = {
+        data: {
+          name: 'events.creation',
           enabled: true
-        };
+        }
+      };
+      apiClient.get.mockResolvedValue(mockResponse);
 
-        const error = new Error('Feature flag not found');
-        apiClient.put.mockRejectedValue(error);
+      // First call should hit the API
+      const result1 = await featureFlagApi.checkFeatureFlagCached('events.creation');
+      expect(result1).toEqual(mockResponse.data);
 
-        await expect(featureFlagApi.updateFeatureFlag('NON_EXISTENT', featureFlagData)).rejects.toThrow('Feature flag not found');
-      });
+      // Second call should use cache
+      const result2 = await featureFlagApi.checkFeatureFlagCached('events.creation');
+      expect(result2).toEqual(mockResponse.data);
+
+      // API should only be called once
+      expect(apiClient.get).toHaveBeenCalledTimes(1);
     });
 
-    describe('1.5 Delete Feature Flag', () => {
-      it('should delete a feature flag successfully', async () => {
-        const mockResponse = {
-          data: {
-            message: "Feature flag deleted successfully",
-            code: "200",
-            data: null
-          }
-        };
+    it('should check feature flag with fallback', async () => {
+      const mockResponse = {
+        data: {
+          name: 'events.creation',
+          enabled: true
+        }
+      };
+      apiClient.get.mockResolvedValue(mockResponse);
 
-        apiClient.delete.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.deleteFeatureFlag('NEW_UI');
-
-        expect(apiClient.delete).toHaveBeenCalledWith('/admin/feature-flags/NEW_UI');
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when deleting feature flag', async () => {
-        const error = new Error('Feature flag not found');
-        apiClient.delete.mockRejectedValue(error);
-
-        await expect(featureFlagApi.deleteFeatureFlag('NON_EXISTENT')).rejects.toThrow('Feature flag not found');
-      });
-    });
-  });
-
-  describe('Group 2: Feature Flag Status Management (Admin)', () => {
-    describe('2.1 Get Enabled Feature Flags', () => {
-      it('should get enabled feature flags successfully', async () => {
-        const mockResponse = {
-          data: {
-            message: "Enabled feature flags retrieved successfully",
-            code: "200",
-            data: [
-              {
-                id: 1,
-                featureName: "NEW_UI",
-                enabled: true,
-                description: "Enable new user interface with modern design",
-                createdAt: "2024-12-01T10:00:00",
-                updatedAt: "2024-12-01T10:00:00"
-              }
-            ]
-          }
-        };
-
-        apiClient.get.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.getEnabledFeatureFlags();
-
-        expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/enabled');
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when getting enabled feature flags', async () => {
-        const error = new Error('Network error');
-        apiClient.get.mockRejectedValue(error);
-
-        await expect(featureFlagApi.getEnabledFeatureFlags()).rejects.toThrow('Network error');
-      });
+      const result = await featureFlagApi.checkFeatureFlagWithFallback('events.creation', false);
+      expect(result).toBe(true);
     });
 
-    describe('2.2 Get Disabled Feature Flags', () => {
-      it('should get disabled feature flags successfully', async () => {
-        const mockResponse = {
-          data: {
-            message: "Disabled feature flags retrieved successfully",
-            code: "200",
-            data: [
-              {
-                id: 2,
-                featureName: "CHAT_FEATURE",
-                enabled: false,
-                description: "Enable real-time chat functionality between alumni",
-                createdAt: "2024-12-01T10:00:00",
-                updatedAt: "2024-12-01T10:00:00"
-              }
-            ]
-          }
-        };
+    it('should return fallback value on error', async () => {
+      apiClient.get.mockRejectedValue(new Error('API Error'));
 
-        apiClient.get.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.getDisabledFeatureFlags();
-
-        expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/disabled');
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when getting disabled feature flags', async () => {
-        const error = new Error('Network error');
-        apiClient.get.mockRejectedValue(error);
-
-        await expect(featureFlagApi.getDisabledFeatureFlags()).rejects.toThrow('Network error');
-      });
-    });
-
-    describe('2.3 Get Feature Flags by Status', () => {
-      it('should get feature flags by enabled status', async () => {
-        const mockResponse = {
-          data: {
-            message: "Enabled feature flags retrieved successfully",
-            code: "200",
-            data: [
-              {
-                id: 1,
-                featureName: "NEW_UI",
-                enabled: true,
-                description: "Enable new user interface with modern design",
-                createdAt: "2024-12-01T10:00:00",
-                updatedAt: "2024-12-01T10:00:00"
-              }
-            ]
-          }
-        };
-
-        apiClient.get.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.getFeatureFlagsByStatus(true);
-
-        expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/enabled');
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should get feature flags by disabled status', async () => {
-        const mockResponse = {
-          data: {
-            message: "Disabled feature flags retrieved successfully",
-            code: "200",
-            data: [
-              {
-                id: 2,
-                featureName: "CHAT_FEATURE",
-                enabled: false,
-                description: "Enable real-time chat functionality between alumni",
-                createdAt: "2024-12-01T10:00:00",
-                updatedAt: "2024-12-01T10:00:00"
-              }
-            ]
-          }
-        };
-
-        apiClient.get.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.getFeatureFlagsByStatus(false);
-
-        expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/disabled');
-        expect(result).toEqual(mockResponse.data);
-      });
-    });
-
-    describe('2.4 Get Feature Flags Summary', () => {
-      it('should get feature flags summary successfully', async () => {
-        const enabledResponse = {
-          data: {
-            message: "Enabled feature flags retrieved successfully",
-            code: "200",
-            data: [
-              {
-                id: 1,
-                featureName: "NEW_UI",
-                enabled: true,
-                description: "Enable new user interface with modern design",
-                createdAt: "2024-12-01T10:00:00",
-                updatedAt: "2024-12-01T10:00:00"
-              }
-            ]
-          }
-        };
-
-        const disabledResponse = {
-          data: {
-            message: "Disabled feature flags retrieved successfully",
-            code: "200",
-            data: [
-              {
-                id: 2,
-                featureName: "CHAT_FEATURE",
-                enabled: false,
-                description: "Enable real-time chat functionality between alumni",
-                createdAt: "2024-12-01T10:00:00",
-                updatedAt: "2024-12-01T10:00:00"
-              }
-            ]
-          }
-        };
-
-        apiClient.get
-          .mockResolvedValueOnce(enabledResponse)
-          .mockResolvedValueOnce(disabledResponse);
-
-        const result = await featureFlagApi.getFeatureFlagsSummary();
-
-        expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/enabled');
-        expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/disabled');
-        expect(result).toEqual({
-          enabled: enabledResponse.data.data,
-          disabled: disabledResponse.data.data,
-          total: 2,
-          enabledCount: 1,
-          disabledCount: 1
-        });
-      });
-
-      it('should handle errors when getting feature flags summary', async () => {
-        const error = new Error('Network error');
-        apiClient.get.mockRejectedValue(error);
-
-        await expect(featureFlagApi.getFeatureFlagsSummary()).rejects.toThrow('Network error');
-      });
+      const result = await featureFlagApi.checkFeatureFlagWithFallback('events.creation', false);
+      expect(result).toBe(false);
     });
   });
 
-  describe('Group 3: Feature Flag Status Checking (User)', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-      // Mock localStorage to return a valid user token
-      localStorageMock.getItem.mockReturnValue(JSON.stringify({
-        token: 'test-token',
-        username: 'testuser'
-      }));
+  describe('Hierarchical Feature Flag Utilities', () => {
+    it('should check if parent feature is enabled', async () => {
+      const mockResponse = {
+        data: {
+          name: 'events',
+          enabled: true
+        }
+      };
+      apiClient.get.mockResolvedValue(mockResponse);
+
+      const result = await featureFlagApi.isParentFeatureEnabled('events.creation');
+      expect(result).toBe(true);
+      expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/events/enabled');
     });
 
-    describe('3.1 Check Feature Flag Status', () => {
-      it('should check feature flag status successfully (enabled)', async () => {
-        const mockResponse = {
-          message: "Feature flag status retrieved successfully",
-          code: "200",
-          data: {
-            featureName: "NEW_UI",
-            enabled: true
-          }
-        };
+    it('should return true for features without parent', async () => {
+      const result = await featureFlagApi.isParentFeatureEnabled('events');
+      expect(result).toBe(true);
+      expect(apiClient.get).not.toHaveBeenCalled();
+    });
 
-        global.fetch.mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse
-        });
+    it('should check feature flag with hierarchical validation', async () => {
+      const parentResponse = {
+        data: {
+          name: 'events',
+          enabled: true
+        }
+      };
+      const featureResponse = {
+        data: {
+          name: 'events.creation',
+          enabled: true
+        }
+      };
+      
+      apiClient.get
+        .mockResolvedValueOnce(parentResponse)
+        .mockResolvedValueOnce(featureResponse);
 
-        const result = await featureFlagApi.checkFeatureFlag('NEW_UI');
+      const result = await featureFlagApi.checkFeatureFlagHierarchical('events.creation');
+      expect(result).toEqual(featureResponse);
+    });
 
-        expect(global.fetch).toHaveBeenCalledWith(
-          'http://localhost:8000/ijaa/api/v1/admin/feature-flags/check/NEW_UI',
+    it('should return disabled when parent is disabled', async () => {
+      const parentResponse = {
+        data: {
+          name: 'events',
+          enabled: false
+        }
+      };
+      
+      apiClient.get.mockResolvedValue(parentResponse);
+
+      const result = await featureFlagApi.checkFeatureFlagHierarchical('events.creation');
+      expect(result.data).toEqual({
+        name: 'events.creation',
+        enabled: false,
+        reason: 'Parent feature disabled'
+      });
+    });
+
+    it('should get available feature flags', async () => {
+      const mockResponse = {
+        data: [
           {
-            method: 'GET',
-            headers: {
-              'Authorization': 'Bearer test-token',
-              'Content-Type': 'application/json'
+            id: 1,
+            name: 'events',
+            children: [
+              {
+                id: 2,
+                name: 'events.creation'
+              }
+            ]
+          }
+        ]
+      };
+      adminApi.getFeatureFlags.mockResolvedValue(mockResponse);
+
+      const result = await featureFlagApi.getAvailableFeatureFlags();
+      expect(result).toEqual(['events', 'events.creation']);
+    });
+
+    it('should extract flag names from hierarchical structure', () => {
+      const flags = [
+        {
+          id: 1,
+          name: 'events',
+          children: [
+            {
+              id: 2,
+              name: 'events.creation'
             }
-          }
-        );
-        expect(result).toEqual(mockResponse);
-      });
-
-      it('should check feature flag status successfully (disabled)', async () => {
-        const mockResponse = {
-          message: "Feature flag status retrieved successfully",
-          code: "200",
-          data: {
-            featureName: "CHAT_FEATURE",
-            enabled: false
-          }
-        };
-
-        global.fetch.mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse
-        });
-
-        const result = await featureFlagApi.checkFeatureFlag('CHAT_FEATURE');
-
-        expect(global.fetch).toHaveBeenCalledWith(
-          'http://localhost:8000/ijaa/api/v1/admin/feature-flags/check/CHAT_FEATURE',
-          {
-            method: 'GET',
-            headers: {
-              'Authorization': 'Bearer test-token',
-              'Content-Type': 'application/json'
+          ]
+        },
+        {
+          id: 3,
+          name: 'user',
+          children: [
+            {
+              id: 4,
+              name: 'user.profile'
             }
-          }
-        );
-        expect(result).toEqual(mockResponse);
-      });
+          ]
+        }
+      ];
 
-      it('should handle errors when checking feature flag status', async () => {
-        global.fetch.mockResolvedValueOnce({
-          ok: false,
-          status: 404
-        });
-
-        await expect(featureFlagApi.checkFeatureFlag('NON_EXISTENT')).rejects.toThrow('HTTP error! status: 404');
-      });
-
-      it('should throw error when no user token is found', async () => {
-        localStorageMock.getItem.mockReturnValue(null);
-
-        await expect(featureFlagApi.checkFeatureFlag('NEW_UI')).rejects.toThrow('No user token found');
-      });
+      const result = featureFlagApi.extractFlagNames(flags);
+      expect(result).toEqual(['events', 'events.creation', 'user', 'user.profile']);
     });
 
-    describe('3.2 Check if feature is enabled', () => {
-      it('should return true when feature is enabled', async () => {
-        const mockResponse = {
-          message: "Feature flag status retrieved successfully",
-          code: "200",
-          data: {
-            featureName: "NEW_UI",
-            enabled: true
-          }
-        };
+    it('should validate if a feature flag exists', async () => {
+      const mockResponse = {
+        data: {
+          name: 'events.creation',
+          enabled: true
+        }
+      };
+      apiClient.get.mockResolvedValue(mockResponse);
 
-        global.fetch.mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse
-        });
-
-        const result = await featureFlagApi.isFeatureEnabled('NEW_UI');
-
-        expect(result).toBe(true);
-      });
-
-      it('should return false when feature is disabled', async () => {
-        const mockResponse = {
-          message: "Feature flag status retrieved successfully",
-          code: "200",
-          data: {
-            featureName: "CHAT_FEATURE",
-            enabled: false
-          }
-        };
-
-        global.fetch.mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse
-        });
-
-        const result = await featureFlagApi.isFeatureEnabled('CHAT_FEATURE');
-
-        expect(result).toBe(false);
-      });
-
-      it('should return false when API call fails', async () => {
-        global.fetch.mockRejectedValueOnce(new Error('Network error'));
-
-        const result = await featureFlagApi.isFeatureEnabled('NEW_UI');
-
-        expect(result).toBe(false);
-      });
+      const result = await featureFlagApi.validateFeatureFlag('events.creation');
+      expect(result).toBe(true);
     });
 
-    describe('3.3 Check multiple feature flags status', () => {
-      it('should check multiple feature flags successfully', async () => {
-        const featureNames = ['NEW_UI', 'CHAT_FEATURE', 'DARK_MODE'];
-        
-        const mockResponses = [
-          {
-            message: "Feature flag status retrieved successfully",
-            code: "200",
-            data: { featureName: "NEW_UI", enabled: true }
-          },
-          {
-            message: "Feature flag status retrieved successfully",
-            code: "200",
-            data: { featureName: "CHAT_FEATURE", enabled: false }
-          },
-          {
-            message: "Feature flag status retrieved successfully",
-            code: "200",
-            data: { featureName: "DARK_MODE", enabled: true }
-          }
-        ];
+    it('should return false for non-existent feature flag', async () => {
+      apiClient.get.mockRejectedValue(new Error('Not found'));
 
-        // Mock successful responses for all feature flags
-        global.fetch
-          .mockResolvedValueOnce({
-            ok: true,
-            json: async () => mockResponses[0]
-          })
-          .mockResolvedValueOnce({
-            ok: true,
-            json: async () => mockResponses[1]
-          })
-          .mockResolvedValueOnce({
-            ok: true,
-            json: async () => mockResponses[2]
-          });
-
-        const result = await featureFlagApi.checkMultipleFeatureFlags(featureNames);
-
-        expect(result).toEqual({
-          NEW_UI: true,
-          CHAT_FEATURE: false,
-          DARK_MODE: true
-        });
-        expect(global.fetch).toHaveBeenCalledTimes(3);
-      });
-
-      it('should handle partial failures gracefully', async () => {
-        const featureNames = ['NEW_UI', 'CHAT_FEATURE'];
-        
-        // Mock one success and one failure
-        global.fetch
-          .mockResolvedValueOnce({
-            ok: true,
-            json: async () => ({
-              message: "Feature flag status retrieved successfully",
-              code: "200",
-              data: { featureName: "NEW_UI", enabled: true }
-            })
-          })
-          .mockRejectedValueOnce(new Error('Network error'));
-
-        const result = await featureFlagApi.checkMultipleFeatureFlags(featureNames);
-
-        expect(result).toEqual({
-          NEW_UI: true,
-          CHAT_FEATURE: false
-        });
-      });
-
-      it('should return empty object for empty feature names array', async () => {
-        const result = await featureFlagApi.checkMultipleFeatureFlags([]);
-
-        expect(result).toEqual({});
-        expect(global.fetch).not.toHaveBeenCalled();
-      });
-
-      it('should handle all failures gracefully', async () => {
-        const featureNames = ['NEW_UI', 'CHAT_FEATURE'];
-        
-        global.fetch
-          .mockRejectedValueOnce(new Error('Network error'))
-          .mockRejectedValueOnce(new Error('Network error'));
-
-        const result = await featureFlagApi.checkMultipleFeatureFlags(featureNames);
-
-        expect(result).toEqual({
-          NEW_UI: false,
-          CHAT_FEATURE: false
-        });
-      });
-    });
-
-    describe('3.4 Get user-specific feature flags', () => {
-      it('should get user feature flags successfully', async () => {
-        const mockResponse = {
-          data: {
-            message: "User feature flags retrieved successfully",
-            code: "200",
-            data: [
-              {
-                id: 1,
-                featureName: "NEW_UI",
-                enabled: true,
-                description: "Enable new user interface with modern design"
-              }
-            ]
-          }
-        };
-
-        apiClient.get.mockResolvedValue(mockResponse);
-
-        const result = await featureFlagApi.getUserFeatureFlags();
-
-        expect(apiClient.get).toHaveBeenCalledWith('/feature-flags');
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when getting user feature flags', async () => {
-        const error = new Error('Network error');
-        apiClient.get.mockRejectedValue(error);
-
-        await expect(featureFlagApi.getUserFeatureFlags()).rejects.toThrow('Network error');
-      });
+      const result = await featureFlagApi.validateFeatureFlag('non.existent');
+      expect(result).toBe(false);
     });
   });
 
-  describe('Helper Functions', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-      localStorageMock.getItem.mockReturnValue(JSON.stringify({
-        token: 'test-token',
-        username: 'testuser'
-      }));
+  describe('Error Handling', () => {
+    it('should handle API errors in getAllFeatureFlags', async () => {
+      adminApi.getFeatureFlags.mockRejectedValue(new Error('API Error'));
+
+      await expect(featureFlagApi.getAllFeatureFlags()).rejects.toThrow('API Error');
     });
 
-    describe('isFeatureEnabled helper', () => {
-      it('should return true when feature is enabled', async () => {
-        const mockResponse = {
-          message: "Feature flag status retrieved successfully",
-          code: "200",
-          data: {
-            featureName: "NEW_UI",
-            enabled: true
-          }
-        };
+    it('should handle API errors in checkFeatureFlag', async () => {
+      apiClient.get.mockRejectedValue(new Error('API Error'));
 
-        global.fetch.mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse
-        });
-
-        const result = await isFeatureEnabled('NEW_UI');
-
-        expect(result).toBe(true);
-      });
-
-      it('should return false when feature is disabled', async () => {
-        const mockResponse = {
-          message: "Feature flag status retrieved successfully",
-          code: "200",
-          data: {
-            featureName: "CHAT_FEATURE",
-            enabled: false
-          }
-        };
-
-        global.fetch.mockResolvedValueOnce({
-          ok: true,
-          json: async () => mockResponse
-        });
-
-        const result = await isFeatureEnabled('CHAT_FEATURE');
-
-        expect(result).toBe(false);
-      });
-
-      it('should return false when API call fails', async () => {
-        global.fetch.mockRejectedValueOnce(new Error('Network error'));
-
-        const result = await isFeatureEnabled('NEW_UI');
-
-        expect(result).toBe(false);
-      });
+      await expect(featureFlagApi.checkFeatureFlag('events.creation')).rejects.toThrow('API Error');
     });
 
-    describe('getFeatureFlagsStatus helper', () => {
-      it('should get feature flags status for multiple flags', async () => {
-        const featureNames = ['NEW_UI', 'CHAT_FEATURE'];
-        
-        const mockResponses = [
-          {
-            message: "Feature flag status retrieved successfully",
-            code: "200",
-            data: { featureName: "NEW_UI", enabled: true }
-          },
-          {
-            message: "Feature flag status retrieved successfully",
-            code: "200",
-            data: { featureName: "CHAT_FEATURE", enabled: false }
-          }
-        ];
+    it('should handle API errors in hierarchical check', async () => {
+      apiClient.get.mockRejectedValue(new Error('API Error'));
 
-        global.fetch
-          .mockResolvedValueOnce({
-            ok: true,
-            json: async () => mockResponses[0]
-          })
-          .mockResolvedValueOnce({
-            ok: true,
-            json: async () => mockResponses[1]
-          });
-
-        const result = await getFeatureFlagsStatus(featureNames);
-
-        expect(result).toEqual({
-          NEW_UI: true,
-          CHAT_FEATURE: false
-        });
-      });
-
-      it('should handle errors gracefully', async () => {
-        global.fetch.mockRejectedValue(new Error('Network error'));
-
-        const result = await getFeatureFlagsStatus(['NEW_UI']);
-
-        expect(result).toEqual({});
-      });
+      const result = await featureFlagApi.isParentFeatureEnabled('events.creation');
+      expect(result).toBe(false);
     });
   });
+});
 
-  describe('Predefined Feature Flags', () => {
-    it('should have all required feature flag constants', () => {
-      expect(FEATURE_FLAGS).toHaveProperty('NEW_UI');
-      expect(FEATURE_FLAGS).toHaveProperty('CHAT_FEATURE');
-      expect(FEATURE_FLAGS).toHaveProperty('EVENT_REGISTRATION');
-      expect(FEATURE_FLAGS).toHaveProperty('PAYMENT_INTEGRATION');
-      expect(FEATURE_FLAGS).toHaveProperty('SOCIAL_LOGIN');
-      expect(FEATURE_FLAGS).toHaveProperty('DARK_MODE');
-      expect(FEATURE_FLAGS).toHaveProperty('NOTIFICATIONS');
-      expect(FEATURE_FLAGS).toHaveProperty('ADVANCED_SEARCH');
-      expect(FEATURE_FLAGS).toHaveProperty('ALUMNI_DIRECTORY');
-      expect(FEATURE_FLAGS).toHaveProperty('MENTORSHIP_PROGRAM');
-      expect(FEATURE_FLAGS).toHaveProperty('EVENT_ANALYTICS');
-      expect(FEATURE_FLAGS).toHaveProperty('EVENT_TEMPLATES');
-      expect(FEATURE_FLAGS).toHaveProperty('RECURRING_EVENTS');
-      expect(FEATURE_FLAGS).toHaveProperty('EVENT_MEDIA');
-      expect(FEATURE_FLAGS).toHaveProperty('EVENT_COMMENTS');
-    });
+describe('FEATURE_FLAGS constants', () => {
+  it('should contain hierarchical feature flags', () => {
+    expect(FEATURE_FLAGS.USER_REGISTRATION).toBe('user.registration');
+    expect(FEATURE_FLAGS.EVENTS).toBe('events');
+    expect(FEATURE_FLAGS.EVENTS_CREATION).toBe('events.creation');
+    expect(FEATURE_FLAGS.FILE_UPLOAD).toBe('file-upload');
+    expect(FEATURE_FLAGS.FILE_UPLOAD_PROFILE_PHOTO).toBe('file-upload.profile-photo');
+    expect(FEATURE_FLAGS.ADMIN_FEATURES).toBe('admin.features');
+    expect(FEATURE_FLAGS.ALUMNI_SEARCH).toBe('alumni.search');
+  });
 
-    it('should have descriptions for all feature flags', () => {
-      Object.values(FEATURE_FLAGS).forEach(flagName => {
-        expect(FEATURE_FLAG_DESCRIPTIONS).toHaveProperty(flagName);
-        expect(typeof FEATURE_FLAG_DESCRIPTIONS[flagName]).toBe('string');
-        expect(FEATURE_FLAG_DESCRIPTIONS[flagName].length).toBeGreaterThan(0);
-      });
-    });
+  it('should contain legacy feature flags for backward compatibility', () => {
+    expect(FEATURE_FLAGS.NEW_UI).toBe('NEW_UI');
+    expect(FEATURE_FLAGS.CHAT_FEATURE).toBe('CHAT_FEATURE');
+    expect(FEATURE_FLAGS.EVENT_REGISTRATION).toBe('EVENT_REGISTRATION');
+  });
+});
+
+describe('FEATURE_FLAG_DESCRIPTIONS', () => {
+  it('should contain descriptions for hierarchical feature flags', () => {
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.USER_REGISTRATION]).toBe('User registration functionality');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.EVENTS]).toBe('Event management system');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.EVENTS_CREATION]).toBe('Event creation functionality');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.FILE_UPLOAD]).toBe('File upload functionality');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.ADMIN_FEATURES]).toBe('Admin panel functionality');
+  });
+
+  it('should contain descriptions for legacy feature flags', () => {
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.NEW_UI]).toBe('Modern user interface with enhanced design');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.CHAT_FEATURE]).toBe('Real-time chat functionality');
   });
 });

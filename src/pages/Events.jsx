@@ -11,6 +11,9 @@ import {
   Clock,
 } from 'lucide-react';
 
+// Import authentication context
+import { useUnifiedAuth } from '../context/UnifiedAuthContext';
+
 // Import custom hooks
 import { useEvents } from '../hooks/events/useEvents';
 import { useEventActions } from '../hooks/events/useEventActions';
@@ -65,6 +68,9 @@ const INITIAL_EVENT_FORM = {
  * Uses custom hooks for state management and business logic
  */
 const Events = () => {
+  // Get user from authentication context
+  const { user } = useUnifiedAuth();
+  
   // Custom hooks
   const {
     events,
@@ -290,8 +296,9 @@ const Events = () => {
               variant="primary"
               size="lg"
               icon={<Plus className="h-5 w-5" />}
+              disabled={!user?.token}
             >
-              Create Event
+              {user?.token ? "Create Event" : "Sign in to Create Event"}
             </Button>
           </div>
         </div>
@@ -303,6 +310,25 @@ const Events = () => {
               <div className="flex items-center space-x-3">
                 <AlertCircle className="h-5 w-5 text-error-500 flex-shrink-0" />
                 <p className="text-error-700 dark:text-error-300">{error}</p>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Authentication Required Message */}
+        {!error && !isLoading && displayEvents && displayEvents.length === 0 && (
+          <Card className="mb-6 border-warning-200 dark:border-warning-700">
+            <div className="p-4">
+              <div className="flex items-center space-x-3">
+                <AlertCircle className="h-5 w-5 text-warning-500 flex-shrink-0" />
+                <div>
+                  <p className="text-warning-700 dark:text-warning-300 font-medium">
+                    Sign in to view and manage events
+                  </p>
+                  <p className="text-warning-600 dark:text-warning-400 text-sm mt-1">
+                    Please sign in to your account to access the events feature.
+                  </p>
+                </div>
               </div>
             </div>
           </Card>
@@ -340,14 +366,24 @@ const Events = () => {
                 <Calendar className="h-8 w-8 text-gray-400" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No events found
+                {!user?.token ? "Sign in to view events" : "No events found"}
               </h3>
               <p className="text-gray-600 dark:text-gray-400 mb-6">
-                {activeTab === "my-events" 
-                  ? "You haven't created any events yet." 
-                  : "No events match your search criteria."}
+                {!user?.token 
+                  ? "Please sign in to your account to view and manage events."
+                  : activeTab === "my-events" 
+                    ? "You haven't created any events yet." 
+                    : "No events match your search criteria."}
               </p>
-              {activeTab === "my-events" && (
+              {!user?.token ? (
+                <Button
+                  onClick={() => window.location.href = '/signin'}
+                  variant="primary"
+                  icon={<Calendar className="h-4 w-4" />}
+                >
+                  Sign In
+                </Button>
+              ) : activeTab === "my-events" && (
                 <Button
                   onClick={() => setShowCreateModal(true)}
                   variant="primary"
@@ -422,7 +458,7 @@ const Events = () => {
       </div>
 
       {/* Modals */}
-      {showCreateModal && (
+      {showCreateModal && user?.token && (
         <EventForm
           isOpen={showCreateModal}
           onClose={() => {
@@ -439,7 +475,7 @@ const Events = () => {
         />
       )}
 
-      {showEventModal && selectedEvent && (
+      {showEventModal && selectedEvent && user?.token && (
         <EventDetailsModal
           isOpen={showEventModal}
           onClose={() => {
@@ -466,7 +502,7 @@ const Events = () => {
         />
       )}
 
-      {showInviteModal && selectedEvent && (
+      {showInviteModal && selectedEvent && user?.token && (
         <InviteModal
           isOpen={showInviteModal}
           onClose={() => {
@@ -480,7 +516,7 @@ const Events = () => {
         />
       )}
 
-      {showParticipantsModal && (
+      {showParticipantsModal && user?.token && (
         <ParticipantsModal
           isOpen={showParticipantsModal}
           onClose={() => setShowParticipantsModal(false)}
@@ -488,7 +524,7 @@ const Events = () => {
         />
       )}
 
-      {showSearchModal && (
+      {showSearchModal && user?.token && (
         <SearchModal
           isOpen={showSearchModal}
           onClose={() => {

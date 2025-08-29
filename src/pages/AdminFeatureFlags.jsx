@@ -1,38 +1,49 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "../components/AdminLayout";
-import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import {
   Flag,
-  ToggleLeft,
-  ToggleRight,
   Settings,
   Save,
-  RefreshCw,
   Plus,
   Trash2,
   Edit,
   X,
-  Filter,
+  ChevronDown,
+  ChevronRight,
+  Shield,
+  Users,
+  Calendar,
+  Search,
+  FileText,
+  Upload,
+  Download,
+  MessageCircle,
+  Bell,
+  Palette,
+  CreditCard,
+  Share2,
+  BookOpen,
+  BarChart3,
+  Repeat,
+  RefreshCw,
+  Activity,
 } from "lucide-react";
 import { adminApi } from "../utils/adminApi";
+import { Card, Button, Badge } from "../components/ui";
 
 const AdminFeatureFlags = () => {
-  const { admin } = useUnifiedAuth();
   const [featureFlags, setFeatureFlags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFlag, setSelectedFlag] = useState(null);
-  const [filterStatus, setFilterStatus] = useState('all'); // 'all', 'enabled', 'disabled'
-  const [featureFlagsSummary, setFeatureFlagsSummary] = useState({
-    enabled: 0,
-    disabled: 0,
-    total: 0
-  });
+  const [expandedGroups, setExpandedGroups] = useState(new Set());
   const [createForm, setCreateForm] = useState({
-    featureName: "",
+    name: "",
+    displayName: "",
     description: "",
+    parentId: null,
     enabled: false
   });
 
@@ -40,61 +51,51 @@ const AdminFeatureFlags = () => {
     fetchFeatureFlags();
   }, []);
 
-  useEffect(() => {
-    if (featureFlags.length > 0) {
-      const summary = {
-        enabled: featureFlags.filter(f => f.enabled).length,
-        disabled: featureFlags.filter(f => !f.enabled).length,
-        total: featureFlags.length
-      };
-      setFeatureFlagsSummary(summary);
-    }
-  }, [featureFlags]);
-
   const fetchFeatureFlags = async () => {
     try {
       setLoading(true);
-      let response;
-      
-      // Use Group 2 functionality based on filter
-      switch (filterStatus) {
-        case 'enabled':
-          response = await adminApi.getEnabledFeatureFlags();
-          break;
-        case 'disabled':
-          response = await adminApi.getDisabledFeatureFlags();
-          break;
-        default:
-          response = await adminApi.getFeatureFlags();
-          break;
-      }
-      
+      const response = await adminApi.getFeatureFlags();
       setFeatureFlags(response.data || []);
     } catch (error) {
       console.error("Feature flags error:", error);
-      // Show error message
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFilterChange = async (status) => {
-    setFilterStatus(status);
-    await fetchFeatureFlags();
-  };
-
-  const handleToggleFeature = async (featureName, enabled) => {
+  const handleToggleFeature = async (featureName, enabled, event) => {
+    // Prevent any form submission or page reload
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
     try {
       setSaving(true);
-      const updateData = {
-        enabled
-      };
-      
+      const updateData = { enabled };
       await adminApi.updateFeatureFlag(featureName, updateData);
-      fetchFeatureFlags(); // Refresh the list
+      
+      // Update the state directly instead of refetching to avoid page scroll
+      setFeatureFlags(prevFlags => 
+        prevFlags.map(flag => {
+          // Update parent flag
+          if (flag.name === featureName) {
+            return { ...flag, enabled };
+          }
+          // Update child flags
+          if (flag.children && flag.children.length > 0) {
+            return {
+              ...flag,
+              children: flag.children.map(child => 
+                child.name === featureName ? { ...child, enabled } : child
+              )
+            };
+          }
+          return flag;
+        })
+      );
     } catch (error) {
       console.error("Failed to update feature flag:", error);
-      // Show error message
     } finally {
       setSaving(false);
     }
@@ -107,14 +108,15 @@ const AdminFeatureFlags = () => {
       await adminApi.createFeatureFlag(createForm);
       setShowCreateModal(false);
       setCreateForm({
-        featureName: "",
+        name: "",
+        displayName: "",
         description: "",
+        parentId: null,
         enabled: false
       });
       fetchFeatureFlags();
     } catch (error) {
       console.error("Failed to create feature flag:", error);
-      // Show error message
     } finally {
       setSaving(false);
     }
@@ -124,18 +126,19 @@ const AdminFeatureFlags = () => {
     e.preventDefault();
     try {
       setSaving(true);
-      await adminApi.updateFeatureFlag(selectedFlag.featureName, createForm);
+      await adminApi.updateFeatureFlag(selectedFlag.name, createForm);
       setShowEditModal(false);
       setSelectedFlag(null);
       setCreateForm({
-        featureName: "",
+        name: "",
+        displayName: "",
         description: "",
+        parentId: null,
         enabled: false
       });
       fetchFeatureFlags();
     } catch (error) {
       console.error("Failed to update feature flag:", error);
-      // Show error message
     } finally {
       setSaving(false);
     }
@@ -152,7 +155,6 @@ const AdminFeatureFlags = () => {
       fetchFeatureFlags();
     } catch (error) {
       console.error("Failed to delete feature flag:", error);
-      // Show error message
     } finally {
       setSaving(false);
     }
@@ -161,72 +163,117 @@ const AdminFeatureFlags = () => {
   const handleEditFeatureFlag = (flag) => {
     setSelectedFlag(flag);
     setCreateForm({
-      featureName: flag.featureName,
+      name: flag.name,
+      displayName: flag.displayName || flag.name,
       description: flag.description || "",
+      parentId: flag.parentId,
       enabled: flag.enabled
     });
     setShowEditModal(true);
   };
 
   const getFeatureIcon = (featureName) => {
-    switch (featureName.toLowerCase()) {
-      case "new_ui":
-        return "🎨";
-      case "chat_feature":
-        return "💬";
-      case "event_registration":
-        return "📅";
-      case "payment_integration":
-        return "💳";
-      case "social_login":
-        return "🔗";
-      case "dark_mode":
-        return "🌙";
-      case "notifications":
-        return "🔔";
-      case "advanced_search":
-        return "🔍";
-      case "alumni_directory":
-        return "👥";
-      case "mentorship_program":
-        return "🎓";
-      default:
-        return "⚙️";
-    }
+    const iconMap = {
+      'user': <Users className="h-6 w-6 text-blue-500" />,
+      'events': <Calendar className="h-6 w-6 text-green-500" />,
+      'search': <Search className="h-6 w-6 text-purple-500" />,
+      'file-upload': <Upload className="h-6 w-6 text-orange-500" />,
+      'file-download': <Download className="h-6 w-6 text-indigo-500" />,
+      'file-delete': <Trash2 className="h-6 w-6 text-red-500" />,
+      'alumni': <Users className="h-6 w-6 text-teal-500" />,
+      'admin': <Shield className="h-6 w-6 text-gray-700" />,
+      'chat': <MessageCircle className="h-6 w-6 text-pink-500" />,
+      'NEW_UI': <Palette className="h-6 w-6 text-yellow-500" />,
+      'CHAT_FEATURE': <MessageCircle className="h-6 w-6 text-pink-500" />,
+      'EVENT_REGISTRATION': <Calendar className="h-6 w-6 text-green-500" />,
+      'PAYMENT_INTEGRATION': <CreditCard className="h-6 w-6 text-emerald-500" />,
+      'SOCIAL_LOGIN': <Share2 className="h-6 w-6 text-blue-500" />,
+      'DARK_MODE': <Palette className="h-6 w-6 text-gray-500" />,
+      'NOTIFICATIONS': <Bell className="h-6 w-6 text-red-500" />,
+      'ADVANCED_SEARCH': <Search className="h-6 w-6 text-purple-500" />,
+      'ALUMNI_DIRECTORY': <BookOpen className="h-6 w-6 text-teal-500" />,
+      'MENTORSHIP_PROGRAM': <Users className="h-6 w-6 text-indigo-500" />,
+      'EVENT_ANALYTICS': <BarChart3 className="h-6 w-6 text-blue-500" />,
+      'EVENT_TEMPLATES': <FileText className="h-6 w-6 text-green-500" />,
+      'RECURRING_EVENTS': <Repeat className="h-6 w-6 text-orange-500" />,
+      'EVENT_MEDIA': <Upload className="h-6 w-6 text-purple-500" />,
+      'EVENT_COMMENTS': <MessageCircle className="h-6 w-6 text-pink-500" />,
+    };
+
+    const baseName = featureName.split('.')[0];
+    return iconMap[baseName] || <Flag className="h-6 w-6 text-gray-500" />;
   };
 
   const getFeatureDescription = (featureName) => {
-    switch (featureName.toLowerCase()) {
-      case "new_ui":
-        return "Modern user interface with enhanced design";
-      case "chat_feature":
-        return "Real-time chat functionality";
-      case "event_registration":
-        return "Event registration system";
-      case "payment_integration":
-        return "Payment processing integration";
-      case "social_login":
-        return "Social media login options";
-      case "dark_mode":
-        return "Dark mode theme";
-      case "notifications":
-        return "Push notifications and alerts";
-      case "advanced_search":
-        return "Advanced search with filters";
-      case "alumni_directory":
-        return "Public alumni directory";
-      case "mentorship_program":
-        return "Mentorship program matching";
-      default:
-        return "Feature flag for system functionality";
-    }
+    const descriptions = {
+      'user.registration': 'User registration functionality',
+      'user.login': 'User authentication system',
+      'user.password-change': 'Password change functionality',
+      'user.profile': 'User profile management',
+      'user.experiences': 'Work experience management',
+      'user.interests': 'User interests management',
+      'events': 'Event management system',
+      'events.creation': 'Event creation functionality',
+      'events.update': 'Event update functionality',
+      'events.delete': 'Event deletion functionality',
+      'events.participation': 'Event participation and RSVP',
+      'events.invitations': 'Event invitation system',
+      'events.comments': 'Event commenting system',
+      'events.media': 'Event media attachment support',
+      'events.templates': 'Reusable event templates',
+      'events.recurring': 'Recurring event patterns',
+      'events.reminders': 'Event reminder system',
+      'search': 'Search functionality',
+      'search.advanced-filters': 'Advanced search filters',
+      'file-upload': 'File upload functionality',
+      'file-upload.profile-photo': 'Profile photo upload',
+      'file-upload.cover-photo': 'Cover photo upload',
+      'file-download': 'File download functionality',
+      'file-delete': 'File deletion functionality',
+      'alumni.search': 'Alumni search functionality',
+      'admin.features': 'Admin panel functionality',
+      'admin.auth': 'Admin authentication',
+      'admin.user-management': 'User management in admin panel',
+      'admin.announcements': 'Announcement management',
+      'admin.reports': 'Report management',
+    };
+
+    return descriptions[featureName] || "Feature flag for system functionality";
   };
+
+  // Process feature flags to handle the API response structure
+  const processFeatureFlags = () => {
+    const parentFlags = [];
+    
+    featureFlags.forEach(flag => {
+      // Only add parent flags to the main list
+      parentFlags.push({
+        ...flag,
+        isParent: flag.children && flag.children.length > 0,
+        hasChildren: flag.children && flag.children.length > 0
+      });
+    });
+    
+    return parentFlags;
+  };
+
+  const toggleGroup = (parentName) => {
+    const newExpanded = new Set(expandedGroups);
+    if (newExpanded.has(parentName)) {
+      newExpanded.delete(parentName);
+    } else {
+      newExpanded.add(parentName);
+    }
+    setExpandedGroups(newExpanded);
+  };
+
+  const processedFlags = processFeatureFlags();
 
   if (loading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       </AdminLayout>
     );
@@ -234,202 +281,275 @@ const AdminFeatureFlags = () => {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              Feature Flags
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Enable or disable system features
-            </p>
-          </div>
-          <div className="flex space-x-2">
-            {/* Filter Dropdown */}
-            <div className="relative">
-              <select
-                value={filterStatus}
-                onChange={(e) => handleFilterChange(e.target.value)}
-                className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700"
-              >
-                <option value="all">All Flags</option>
-                <option value="enabled">Enabled Only</option>
-                <option value="disabled">Disabled Only</option>
-              </select>
+      <div className="space-y-8">
+        {/* Enhanced Header - Consistent with AdminDashboard */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-green-600 via-emerald-600 to-teal-700 p-8 text-white shadow-xl">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Feature Flags</h1>
+              <p className="text-green-100 text-lg">
+                Control system functionality with precision
+              </p>
+              <p className="text-green-200 text-sm mt-1">
+                Manage feature availability across the platform
+              </p>
             </div>
-            <button
-              onClick={fetchFeatureFlags}
-              disabled={saving}
-              className="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50"
-            >
-              <RefreshCw className="h-5 w-5 mr-2" />
-              Refresh
-            </button>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              disabled={saving}
-              className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50"
-            >
-              <Plus className="h-5 w-5 mr-2" />
-              Create Flag
-            </button>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-green-200 text-sm">Last Updated</p>
+                <p className="font-semibold">
+                  {new Date().toLocaleTimeString()}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={fetchFeatureFlags}
+                icon={<Activity className="h-4 w-4" />}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                disabled={loading}
+              >
+                Refresh
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => setShowCreateModal(true)}
+                icon={<Plus className="h-4 w-4" />}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                disabled={saving}
+              >
+                Create Flag
+              </Button>
+            </div>
           </div>
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
         </div>
 
         {/* Feature Flags List */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white">
-              System Features ({featureFlags.length})
-            </h3>
-          </div>
-          <div className="divide-y divide-gray-200 dark:divide-gray-700">
-            {featureFlags.length === 0 ? (
-              <div className="p-8 text-center">
-                <Flag className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                  No feature flags found
-                </h3>
-                <p className="text-gray-600 dark:text-gray-400">
-                  Feature flags will appear here when configured.
-                </p>
-              </div>
-            ) : (
-              featureFlags.map((feature) => (
-                <div
-                  key={feature.id}
-                  className="px-6 py-4 flex items-center justify-between"
-                >
+        <div className="space-y-4">
+          {processedFlags.map((flag) => (
+            <Card key={flag.id} className="overflow-hidden">
+              <div className={`px-6 py-4 ${flag.hasChildren ? 'bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 border-b border-gray-200 dark:border-gray-600' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50'} transition-colors`}>
+                <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
                     <div className="text-2xl">
-                      {getFeatureIcon(feature.featureName)}
+                      {getFeatureIcon(flag.name)}
                     </div>
                     <div className="flex-1">
                       <h4 className="text-lg font-medium text-gray-900 dark:text-white">
-                        {feature.featureName}
+                        {flag.displayName || flag.name}
                       </h4>
                       <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {feature.description || getFeatureDescription(feature.featureName)}
+                        {flag.description || getFeatureDescription(flag.name)}
                       </p>
+                      <div className="flex items-center mt-1">
+                        {flag.hasChildren ? (
+                          <>
+                            <Shield className="h-3 w-3 text-blue-500 mr-1" />
+                            <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+                              Parent Feature
+                            </span>
+                            <span className="mx-2 text-gray-300">•</span>
+                            <span className="text-xs text-gray-500">
+                              {flag.children?.length || 0} child{flag.children?.length !== 1 ? 'ren' : ''}
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs text-gray-500">
+                              Standalone Feature
+                            </span>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <span
-                      className={`text-sm font-medium ${
-                        feature.enabled
-                          ? "text-green-600 dark:text-green-400"
-                          : "text-gray-500 dark:text-gray-400"
-                      }`}
-                    >
-                      {feature.enabled ? "Enabled" : "Disabled"}
-                    </span>
+                    <Badge variant={flag.enabled ? "success" : "secondary"}>
+                      {flag.enabled ? "Enabled" : "Disabled"}
+                    </Badge>
                     <button
-                      onClick={() =>
-                        handleToggleFeature(feature.featureName, !feature.enabled)
+                      type="button"
+                      onClick={(e) =>
+                        handleToggleFeature(flag.name, !flag.enabled, e)
                       }
                       disabled={saving}
-                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 ${
-                        feature.enabled
-                          ? "bg-blue-600"
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 ${
+                        flag.enabled
+                          ? "bg-primary-600"
                           : "bg-gray-200 dark:bg-gray-700"
                       }`}
                     >
                       <span
                         className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                          feature.enabled ? "translate-x-6" : "translate-x-1"
+                          flag.enabled ? "translate-x-6" : "translate-x-1"
                         }`}
                       />
                     </button>
-                    <button
-                      onClick={() => handleEditFeatureFlag(feature)}
-                      className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleEditFeatureFlag(flag)}
+                      icon={<Edit className="h-4 w-4" />}
                       title="Edit Feature Flag"
-                    >
-                      <Edit className="h-4 w-4" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteFeatureFlag(feature.featureName)}
-                      className="p-1 text-gray-400 hover:text-red-600 transition-colors"
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteFeatureFlag(flag.name)}
+                      icon={<Trash2 className="h-4 w-4" />}
                       title="Delete Feature Flag"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    />
+                    {flag.hasChildren && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleGroup(flag.name)}
+                        icon={expandedGroups.has(flag.name) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                        title={expandedGroups.has(flag.name) ? "Hide Children" : "Show Children"}
+                      />
+                    )}
                   </div>
                 </div>
-              ))
-            )}
-          </div>
+              </div>
+
+              {/* Show children if expanded */}
+              {flag.hasChildren && expandedGroups.has(flag.name) && (
+                <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                  {flag.children?.map((child) => (
+                    <div 
+                      key={child.id} 
+                      className="px-6 py-4 bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-4">
+                          <div className="text-xl ml-4">
+                            {getFeatureIcon(child.name)}
+                          </div>
+                          <div className="flex-1">
+                            <h5 className="text-base font-medium text-gray-900 dark:text-white">
+                              {child.displayName || child.name}
+                            </h5>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {child.description || getFeatureDescription(child.name)}
+                            </p>
+                            <div className="flex items-center mt-1">
+                              <ChevronRight className="h-3 w-3 text-gray-400 mr-1" />
+                              <span className="text-xs text-gray-500">
+                                Child of {flag.name}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <Badge variant={child.enabled ? "success" : "secondary"}>
+                            {child.enabled ? "Enabled" : "Disabled"}
+                          </Badge>
+                          <button
+                            type="button"
+                            onClick={(e) =>
+                              handleToggleFeature(child.name, !child.enabled, e)
+                            }
+                            disabled={saving}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 ${
+                              child.enabled
+                                ? "bg-primary-600"
+                                : "bg-gray-200 dark:bg-gray-700"
+                            }`}
+                          >
+                            <span
+                              className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                child.enabled ? "translate-x-6" : "translate-x-1"
+                              }`}
+                            />
+                          </button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEditFeatureFlag(child)}
+                            icon={<Edit className="h-4 w-4" />}
+                            title="Edit Feature Flag"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteFeatureFlag(child.name)}
+                            icon={<Trash2 className="h-4 w-4" />}
+                            title="Delete Feature Flag"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/20"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </Card>
+          ))}
         </div>
 
+        {/* Empty State */}
+        {featureFlags.length === 0 && (
+          <Card className="p-12 text-center">
+            <div className="mx-auto w-24 h-24 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/30 dark:to-primary-900/30 rounded-full flex items-center justify-center mb-6">
+              <Flag className="h-12 w-12 text-primary-600 dark:text-primary-400" />
+            </div>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              No feature flags configured
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+              Get started by creating your first feature flag to control system functionality.
+            </p>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => setShowCreateModal(true)}
+              icon={<Plus className="h-5 w-5" />}
+            >
+              Create Your First Flag
+            </Button>
+          </Card>
+        )}
+
         {/* Information Card */}
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <Card className="bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/20 dark:to-primary-900/20 border-primary-200 dark:border-primary-800">
           <div className="flex items-start">
-            <Settings className="h-6 w-6 text-blue-600 dark:text-blue-400 mt-1 mr-3" />
-            <div>
-              <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">
+            <div className="flex-shrink-0">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
+                <Settings className="h-6 w-6 text-white" />
+              </div>
+            </div>
+            <div className="ml-4">
+              <h3 className="text-lg font-semibold text-primary-900 dark:text-primary-100 mb-2">
                 About Feature Flags
               </h3>
-              <p className="text-blue-800 dark:text-blue-200 text-sm">
-                Feature flags allow you to enable or disable specific functionality
-                across the application. Changes take effect immediately and affect
-                all users. Use this feature carefully as it can impact user
-                experience.
+              <p className="text-primary-800 dark:text-primary-200 text-sm leading-relaxed">
+                Feature flags provide granular control over system functionality. Parent features control child features - 
+                disabling a parent automatically disables all its children. Changes take effect immediately and affect all users.
               </p>
             </div>
           </div>
-        </div>
-
-        {/* Status Summary */}
-        {featureFlags.length > 0 && (
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-              Feature Status Summary
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">
-                  {featureFlagsSummary.enabled}
-                </div>
-                <div className="text-sm text-green-600 dark:text-green-400">
-                  Enabled Features
-                </div>
-              </div>
-              <div className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <div className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                  {featureFlagsSummary.disabled}
-                </div>
-                <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Disabled Features
-                </div>
-              </div>
-              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">
-                  {featureFlagsSummary.total}
-                </div>
-                <div className="text-sm text-blue-600 dark:text-blue-400">
-                  Total Features
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        </Card>
 
         {/* Create Feature Flag Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <Card className="max-w-md w-full transform transition-all">
               <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Create Feature Flag
                   </h2>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setShowCreateModal(false)}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
+                    icon={<X className="h-5 w-5" />}
+                  />
                 </div>
               </div>
 
@@ -441,10 +561,23 @@ const AdminFeatureFlags = () => {
                   <input
                     type="text"
                     required
-                    value={createForm.featureName}
-                    onChange={(e) => setCreateForm({ ...createForm, featureName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                    placeholder="e.g., NEW_UI"
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                    placeholder="e.g., user.registration"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={createForm.displayName}
+                    onChange={(e) => setCreateForm({ ...createForm, displayName: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                    placeholder="e.g., User Registration"
                   />
                 </div>
 
@@ -456,7 +589,7 @@ const AdminFeatureFlags = () => {
                     value={createForm.description}
                     onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors resize-none"
                     placeholder="Describe what this feature does..."
                   />
                 </div>
@@ -467,56 +600,51 @@ const AdminFeatureFlags = () => {
                       type="checkbox"
                       checked={createForm.enabled}
                       onChange={(e) => setCreateForm({ ...createForm, enabled: e.target.checked })}
-                      className="mr-2"
+                      className="mr-3 w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                     />
-                    <span className="text-sm">Enabled by default</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Enabled by default</span>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
                     type="submit"
-                    disabled={saving}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    loading={saving}
+                    icon={<Plus className="h-4 w-4" />}
                   >
-                    {saving ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ) : (
-                      <Plus className="h-4 w-4" />
-                    )}
-                    <span>Create Flag</span>
-                  </button>
+                    Create Flag
+                  </Button>
                 </div>
               </form>
-            </div>
+            </Card>
           </div>
         )}
 
         {/* Edit Feature Flag Modal */}
         {showEditModal && selectedFlag && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full">
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <Card className="max-w-md w-full transform transition-all">
               <div className="p-6 border-b border-gray-200 dark:border-gray-700">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
                     Edit Feature Flag
                   </h2>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => {
                       setShowEditModal(false);
                       setSelectedFlag(null);
                     }}
-                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  >
-                    <X className="h-6 w-6" />
-                  </button>
+                    icon={<X className="h-5 w-5" />}
+                  />
                 </div>
               </div>
 
@@ -527,9 +655,22 @@ const AdminFeatureFlags = () => {
                   </label>
                   <input
                     type="text"
-                    value={createForm.featureName}
+                    value={createForm.name}
                     disabled
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-100 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={createForm.displayName}
+                    onChange={(e) => setCreateForm({ ...createForm, displayName: e.target.value })}
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors"
+                    placeholder="e.g., User Registration"
                   />
                 </div>
 
@@ -541,7 +682,7 @@ const AdminFeatureFlags = () => {
                     value={createForm.description}
                     onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
                     rows={3}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                    className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-white transition-colors resize-none"
                     placeholder="Describe what this feature does..."
                   />
                 </div>
@@ -552,38 +693,33 @@ const AdminFeatureFlags = () => {
                       type="checkbox"
                       checked={createForm.enabled}
                       onChange={(e) => setCreateForm({ ...createForm, enabled: e.target.checked })}
-                      className="mr-2"
+                      className="mr-3 w-4 h-4 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
                     />
-                    <span className="text-sm">Enabled</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-300">Enabled</span>
                   </label>
                 </div>
 
                 <div className="flex items-center justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
+                  <Button
+                    variant="secondary"
                     onClick={() => {
                       setShowEditModal(false);
                       setSelectedFlag(null);
                     }}
-                    className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                   >
                     Cancel
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="primary"
                     type="submit"
-                    disabled={saving}
-                    className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                    loading={saving}
+                    icon={<Save className="h-4 w-4" />}
                   >
-                    {saving ? (
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                    ) : (
-                      <Save className="h-4 w-4" />
-                    )}
-                    <span>Update Flag</span>
-                  </button>
+                    Update Flag
+                  </Button>
                 </div>
               </form>
-            </div>
+            </Card>
           </div>
         )}
       </div>

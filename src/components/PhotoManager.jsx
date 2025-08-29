@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Camera, X, Upload, Trash2 } from "lucide-react";
 import { Button } from "./ui";
+import FeatureFlagWrapper from "./FeatureFlagWrapper";
 import {
   uploadProfilePhoto,
   uploadCoverPhoto,
@@ -186,31 +187,36 @@ export const ProfilePhotoUploadButton = ({
   if (!isEditing) return null;
 
   return (
-    <div className="relative">
-      <Button
-        size="sm"
-        variant="secondary"
-        className="absolute bottom-0 right-0 rounded-full p-2 bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-600"
-        onClick={() => setShowFileInput(true)}
-        aria-label="Change profile photo"
-      >
-        <Camera className="h-4 w-4" />
-      </Button>
+    <FeatureFlagWrapper
+      featureName="file-upload.profile-photo"
+      showFallback={false}
+    >
+      <div className="relative">
+        <Button
+          size="sm"
+          variant="secondary"
+          className="absolute bottom-0 right-0 rounded-full p-2 bg-white dark:bg-gray-800 shadow-lg border border-gray-200 dark:border-gray-600"
+          onClick={() => setShowFileInput(true)}
+          aria-label="Change profile photo"
+        >
+          <Camera className="h-4 w-4" />
+        </Button>
 
-      <input
-        type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
-        onChange={handleFileSelect}
-        className="hidden"
-        id="profile-photo-input"
-        ref={(input) => {
-          if (input && showFileInput) {
-            input.click();
-            setShowFileInput(false);
-          }
-        }}
-      />
-    </div>
+        <input
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          onChange={handleFileSelect}
+          className="hidden"
+          id="profile-photo-input"
+          ref={(input) => {
+            if (input && showFileInput) {
+              input.click();
+              setShowFileInput(false);
+            }
+          }}
+        />
+      </div>
+    </FeatureFlagWrapper>
   );
 };
 
@@ -239,31 +245,36 @@ export const CoverPhotoUploadButton = ({
   if (!isEditing) return null;
 
   return (
-    <div className="absolute top-4 right-4">
-      <Button
-        size="sm"
-        variant="secondary"
-        className="bg-white/20 text-white p-2 rounded-lg hover:bg-white/30 transition-colors"
-        onClick={() => setShowFileInput(true)}
-        aria-label="Change cover photo"
-      >
-        <Camera className="h-5 w-5" />
-      </Button>
+    <FeatureFlagWrapper
+      featureName="file-upload.cover-photo"
+      showFallback={false}
+    >
+      <div className="absolute top-4 right-4">
+        <Button
+          size="sm"
+          variant="secondary"
+          className="bg-white/20 text-white p-2 rounded-lg hover:bg-white/30 transition-colors"
+          onClick={() => setShowFileInput(true)}
+          aria-label="Change cover photo"
+        >
+          <Camera className="h-5 w-5" />
+        </Button>
 
-      <input
-        type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
-        onChange={handleFileSelect}
-        className="hidden"
-        id="cover-photo-input"
-        ref={(input) => {
-          if (input && showFileInput) {
-            input.click();
-            setShowFileInput(false);
-          }
-        }}
-      />
-    </div>
+        <input
+          type="file"
+          accept="image/jpeg,image/jpg,image/png,image/webp"
+          onChange={handleFileSelect}
+          className="hidden"
+          id="cover-photo-input"
+          ref={(input) => {
+            if (input && showFileInput) {
+              input.click();
+              setShowFileInput(false);
+            }
+          }}
+        />
+      </div>
+    </FeatureFlagWrapper>
   );
 };
 

@@ -1,15 +1,15 @@
-import React from 'react';
+import React from "react";
 import {
-  MapPin,
-  Briefcase,
   GraduationCap,
+  MapPin,
+  Users,
   MessageCircle,
   UserPlus,
-  Users,
   Tag,
 } from "lucide-react";
-import { useUserPhoto } from '../hooks/useUserPhoto';
-import { Button, Avatar, Badge, Card } from './ui';
+import { Card, Avatar, Badge, Button } from "./ui";
+import { useFeatureFlag } from "../hooks/useFeatureFlag";
+import { useUserPhoto } from "../hooks/useUserPhoto";
 
 const UserCard = ({ 
   user, 
@@ -18,20 +18,27 @@ const UserCard = ({
   onViewProfile, 
   loading = false 
 }) => {
+  const { isEnabled: isInterestsEnabled } = useFeatureFlag("user.interests", false);
   const { profilePhotoUrl } = useUserPhoto(user.userId);
 
   const handleConnect = (e) => {
     e.stopPropagation();
-    onConnect?.(user.userId);
+    if (!loading) {
+      onConnect?.(user.userId);
+    }
   };
 
   const handleMessage = (e) => {
     e.stopPropagation();
-    onMessage?.(user.userId);
+    if (!loading) {
+      onMessage?.(user.userId);
+    }
   };
 
   const handleViewProfile = () => {
-    onViewProfile?.(user.userId);
+    if (!loading) {
+      onViewProfile?.(user.userId);
+    }
   };
 
   return (
@@ -104,30 +111,34 @@ const UserCard = ({
         </div>
 
         {/* Interests Section - Fixed Height */}
-        <div className="mb-6 h-8 flex items-start">
-          {user.interests && user.interests.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {user.interests.slice(0, 2).map((interest, index) => (
-                <Badge
-                  key={index}
-                  variant="secondary"
-                  size="sm"
-                  className="max-w-20 truncate"
-                >
-                  <Tag className="h-3 w-3 flex-shrink-0 mr-1" />
-                  {interest}
-                </Badge>
-              ))}
-              {user.interests.length > 2 && (
-                <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1 flex items-center">
-                  +{user.interests.length - 2}
-                </span>
-              )}
-            </div>
-          ) : (
-            <div className="h-8"></div>
-          )}
-        </div>
+        {isInterestsEnabled ? (
+          <div className="mb-6 h-8 flex items-start">
+            {user.interests && user.interests.length > 0 ? (
+              <div className="flex flex-wrap gap-1">
+                {user.interests.slice(0, 2).map((interest, index) => (
+                  <Badge
+                    key={index}
+                    variant="secondary"
+                    size="sm"
+                    className="max-w-20 truncate"
+                  >
+                    <Tag className="h-3 w-3 flex-shrink-0 mr-1" />
+                    {interest}
+                  </Badge>
+                ))}
+                {user.interests.length > 2 && (
+                  <span className="text-gray-500 dark:text-gray-400 text-xs px-2 py-1 flex items-center">
+                    +{user.interests.length - 2}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="h-8"></div>
+            )}
+          </div>
+        ) : (
+          <div className="mb-6 h-8"></div>
+        )}
 
         {/* Action Buttons - Fixed at bottom */}
         <div className="mt-auto pt-4">

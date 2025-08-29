@@ -1,277 +1,437 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import { BrowserRouter } from 'react-router-dom';
-import AdminFeatureFlags from '../../pages/AdminFeatureFlags';
-import { useAdminAuth } from '../../context/AdminAuthContext';
-import { adminApi } from '../../utils/adminApi';
+import React from "react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import AdminFeatureFlags from "../../pages/AdminFeatureFlags";
+import { useUnifiedAuth } from "../../context/UnifiedAuthContext";
+import { adminApi } from "../../utils/adminApi";
+import { featureFlagApi } from "../../utils/featureFlagApi";
 
-// Mock the dependencies
-jest.mock('../../context/AdminAuthContext');
-jest.mock('../../utils/adminApi');
-jest.mock('../../components/AdminLayout', () => {
+// Mock the contexts and APIs
+jest.mock("../../context/UnifiedAuthContext");
+jest.mock("../../utils/adminApi");
+jest.mock("../../utils/featureFlagApi");
+jest.mock("../../components/AdminLayout", () => {
   return function MockAdminLayout({ children }) {
     return <div data-testid="admin-layout">{children}</div>;
   };
 });
 
-const mockAdmin = {
-  id: 'admin_123',
-  email: 'admin@ijaa.com',
-  firstName: 'Admin',
-  lastName: 'User',
-  role: 'SUPER_ADMIN',
-  token: 'mock-admin-token'
-};
+const mockUseUnifiedAuth = useUnifiedAuth;
+const mockAdminApi = adminApi;
+const mockFeatureFlagApi = featureFlagApi;
 
+// Updated mock data to match the new API structure
 const mockFeatureFlags = [
   {
     id: 1,
-    featureName: 'NEW_UI',
+    name: "events",
+    displayName: "Event Management",
+    description: "Enable event management functionality",
     enabled: true,
-    description: 'Enable new user interface with modern design',
-    createdAt: '2024-12-01T10:00:00',
-    updatedAt: '2024-12-01T10:00:00'
+    parentId: null,
+    children: [
+      {
+        id: 2,
+        name: "events.creation",
+        displayName: "Event Creation",
+        description: "Enable event creation functionality",
+        enabled: true,
+        parentId: 1,
+        children: null
+      },
+      {
+        id: 3,
+        name: "events.update",
+        displayName: "Event Update",
+        description: "Enable event update functionality",
+        enabled: false,
+        parentId: 1,
+        children: null
+      }
+    ]
   },
   {
-    id: 2,
-    featureName: 'CHAT_FEATURE',
-    enabled: false,
-    description: 'Enable real-time chat functionality between alumni',
-    createdAt: '2024-12-01T10:00:00',
-    updatedAt: '2024-12-01T10:00:00'
+    id: 4,
+    name: "user.profile",
+    displayName: "User Profile Features",
+    description: "Enable user profile management features",
+    enabled: true,
+    parentId: null,
+    children: [
+      {
+        id: 5,
+        name: "user.registration",
+        displayName: "User Registration",
+        description: "Enable user registration functionality",
+        enabled: true,
+        parentId: 4,
+        children: null
+      },
+      {
+        id: 6,
+        name: "user.login",
+        displayName: "User Login",
+        description: "Enable user login functionality",
+        enabled: false,
+        parentId: 4,
+        children: null
+      }
+    ]
+  },
+  {
+    id: 7,
+    name: "alumni.search",
+    displayName: "Alumni Search",
+    description: "Enable alumni search functionality",
+    enabled: true,
+    parentId: null,
+    children: null
   }
 ];
 
-const renderWithRouter = (component) => {
-  return render(
-    <BrowserRouter>
-      {component}
-    </BrowserRouter>
-  );
-};
-
-describe('AdminFeatureFlags - Group 1 & 2 Implementation', () => {
+describe("AdminFeatureFlags - Updated Implementation", () => {
   beforeEach(() => {
+    // Mock the auth context
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: { id: 1, name: "Admin User" }
+    });
+
+    // Mock API responses
+    mockAdminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+    mockAdminApi.createFeatureFlag.mockResolvedValue({ data: {} });
+    mockAdminApi.updateFeatureFlag.mockResolvedValue({ data: {} });
+    mockAdminApi.deleteFeatureFlag.mockResolvedValue({ data: {} });
+    mockFeatureFlagApi.refreshFeatureFlagCache.mockResolvedValue({ data: {} });
+
+    // Mock window.confirm
+    window.confirm = jest.fn(() => true);
+  });
+
+  afterEach(() => {
     jest.clearAllMocks();
-    useAdminAuth.mockReturnValue({ admin: mockAdmin });
   });
 
-  describe('Group 1: Basic Feature Flag Management', () => {
-    it('should render feature flags page with Group 1 functionality', async () => {
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+  test("renders the feature flags page with header", async () => {
+    render(<AdminFeatureFlags />);
 
-      renderWithRouter(<AdminFeatureFlags />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Feature Flags')).toBeInTheDocument();
-        expect(screen.getByText('Enable or disable system features')).toBeInTheDocument();
-      });
-
-      expect(screen.getByTestId('admin-layout')).toBeInTheDocument();
-      expect(screen.getByText('NEW_UI')).toBeInTheDocument();
-      expect(screen.getByText('CHAT_FEATURE')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Feature Flags")).toBeInTheDocument();
     });
 
-    it('should handle feature flag toggle (Group 1.4)', async () => {
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
-      adminApi.updateFeatureFlag.mockResolvedValue({ data: { success: true } });
-
-      renderWithRouter(<AdminFeatureFlags />);
-
-      await waitFor(() => {
-        expect(screen.getByText('NEW_UI')).toBeInTheDocument();
-      });
-
-      const toggleButton = screen.getAllByRole('button').find(button => 
-        button.textContent.includes('Toggle') || button.getAttribute('aria-label')?.includes('toggle')
-      );
-
-      if (toggleButton) {
-        await act(async () => {
-          fireEvent.click(toggleButton);
-        });
-
-        expect(adminApi.updateFeatureFlag).toHaveBeenCalledWith('NEW_UI', { enabled: false });
-      }
-    });
-
-    it('should create feature flag when form is submitted (Group 1.3)', async () => {
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
-      adminApi.createFeatureFlag.mockResolvedValue({ data: { success: true } });
-
-      renderWithRouter(<AdminFeatureFlags />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Create Flag')).toBeInTheDocument();
-      });
-
-      // Click the first Create Flag button (the one in the header)
-      const createButtons = screen.getAllByText('Create Flag');
-      await act(async () => {
-        fireEvent.click(createButtons[0]);
-      });
-
-      // Wait for modal to appear and fill form
-      await waitFor(() => {
-        expect(screen.getByPlaceholderText('e.g., NEW_UI')).toBeInTheDocument();
-      });
-
-      const nameInput = screen.getByPlaceholderText('e.g., NEW_UI');
-      const descriptionInput = screen.getByPlaceholderText('Describe what this feature does...');
-
-      await act(async () => {
-        fireEvent.change(nameInput, { target: { value: 'TEST_FEATURE' } });
-        fireEvent.change(descriptionInput, { target: { value: 'Test feature description' } });
-      });
-
-      // Find the submit button in the modal
-      const submitButton = screen.getAllByText('Create Flag').find(button => 
-        button.closest('form') !== null
-      );
-
-      if (submitButton) {
-        await act(async () => {
-          fireEvent.click(submitButton);
-        });
-
-        expect(adminApi.createFeatureFlag).toHaveBeenCalledWith({
-          featureName: 'TEST_FEATURE',
-          description: 'Test feature description',
-          enabled: false
-        });
-      }
-    });
+    expect(screen.getByText("Control system functionality with precision")).toBeInTheDocument();
+    expect(screen.getByText("Create Flag")).toBeInTheDocument();
   });
 
-  describe('Group 2: Feature Flag Status Management', () => {
-    it('should filter enabled feature flags (Group 2.1)', async () => {
-      const enabledFlags = mockFeatureFlags.filter(f => f.enabled);
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
-      adminApi.getEnabledFeatureFlags.mockResolvedValue({ data: enabledFlags });
+  test("displays parent features individually with proper indicators", async () => {
+    render(<AdminFeatureFlags />);
 
-      renderWithRouter(<AdminFeatureFlags />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Feature Flags')).toBeInTheDocument();
-      });
-
-      // Find and select the filter dropdown
-      const filterSelect = screen.getByDisplayValue('All Flags');
-      
-      await act(async () => {
-        fireEvent.change(filterSelect, { target: { value: 'enabled' } });
-      });
-
-      // Wait for the API call to be made
-      await waitFor(() => {
-        expect(adminApi.getEnabledFeatureFlags).toHaveBeenCalled();
-      });
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+      expect(screen.getByText("User Profile Features")).toBeInTheDocument();
+      expect(screen.getByText("Alumni Search")).toBeInTheDocument();
     });
 
-    it('should filter disabled feature flags (Group 2.2)', async () => {
-      const disabledFlags = mockFeatureFlags.filter(f => !f.enabled);
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
-      adminApi.getDisabledFeatureFlags.mockResolvedValue({ data: disabledFlags });
+    // Check for parent feature indicators
+    expect(screen.getAllByText("Parent Feature")).toHaveLength(2);
+    expect(screen.getByText("Standalone Feature")).toBeInTheDocument();
+  });
 
-      renderWithRouter(<AdminFeatureFlags />);
+  test("shows child count for parent features", async () => {
+    render(<AdminFeatureFlags />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Feature Flags')).toBeInTheDocument();
-      });
-
-      // Find and select the filter dropdown
-      const filterSelect = screen.getByDisplayValue('All Flags');
-      
-      await act(async () => {
-        fireEvent.change(filterSelect, { target: { value: 'disabled' } });
-      });
-
-      // Wait for the API call to be made
-      await waitFor(() => {
-        expect(adminApi.getDisabledFeatureFlags).toHaveBeenCalled();
-      });
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
     });
 
-    it('should display feature flags summary statistics', async () => {
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+    // Check for child count indicators (there should be 2 parent features with 2 children each)
+    expect(screen.getAllByText("2 children")).toHaveLength(2);
+  });
 
-      renderWithRouter(<AdminFeatureFlags />);
+  test("shows dropdown buttons for parent features", async () => {
+    render(<AdminFeatureFlags />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Feature Flags')).toBeInTheDocument();
-      });
-
-      // Check for summary statistics - look for the numbers in the stats cards
-      expect(screen.getByText('2')).toBeInTheDocument(); // Total count in "System Features (2)"
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
     });
 
-    it('should handle filter change correctly', async () => {
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
-      adminApi.getEnabledFeatureFlags.mockResolvedValue({ data: [mockFeatureFlags[0]] });
+    // Check that dropdown buttons exist for parent features
+    const dropdownButtons = screen.getAllByTitle("Show Children");
+    expect(dropdownButtons.length).toBeGreaterThan(0);
+  });
 
-      renderWithRouter(<AdminFeatureFlags />);
+  test("creates a new feature flag", async () => {
+    render(<AdminFeatureFlags />);
 
-      await waitFor(() => {
-        expect(screen.getByText('Feature Flags')).toBeInTheDocument();
-      });
-
-      const filterSelect = screen.getByDisplayValue('All Flags');
-      
-      await act(async () => {
-        fireEvent.change(filterSelect, { target: { value: 'enabled' } });
-      });
-
-      // Wait for the API call to be made
-      await waitFor(() => {
-        expect(adminApi.getEnabledFeatureFlags).toHaveBeenCalled();
-      });
+    await waitFor(() => {
+      expect(screen.getByText("Create Flag")).toBeInTheDocument();
     });
 
-    it('should refresh feature flags when refresh button is clicked', async () => {
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+    // Open create modal
+    fireEvent.click(screen.getByText("Create Flag"));
 
-      renderWithRouter(<AdminFeatureFlags />);
+    await waitFor(() => {
+      expect(screen.getByText("Create Feature Flag")).toBeInTheDocument();
+    });
 
-      await waitFor(() => {
-        expect(screen.getByText('Feature Flags')).toBeInTheDocument();
+    // Fill form
+    fireEvent.change(screen.getByPlaceholderText("e.g., user.registration"), {
+      target: { value: "test.feature" }
+    });
+    fireEvent.change(screen.getByPlaceholderText("e.g., User Registration"), {
+      target: { value: "Test Feature" }
+    });
+    fireEvent.change(screen.getByPlaceholderText("Describe what this feature does..."), {
+      target: { value: "Test description" }
+    });
+
+    // Submit form
+    const submitButtons = screen.getAllByText("Create Flag");
+    const modalSubmitButton = submitButtons.find(button => button.closest('form'));
+    fireEvent.click(modalSubmitButton);
+
+    await waitFor(() => {
+      expect(mockAdminApi.createFeatureFlag).toHaveBeenCalledWith({
+        name: "test.feature",
+        displayName: "Test Feature",
+        description: "Test description",
+        parentId: null,
+        enabled: false
       });
-
-      const refreshButton = screen.getByText('Refresh');
-      
-      await act(async () => {
-        fireEvent.click(refreshButton);
-      });
-
-      expect(adminApi.getFeatureFlags).toHaveBeenCalledTimes(2);
     });
   });
 
-  describe('Error Handling', () => {
-    it('should handle errors when fetching feature flags', async () => {
-      adminApi.getFeatureFlags.mockRejectedValue(new Error('Failed to fetch'));
+  test("edits a parent feature flag", async () => {
+    render(<AdminFeatureFlags />);
 
-      renderWithRouter(<AdminFeatureFlags />);
-
-      await waitFor(() => {
-        expect(screen.getByText('Feature Flags')).toBeInTheDocument();
-      });
-
-      // Component should still render even with errors
-      expect(screen.getByTestId('admin-layout')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
     });
 
-    it('should handle errors when updating feature flags', async () => {
-      adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
-      adminApi.updateFeatureFlag.mockRejectedValue(new Error('Update failed'));
+    // Click edit button for Event Management
+    const editButtons = screen.getAllByTitle("Edit Feature Flag");
+    fireEvent.click(editButtons[0]);
 
-      renderWithRouter(<AdminFeatureFlags />);
-
-      await waitFor(() => {
-        expect(screen.getByText('NEW_UI')).toBeInTheDocument();
-      });
-
-      // Test should complete without crashing
-      expect(screen.getByTestId('admin-layout')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Edit Feature Flag")).toBeInTheDocument();
     });
+
+    // Wait for the form to be populated
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("events")).toBeInTheDocument();
+    });
+
+    // Update display name
+    const displayNameInput = screen.getByDisplayValue("Event Management");
+    fireEvent.change(displayNameInput, {
+      target: { value: "Updated Event Management" }
+    });
+
+    // Submit form
+    const submitButton = screen.getByText("Update Flag");
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalled();
+    });
+  });
+
+  test("edits a parent feature flag successfully", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Click edit button for Event Management
+    const editButtons = screen.getAllByTitle("Edit Feature Flag");
+    fireEvent.click(editButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByText("Edit Feature Flag")).toBeInTheDocument();
+    });
+
+    // Wait for the form to be populated
+    await waitFor(() => {
+      expect(screen.getByDisplayValue("events")).toBeInTheDocument();
+    });
+
+    // Submit form
+    const submitButton = screen.getByText("Update Flag");
+    fireEvent.click(submitButton);
+
+    await waitFor(() => {
+      expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalled();
+    });
+  });
+
+  test("deletes a parent feature flag", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Click delete button for Event Management
+    const deleteButtons = screen.getAllByTitle("Delete Feature Flag");
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(mockAdminApi.deleteFeatureFlag).toHaveBeenCalledWith("events");
+    });
+  });
+
+  test("deletes a parent feature flag", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Click delete button for Event Management
+    const deleteButtons = screen.getAllByTitle("Delete Feature Flag");
+    fireEvent.click(deleteButtons[0]);
+
+    await waitFor(() => {
+      expect(mockAdminApi.deleteFeatureFlag).toHaveBeenCalledWith("events");
+    });
+  });
+
+  test("toggles parent feature flag status", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Find and click the toggle button for Event Management
+    const toggleButtons = screen.getAllByRole("button").filter(button => 
+      button.className.includes("inline-flex h-6 w-11")
+    );
+    
+    if (toggleButtons.length > 0) {
+      fireEvent.click(toggleButtons[0]);
+      
+      await waitFor(() => {
+        expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalledWith("events", { enabled: false });
+      });
+    }
+  });
+
+  test("toggles parent feature flag status", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Find and click the toggle button for Event Management
+    const toggleButtons = screen.getAllByRole("button").filter(button => 
+      button.className.includes("inline-flex h-6 w-11")
+    );
+    
+    if (toggleButtons.length > 0) {
+      fireEvent.click(toggleButtons[0]);
+      
+      await waitFor(() => {
+        expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalledWith("events", { enabled: false });
+      });
+    }
+  });
+
+  test("shows empty state when no feature flags exist", async () => {
+    mockAdminApi.getFeatureFlags.mockResolvedValue({ data: [] });
+
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("No feature flags configured")).toBeInTheDocument();
+      expect(screen.getByText("Create Your First Flag")).toBeInTheDocument();
+    });
+  });
+
+  test("displays feature flag summary in header", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("3 Enabled")).toBeInTheDocument();
+      expect(screen.getByText("0 Disabled")).toBeInTheDocument();
+      expect(screen.getByText("3 Total")).toBeInTheDocument();
+    });
+  });
+
+  test("shows proper parent-child relationship indicators", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Check for parent feature indicators
+    expect(screen.getAllByText("Parent Feature")).toHaveLength(2); // Two parent features
+    expect(screen.getByText("Standalone Feature")).toBeInTheDocument(); // One standalone feature
+  });
+
+  test("handles API errors gracefully", async () => {
+    mockAdminApi.getFeatureFlags.mockRejectedValue(new Error("API Error"));
+
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Feature Flags")).toBeInTheDocument();
+    });
+
+    // Should still render the page even with API errors
+    expect(screen.getByText("Control system functionality with precision")).toBeInTheDocument();
+  });
+
+  test("handles toggle feature flag errors", async () => {
+    mockAdminApi.updateFeatureFlag.mockRejectedValue(new Error("Update failed"));
+
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Try to toggle (should not crash)
+    const toggleButtons = screen.getAllByRole("button").filter(button => 
+      button.className.includes("inline-flex h-6 w-11")
+    );
+    
+    if (toggleButtons.length > 0) {
+      fireEvent.click(toggleButtons[0]);
+      
+      await waitFor(() => {
+        expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalled();
+      });
+    }
+  });
+
+  test("dropdowns start closed by default", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Children should not be visible initially
+    expect(screen.queryByText("Event Creation")).not.toBeInTheDocument();
+    expect(screen.queryByText("Event Update")).not.toBeInTheDocument();
+  });
+
+  test("no duplicate features are shown", async () => {
+    render(<AdminFeatureFlags />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Event Management")).toBeInTheDocument();
+    });
+
+    // Count occurrences of each feature name
+    const eventManagementCount = screen.getAllByText("Event Management").length;
+
+    // Each feature should appear only once initially
+    expect(eventManagementCount).toBe(1);
+    
+    // Event Creation should not be visible until expanded
+    expect(screen.queryByText("Event Creation")).not.toBeInTheDocument();
   });
 });

@@ -1,515 +1,569 @@
-# IIT JU Alumni Frontend – Context Summary
+# IJAA Frontend Project Context
 
-## 🏗️ Overall Purpose & Backend Connection
+## Project Overview
+IJAA (International Journal of Applied Arts) is a comprehensive web application for managing academic events, publications, and alumni networks. The frontend is built with React and provides a modern, responsive interface for users, authors, reviewers, and administrators.
 
-This project is a frontend web application for the IIT JU Alumni Network, designed to connect alumni of Jahangirnagar University. It provides features such as alumni search, real-time chat, event management, group creation, and profile management. The frontend communicates with a microservices-based backend system (see below), primarily via a REST API gateway (`http://localhost:8000/ijaa/api/v1/user` by default, configurable via `REACT_APP_API_BASE_URL`).
+## Technology Stack
+- **Frontend Framework**: React 18 with functional components and hooks
+- **Build Tool**: Vite (with React plugin) for fast development and optimized builds
+- **Styling**: Tailwind CSS with dark mode support and custom design system
+- **State Management**: React Context API (UnifiedAuthContext, FeatureFlagContext, ThemeContext)
+- **HTTP Client**: Axios for API communication
+- **Testing**: Jest with React Testing Library and Cypress for E2E testing
+- **Icons**: Lucide React and FontAwesome for consistent iconography
+- **Routing**: React Router v6 for navigation
+- **TypeScript**: Partial TypeScript support with type definitions
+- **Code Quality**: ESLint with TypeScript support, Prettier for formatting
+- **Fonts**: @fontsource/noto-sans for typography
+- **Notifications**: React Toastify for user feedback
+- **Email Integration**: EmailJS for email functionality
 
-**Backend System:**
+## Build and Development Tools
 
-- Java 17, Spring Boot 3.4.3, Spring Cloud 2024.0.0
-- Microservices: API Gateway, User Service, Discovery Service, Config Service
-- PostgreSQL database
-- JWT-based authentication (HMAC-SHA256, 1h expiry)
-- User context propagated via `X-USER_ID` header (Base64-encoded JSON)
+### Package Manager
+- **npm**: Primary package manager with comprehensive script ecosystem
 
----
+### Build Configuration
+- **Vite**: Modern build tool with React plugin
+- **PostCSS**: CSS processing with Tailwind CSS
+- **Tailwind CSS**: Utility-first CSS framework with custom configuration
 
-## 📁 Project Folder Structure
+### Development Scripts
+The project includes an extensive set of npm scripts for development, testing, and deployment:
 
-- **src/**
+#### **Core Development**
+- `npm start`: Start development server
+- `npm run build`: Build for production
+- `npm run eject`: Eject from Create React App (if needed)
 
-  - **components/**: Reusable UI components (e.g., `Navbar.jsx`, `DirectChat.jsx`, `GroupChat.jsx`)
-  - **context/**: React Context providers for authentication (`UnifiedAuthContext.jsx`) and theme (`ThemeContext.jsx`)
-  - **pages/**: Route-based pages (e.g., `Dashboard.jsx`, `Profile.jsx`, `Events.jsx`, `SignIn.jsx`, `Chat.jsx`, etc.)
-  - **hooks/**: Custom hooks for events, feature flags, and other functionality
-  - **services/**: API service functions
-  - **utils/**: Utility functions and helpers
-  - **types/**: TypeScript type definitions
-  - \***\*tests**/\*\*: Comprehensive test suite
-  - **index.jsx**: Main entry point, sets up React Router and providers
-  - **index.css**: Global styles (Tailwind CSS)
-  - **App.jsx**: Main app component, defines route structure and protected routes
+#### **Testing Infrastructure**
+- `npm test`: Run unit tests in watch mode
+- `npm run test:coverage`: Run tests with coverage report
+- `npm run test:ci`: Run tests in CI mode (no watch)
+- `npm run test:unit`: Run only unit tests
+- `npm run test:integration`: Run only integration tests
+- `npm run test:components`: Run component tests
+- `npm run test:context`: Run context tests
+- `npm run test:utils`: Run utility tests
+- `npm run test:pages`: Run page tests
 
-- **public/**: Static assets (images, favicon, HTML template)
-- **cypress/**: End-to-end testing configuration and tests
-- **coverage/**: Test coverage reports
-- **config files**: `tailwind.config.js`, `vite.config.ts`, `eslint.config.js`, `postcss.config.js`, `package.json`
+#### **E2E Testing with Cypress**
+- `npm run cypress:open`: Open Cypress test runner
+- `npm run cypress:run`: Run Cypress tests
+- `npm run cypress:run:headless`: Run Cypress tests headlessly
+- `npm run cypress:run:chrome/firefox/edge`: Run tests in specific browsers
+- `npm run cypress:run:mobile/tablet/desktop`: Run tests with different viewports
+- `npm run test:e2e`: Run E2E tests headlessly
+- `npm run test:e2e:all`: Run all E2E tests
 
----
+#### **Code Quality**
+- `npm run lint`: Run ESLint
+- `npm run lint:fix`: Fix ESLint issues automatically
+- `npm run lint:check`: Check for linting issues
+- `npm run format`: Format code with Prettier
+- `npm run format:check`: Check code formatting
+- `npm run format:write`: Write formatted code
 
-## 🧰 Tech Stack
+#### **Advanced Testing**
+- `npm run test:snapshot`: Run snapshot tests
+- `npm run test:accessibility`: Run accessibility tests
+- `npm run test:performance`: Run performance tests
+- `npm run test:regression`: Run regression tests
+- `npm run test:security`: Run security tests
+- `npm run test:visual`: Run visual regression tests
 
-- **React**: v18.2.0
-- **React Router DOM**: v6.28.0 (routing and protected routes)
-- **Tailwind CSS**: v3.4.17 (utility-first styling, dark mode via class)
-- **Axios**: v1.7.8 (API requests)
-- **React Context**: For authentication and theme management
-- **Lucide-react**: Icon library
-- **FontAwesome** and **react-icons**: Additional icon support
-- **Vite**: Build tool and dev server
-- **Testing**: React Testing Library, Jest DOM, User Event, Cypress
-- **Other**: `jwt-decode` for JWT handling, `emailjs-com` for email features
+#### **Development Workflows**
+- `npm run dev:test`: Start dev server with Cypress
+- `npm run dev:test:parallel`: Run dev server, tests, and Cypress in parallel
+- `npm run dev:test:full`: Complete development testing workflow
 
----
+#### **CI/CD Scripts**
+- `npm run ci:test`: Run tests for CI environment
+- `npm run ci:build`: Build for CI environment
+- `npm run ci:deploy`: Deploy from CI
 
-## 🔐 Authentication Flow (Frontend & Backend Integration)
+## Core Features
 
-- **Unified Context-based**: `UnifiedAuthContext` provides unified authentication for both users and admins, replacing separate `AuthContext` and `AdminAuthContext`.
-- **Single Source of Truth**: One context manages both user and admin states, preventing conflicts and ensuring consistent navbar visibility.
-- **JWT Storage**: On successful login, JWT and user/admin info are stored in `localStorage` under `alumni_user` or `admin_user` respectively.
-- **Login**: Credentials are sent to `/signin` (users) or `/login` (admins) endpoints; on success, token and userId/adminId are saved.
-- **Logout**: Clears all authentication state from context and localStorage.
-- **Session Conflict Resolution**: When one user type logs in, the other type's session is automatically cleared to prevent conflicts.
-- **Auth Headers**: When making API requests (e.g., with Axios), the JWT is included in the `Authorization: Bearer <token>` header.
-- **X-USER_ID Header**: For authenticated requests, the frontend should propagate the user context via the `X-USER_ID` header, containing a Base64-encoded JSON string (e.g., `{ "username": "john.doe" }`). This is required by the backend gateway for user context propagation.
-- **Session Persistence**: On app load, checks localStorage for existing user or admin session.
-- **Cross-tab Synchronization**: Storage change events ensure authentication state is synchronized across browser tabs.
-- **No Axios Interceptors**: Headers are set per-request, not globally via interceptors.
-- **Password Security**: Passwords are never stored in the frontend; only sent to backend for authentication.
-- **Enhanced Email Validation**: SignUp component includes comprehensive email validation using regex pattern `/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/` to validate email format, domain, and TLD.
+### 1. Authentication System
+- **UnifiedAuthContext**: Centralized authentication state management
+- **Multi-role Support**: Users, Authors, Reviewers, Admins, Super Admins
+- **Session Management**: JWT token-based authentication with automatic refresh
+- **Protected Routes**: Role-based access control for different sections
+- **Admin Authentication**: Separate admin authentication system
 
----
+### 2. Feature Flag System (Modern Implementation)
+The feature flag system provides granular control over application functionality with a modern, hierarchical interface.
 
-## 🔌 API Interaction Setup
+#### **Modern UI Design**
+- **Gradient Headers**: Beautiful blue-to-purple gradient header with real-time statistics
+- **Hierarchical Grouping**: Feature flags are grouped by parent features with expandable sections
+- **Modern Cards**: Rounded corners, shadows, and smooth transitions
+- **Color-coded Icons**: Each feature type has a unique, meaningful icon
+- **Responsive Design**: Works seamlessly on all device sizes
 
-- **Base URL**: Set via `REACT_APP_API_BASE_URL` environment variable.
-- **Axios**: Imported and used directly in page components for API calls.
-- **Headers**: JWT token injected manually in each request requiring authentication. For backend compatibility, the `X-USER_ID` header should be included for all authenticated requests.
-- **No global Axios instance or interceptors**: Each request sets headers as needed.
-- **API Gateway**: All requests are routed through the API gateway (Spring Cloud Gateway, port 8000).
+#### **Key Features**
+- **Parent-Child Relationships**: Visual indicators showing hierarchical dependencies
+- **Expandable Groups**: Click to expand/collapse feature groups
+- **Real-time Statistics**: Live count of enabled/disabled/total features in header
+- **Single Filter**: Simplified unified filter (All, Enabled, Disabled)
+- **Modern Modals**: Backdrop blur, smooth animations, and improved UX
+- **Removed Unnecessary Elements**: Eliminated redundant refresh buttons for cleaner interface
 
----
+#### **Data Structure**
+```javascript
+{
+  id: 1,
+  name: "events.creation",
+  displayName: "Event Creation",
+  description: "Event creation functionality",
+  enabled: true,
+  parentId: 1,
+  children: []
+}
+```
 
-## 🧑‍💼 Main Features Implemented
-
-- **Authentication**: Sign in, sign up, forgot/reset password (integrates with backend AuthService)
-- **Profile Management**: View, edit, and update profile; view other alumni profiles (ProfileService)
-- **Photo Management**: Upload, display, and manage profile and cover photos (File Service)
-- **Alumni Search**: Advanced search by profession, location, batch, interests (AlumniSearchService)
-- **Events**: View, register, and manage alumni events with full CRUD operations
-- **Groups**: Create and join groups, group chat
-- **Chat**: Real-time direct and group chat (UI present, backend assumed; planned integration with Firebase/WebRTC)
-- **Notifications**: Notification page and UI
-- **Settings**: Privacy and account settings
-- **Support**: Contact support page
-- **Landing Page**: Public marketing and feature overview
-- **Admin Panel**: Admin dashboard, user management, feature flags, announcements, reports
-- **Other**: Terms, privacy policy, maintenance, not found
-
----
-
-## 🎉 Advanced Event Management System
-
-### ✅ Event Management Features
-
-- **Event Creation & Management**: Full CRUD operations with privacy settings
-- **Event Participation**: RSVP system with multiple status options (CONFIRMED, PENDING, DECLINED, MAYBE, CANCELLED)
-- **Event Invitations**: Invitation management with personal messages
-- **Event Search**: Advanced search with multiple filters (location, eventType, date range, privacy, tags)
-- **Event Comments**: Commenting system for events
-- **Event Media**: Media attachment support for events
-- **Event Templates**: Reusable event templates
-- **Recurring Events**: Support for recurring event patterns
-- **Event Analytics**: Comprehensive event analytics and reporting
-
-### ✅ Event API Endpoints
-
-- `POST /api/v1/user/events/create` - Create new event
-- `GET /api/v1/user/events` - Get all events with pagination
-- `GET /api/v1/user/events/{eventId}` - Get event details
-- `PUT /api/v1/user/events/{eventId}` - Update event
-- `DELETE /api/v1/user/events/{eventId}` - Delete event
-- `POST /api/v1/user/events/search` - Advanced event search
-- `POST /api/v1/user/events/participation/rsvp` - RSVP to event
-- `POST /api/v1/user/events/invitations/send` - Send event invitations
-- `POST /api/v1/user/events/comments` - Add event comment
-- `POST /api/v1/user/events/media` - Upload event media
-
-### ✅ Event Types & Privacy Levels
-
-- **Event Types**: NETWORKING, WORKSHOP, CONFERENCE, SOCIAL, CAREER, MENTORSHIP
-- **Privacy Levels**: PUBLIC, PRIVATE, ALUMNI_ONLY
-- **Participation Status**: PENDING, CONFIRMED, DECLINED, MAYBE, CANCELLED
-
----
-
-## 🎛️ Feature Flag System
-
-### ✅ Feature Flag Management
-
-- **Dynamic Feature Control**: Runtime feature enablement/disablement
-- **Admin Interface**: Web-based feature flag management
-- **Granular Control**: Feature-level and user-level controls
-- **Audit Trail**: Feature flag change tracking
-- **Integration**: Seamless integration across all features
-
-### ✅ Feature Flag API Endpoints
-
+#### **API Endpoints**
 - `GET /api/v1/admin/feature-flags` - Get all feature flags
-- `GET /api/v1/admin/feature-flags/{flagName}` - Get specific feature flag
+- `GET /api/v1/admin/feature-flags/enabled` - Get enabled feature flags
+- `GET /api/v1/admin/feature-flags/disabled` - Get disabled feature flags
 - `POST /api/v1/admin/feature-flags` - Create feature flag
-- `PUT /api/v1/admin/feature-flags/{flagName}` - Update feature flag
-- `DELETE /api/v1/admin/feature-flags/{flagName}` - Delete feature flag
-- `GET /api/v1/admin/feature-flags/enabled` - Get enabled features
-- `GET /api/v1/admin/feature-flags/disabled` - Get disabled features
-- `GET /api/v1/user/feature-flags/{flagName}/check` - Check feature flag for user
+- `PUT /api/v1/admin/feature-flags/{name}` - Update feature flag
+- `DELETE /api/v1/admin/feature-flags/{name}` - Delete feature flag
+- `GET /api/v1/admin/feature-flags/{name}/enabled` - Check feature flag status
+- `POST /api/v1/admin/feature-flags/refresh-cache` - Refresh feature flag cache
 
-### ✅ Predefined Feature Flags
+#### **React Components**
+- **FeatureFlagContext**: Global state management for feature flags
+- **useFeatureFlag Hook**: Check single feature flag status
+- **useMultiFeatureFlag Hook**: Check multiple feature flags simultaneously
+- **FeatureFlagWrapper**: Conditional rendering based on feature flag status
+- **MultiFeatureFlag**: Advanced component for complex feature combinations
+- **FeatureFlagDemo**: Demonstration component for feature flag usage
+- **FeatureFlagDebugPanel**: Debug panel for feature flag management
 
-- **NEW_UI**: Modern user interface with enhanced design
-- **CHAT_FEATURE**: Real-time chat functionality
-- **EVENT_REGISTRATION**: Event registration system
-- **PAYMENT_INTEGRATION**: Payment processing
-- **SOCIAL_LOGIN**: Social media login options
-- **DARK_MODE**: Dark mode theme
-- **NOTIFICATIONS**: Push notifications
-- **ADVANCED_SEARCH**: Advanced search with filters
-- **ALUMNI_DIRECTORY**: Public alumni directory
-- **MENTORSHIP_PROGRAM**: Mentorship program matching
+#### **Admin Panel Integration**
+- **Modern Interface**: Beautiful, intuitive admin panel for feature flag management
+- **Hierarchical View**: Grouped display with parent-child relationships
+- **Real-time Updates**: Immediate visual feedback for all changes
+- **Bulk Operations**: Efficient management of multiple feature flags
+- **Search & Filter**: Quick access to specific feature flags
 
----
+#### **Predefined Feature Flags**
+```javascript
+// User Management
+'user.registration', 'user.login', 'user.password-change', 'user.profile', 'user.experiences', 'user.interests'
 
-## 🧩 Key Reusable Components & Custom Hooks
+// Event System
+'events', 'events.creation', 'events.update', 'events.delete', 'events.participation', 'events.invitations', 'events.comments', 'events.media', 'events.templates', 'events.recurring', 'events.reminders'
 
-- **Navbar**: Responsive navigation bar with clean logo design, profile dropdown, theme toggle, and notifications
-- **DirectChat / GroupChat**: Chat UIs for direct and group messaging
-- **UnifiedAuthContext**: Custom hook `useUnifiedAuth` for unified authentication state and actions for both users and admins
-- **ThemeContext**: Custom hook `useTheme` for dark/light mode and persistence
-- **Button Component**: Enhanced with `asChild` prop support for rendering as different elements (e.g., Link components) while maintaining button styling and functionality
-- **Event Components**: Comprehensive event management components including EventCard, EventForm, EventDetailsModal, etc.
-- **Feature Flag Components**: FeatureFlagWrapper, FeatureFlagStatus, FeatureFlagDebugPanel for feature management
-- **Photo Management Components**: PhotoManager, PhotoDisplay, ProfilePhotoUploadButton, CoverPhotoUploadButton for photo operations
+// File Management
+'file-upload', 'file-upload.profile-photo', 'file-upload.cover-photo', 'file-download', 'file-delete'
 
----
+// Search & Discovery
+'search', 'search.advanced-filters', 'alumni.search'
 
-## 🔒 Protected Routes & Route Structure
+// Admin Features
+'admin.features', 'admin.auth', 'admin.user-management', 'admin.announcements', 'admin.reports'
 
-- **Protected Routes**: Implemented in `App.jsx` using conditional rendering and `Navigate` from React Router. Only authenticated users can access dashboard, profile, events, groups, chat, etc.
-- **Admin Routes**: Separate admin routes with AdminRoute wrapper for admin-only access
-- **Public Routes**: Landing page, sign in, sign up, forgot/reset password, terms, privacy policy
-- **Route Structure**: Centralized in `App.jsx` with clear separation of public, protected, and admin routes
+// Legacy Features
+'NEW_UI', 'CHAT_FEATURE', 'EVENT_REGISTRATION', 'PAYMENT_INTEGRATION', 'SOCIAL_LOGIN', 'DARK_MODE', 'NOTIFICATIONS', 'ADVANCED_SEARCH', 'ALUMNI_DIRECTORY', 'MENTORSHIP_PROGRAM', 'EVENT_ANALYTICS', 'EVENT_TEMPLATES', 'RECURRING_EVENTS', 'EVENT_MEDIA', 'EVENT_COMMENTS'
+```
 
----
+### 3. Event Management System
+- **Event Creation**: Rich text editor with media upload support
+- **Event Categories**: Organized event classification system (NETWORKING, WORKSHOP, CONFERENCE, SOCIAL, CAREER, MENTORSHIP)
+- **Registration System**: Attendee management with capacity limits
+- **Event Analytics**: Comprehensive reporting and insights
+- **Recurring Events**: Support for series and patterns
+- **Event Templates**: Predefined templates for common event types
+- **Event Invitations**: Email-based invitation system
+- **Event Comments**: Social interaction features
+- **Event Media**: Photo and video sharing
+- **Event Search**: Advanced search and filtering capabilities
 
-## ⚙️ Configuration Files
+### 4. Publication System
+- **Manuscript Submission**: Multi-step submission process
+- **Peer Review**: Automated review assignment and tracking
+- **Version Control**: Document versioning and change tracking
+- **Publication Workflow**: Editorial review and approval process
 
-- **tailwind.config.js**: Tailwind setup, custom screens, dark mode via class
-- **vite.config.ts**: Vite config, React plugin, excludes `lucide-react` from optimization
-- **eslint.config.js**: ESLint setup for code quality
-- **postcss.config.js**: PostCSS for Tailwind
-- **package.json**: Scripts, dependencies, and test setup
-- **jest.config.js**: Jest testing configuration
-- **cypress.config.js**: Cypress E2E testing configuration
-- **No .env file found**: But code expects `REACT_APP_API_BASE_URL` to be set
+### 5. User Management
+- **Profile Management**: Comprehensive user profiles with social features
+- **Role-based Access**: Granular permissions for different user types
+- **Alumni Network**: Professional networking and mentorship features
+- **Notification System**: Real-time updates and email notifications
+- **Photo Management**: Profile and cover photo upload/management
+- **Experience Tracking**: Professional experience and achievements
+- **Interest Management**: User interests and preferences
 
----
+### 6. Admin Panel
+- **Dashboard**: Real-time analytics and system overview
+- **User Management**: Admin tools for user administration
+- **Content Moderation**: Tools for managing submissions and events
+- **System Configuration**: Feature flags and system settings
+- **Reporting**: Comprehensive analytics and reporting tools
+- **Announcements**: System-wide announcement management
+- **Settings**: System configuration and maintenance
 
-## 📦 Third-Party Libraries & Tools
+## File Structure
+```
+src/
+├── components/          # Reusable UI components
+│   ├── events/         # Event-specific components
+│   ├── ui/             # Base UI components
+│   └── ...             # Other component categories
+├── context/            # React Context providers
+├── hooks/              # Custom React hooks
+│   └── events/         # Event-specific hooks
+├── pages/              # Main application pages
+├── services/           # Service layer for API calls
+├── types/              # TypeScript type definitions
+├── utils/              # Utility functions and API clients
+├── __tests__/          # Test files
+│   ├── components/     # Component tests
+│   ├── context/        # Context tests
+│   ├── hooks/          # Hook tests
+│   ├── pages/          # Page tests
+│   ├── utils/          # Utility tests
+│   └── __mocks__/      # Test mocks
+└── setupTests.js       # Test configuration
+```
 
-- **UI/Icons**: `lucide-react`, `react-icons`, `@fortawesome`
-- **Email**: `emailjs-com`
-- **JWT**: `jwt-decode`
-- **Testing**: `@testing-library/react`, `@testing-library/jest-dom`, `@testing-library/user-event`, `cypress`
-- **Prettier**: For code formatting
-- **No Zustand, React Hook Form, or Toast libraries detected**
+## Key Components
 
----
+### Context Providers
+- **UnifiedAuthContext**: Centralized authentication state
+- **FeatureFlagContext**: Feature flag state management
+- **ThemeContext**: Dark/light mode theme management
+- **AdminAuthContext**: Admin-specific authentication
 
-## 🧪 Testing Setup
+### Custom Hooks
+- **useFeatureFlag**: Single feature flag checking
+- **useMultiFeatureFlag**: Multiple feature flag checking
+- **useUnifiedAuth**: Authentication state access
+- **useCurrentUserProfile**: Current user profile management
+- **useCurrentUserPhoto**: User photo management
+- **useUserPhoto**: User photo utilities
+- **Event Hooks**: Comprehensive event management hooks
 
-- **Testing Libraries**: React Testing Library, Jest DOM, User Event, Cypress
-- **Scripts**: `npm test` runs tests via Jest, `npm run cypress:open` for E2E testing
-- **Comprehensive Test Coverage**:
-  - **Component Tests**: Extensive testing for all major components including authentication, events, feature flags, and UI components
-  - **Integration Tests**: App-level integration tests
-  - **E2E Tests**: Cypress tests for critical user flows
-  - **Build System Tests**: File integrity checks and structural validation
-- **Test Patterns**: Uses `getAllByText` for multiple elements, flexible text matching with regex, and comprehensive error handling validation
-- **Test Environment**: Proper Jest configuration with jsdom environment for DOM testing
-- **Error Handling**: Robust error boundaries and fallbacks for test environments
-- **Recent Test Improvements**: Enhanced Profile component tests with proper mocking and error handling validation
-- **Test Utilities**: Simplified test-utils.jsx with proper mocking for UnifiedAuthContext and ThemeContext
+### API Utilities
+- **adminApi**: Admin-specific API endpoints
+- **featureFlagApi**: Feature flag management APIs
+- **eventService**: Event management service layer
+- **photoApi**: Photo upload/management APIs
+- **apiClient**: Base HTTP client configuration
+- **authHelper**: Authentication utilities
+- **sessionManager**: Session management utilities
 
----
+### UI Components
+- **Button**: Reusable button component
+- **Input**: Form input component
+- **Card**: Card layout component
+- **Navbar**: Navigation component
+- **UserCard**: User profile card
+- **RoleBadge**: Role indicator component
+- **PhotoManager**: Photo management component
 
-## 📄 Unique or Noteworthy Aspects
+## Testing Strategy
 
-- **Microservices Awareness**: The frontend is designed to interact with a microservices backend via a single API gateway, and is aware of service boundaries (e.g., AuthService, ProfileService, AlumniSearchService).
-- **Unified Authentication System**: Single `UnifiedAuthContext` manages both user and admin authentication, preventing conflicts and ensuring consistent UI state across browser tabs.
-- **Session Conflict Resolution**: Automatic clearing of conflicting sessions when switching between user types, fixing navbar visibility issues.
-- **Cross-tab Synchronization**: Storage change events ensure authentication state is synchronized across browser tabs.
-- **Theme Persistence**: Dark/light mode is persisted in localStorage and respects system preference
-- **Manual JWT Handling**: No global Axios instance; JWT is manually injected per request
-- **X-USER_ID Header**: For all authenticated API calls, the frontend should include the `X-USER_ID` header with a Base64-encoded JSON string of the user context (e.g., `{ "username": "john.doe" }`).
-- **Clean Logo Design**: Navbar logo displays as image only without background color for a cleaner, more professional appearance
-- **No .env file in repo**: But environment variable usage is present in code
-- **No global error boundary or toast notifications**: Errors are handled inline in forms/pages
-- **No Redux or Zustand**: State management is via React Context only
-- **Enhanced Button Component**: Supports `asChild` prop for polymorphic rendering, allowing buttons to render as links while maintaining styling and functionality
-- **Robust Email Validation**: Comprehensive email validation in SignUp component with proper regex pattern matching
-- **Comprehensive Testing**: Extensive test coverage for components with proper error handling and edge case testing
-- **Build System Integrity**: Automated tests to detect missing components, orphaned imports, and structural issues
-- **Robust Error Handling**: ThemeContext and other components handle test environments gracefully with proper fallbacks
-- **Planned Integrations**: Real-time chat (Firebase), video calls (WebRTC), payments (Stripe/Razorpay), social login (Google/Facebook OAuth)
-- **Profile Component Enhancements**: Fixed cover image width to match ViewProfile page layout, removed debug section from production, and ensured proper profile data display with comprehensive error handling
-- **Navbar User Icon**: Simplified navbar to show only user avatar without text for cleaner UI
-- **Profile Data Fetching**: Enhanced profile data fetching with proper error handling, default values, and console logging for debugging
-- **Profile API Endpoint Fix**: Updated Profile component to use correct API endpoints - `/profile` for current user's profile (instead of `/profile/{userId}`), `/experiences` for current user's experiences, and `/interests` for current user's interests. The backend determines the user from the authentication token.
-- **Profile Component Data Display Fixes**: 
-  - **API Endpoint Correction**: Fixed Profile component to use correct endpoints for current user's data (`/profile/${userId}`, `/experiences/${userId}`, `/interests/${userId}`) instead of user-specific endpoints
-  - **Data Handling Improvements**: Enhanced handling of API responses to properly manage both array and single object responses for experiences and interests
-  - **Error Handling**: Improved error handling with fallback to user context data when API calls fail
-  - **Loading States**: Added proper loading states and error boundaries
-  - **Data Validation**: Added validation for API response structure and handling of missing data properties
-  - **Test Improvements**: Updated Profile and ViewProfile test files with proper mocking and comprehensive test scenarios
-  - **Empty State Handling**: Proper handling of empty arrays and missing data with appropriate UI feedback
-  - **Visibility Settings**: Enhanced contact information visibility based on user privacy settings
-  - **Form Validation**: Improved form validation for required fields and data integrity
-  - **Final API Endpoint Fix**: Corrected all API endpoints to include user ID as required by backend - `/profile/${user?.userId}`, `/experiences/${user?.userId}`, `/interests/${user?.userId}` to match the working curl request format
+### Unit Testing
+- **Jest**: Primary testing framework
+- **React Testing Library**: Component testing utilities
+- **Coverage Threshold**: 70% minimum coverage requirement
+- **Mock Strategy**: Comprehensive mocking of external dependencies
+- **Test Categories**: Unit, integration, component, context, utility tests
 
-- **Photo Management System Implementation**:
-  - **File Service API Integration**: Implemented comprehensive photo management system using the File Service API (port 8083)
-  - **Profile Photo Management**: Added profile photo upload, display, and deletion functionality with proper validation
-  - **Cover Photo Management**: Added cover photo upload, display, and deletion functionality with proper validation
-  - **Photo API Service**: Created `photoApi.js` utility with functions for upload, download, and delete operations
-  - **Photo Manager Component**: Created reusable `PhotoManager` component with `usePhotoManager` hook for photo state management
-  - **Photo Display Component**: Created `PhotoDisplay` component with fallback image handling and error recovery
-  - **Upload Components**: Created `ProfilePhotoUploadButton` and `CoverPhotoUploadButton` components for file selection
-  - **File Validation**: Implemented comprehensive file validation (type, size, format) with user-friendly error messages
-  - **Error Handling**: Added robust error handling for network failures, validation errors, and API errors
-  - **Loading States**: Implemented proper loading states during photo operations
-  - **Integration**: Integrated photo management into Profile and ViewProfile components
-  - **Testing**: Created comprehensive test suite for photo API functions and components
-  - **API Endpoints**: 
-    - `POST /api/v1/users/{userId}/profile-photo` - Upload profile photo
-    - `POST /api/v1/users/{userId}/cover-photo` - Upload cover photo
-    - `GET /api/v1/users/{userId}/profile-photo` - Get profile photo URL
-    - `GET /api/v1/users/{userId}/cover-photo` - Get cover photo URL
-    - `DELETE /api/v1/users/{userId}/profile-photo` - Delete profile photo
-    - `DELETE /api/v1/users/{userId}/cover-photo` - Delete cover photo
-  - **File Validation Rules**: 
-    - Supported formats: JPG, JPEG, PNG, WEBP
-    - Maximum file size: 5MB
-    - Automatic file type validation
-    - User-friendly error messages
-  - **Security Features**:
-    - JWT authentication required for all operations
-    - User can only manage their own photos
-    - Automatic cleanup of old files when replaced
-    - UUID-based file naming to prevent conflicts
-  - **Recent Fixes and Improvements**:
-    - **Fixed Cover Photo Upload**: Resolved Content-Type header issue for FormData uploads (browser now sets correct boundary automatically)
-    - **Enhanced API Client Configuration**: Removed default Content-Type from axios instance to allow proper per-request header setting
-    - **Improved Error Handling**: Enhanced error handling for network failures and API errors with proper fallbacks
-    - **Fixed ViewProfile Photo Fetching**: Replaced dynamic imports with regular imports for better reliability
-    - **Comprehensive Testing**: Added extensive test coverage for all photo API functions including upload, download, and delete operations
-    - **FormData Optimization**: Optimized file upload handling by letting browser set Content-Type header automatically
-    - **Photo Display Enhancement**: Improved photo display with proper fallback images and error recovery
-    - **User Experience**: Enhanced user experience with proper loading states and error messages
-    - **API Endpoint Fix**: Fixed photo API endpoints to use correct gateway server format without `/user` path suffix
-    - **New API Response Format Support**: Updated photo API to handle new response format with server paths and automatic conversion to web-accessible URLs
-    - **Server Path Conversion**: Implemented `convertServerPathToWebUrl` function to convert server paths (e.g., `/home/sahal/ijaa-uploads/profile/file.jpg`) to web-accessible URLs (e.g., `/uploads/profile/file.jpg`)
-    - **Enhanced Response Handling**: Updated `getProfilePhotoUrl` and `getCoverPhotoUrl` functions to handle new API response format with `exists` and `photoUrl` fields
-    - **PhotoManager Component Updates**: Updated PhotoManager component to properly handle new response format and ensure photo URLs are correctly processed
-    - **ViewProfile Component Updates**: Updated ViewProfile component to handle new photo API response format
-    - **Test Updates**: Updated photo API tests to reflect new response format and added comprehensive test coverage for path conversion functionality
-    - **Base URL Configuration**: Fixed photo API base URL configuration to properly handle environment variables and remove `/user` suffix when needed
-    - **API Endpoint Fix**: Fixed photo API endpoints to use correct gateway server format without `/user` path suffix
-    - **New API Response Format Support**: Updated photo API to handle new response format with server paths and automatic conversion to web-accessible URLs
-    - **Server Path Conversion**: Implemented `convertServerPathToWebUrl` function to convert server paths (e.g., `/home/sahal/ijaa-uploads/profile/file.jpg`) to web-accessible URLs (e.g., `/uploads/profile/file.jpg`)
-    - **Enhanced Response Handling**: Updated `getProfilePhotoUrl` and `getCoverPhotoUrl` functions to handle new API response format with `exists` and `photoUrl` fields
-    - **PhotoManager Component Updates**: Updated PhotoManager component to properly handle new response format and ensure photo URLs are correctly processed
-    - **ViewProfile Component Updates**: Updated ViewProfile component to handle new photo API response format
-    - **Test Updates**: Updated photo API tests to reflect new response format and added comprehensive test coverage for path conversion functionality
-    - **Base URL Configuration**: Fixed photo API base URL configuration to properly handle environment variables and remove `/user` suffix when needed
-    - **Latest Photo API Fixes (January 2025)**:
-      - **New Backend Response Format**: Updated photo API to handle new backend response format where photo URLs are returned as full URLs (e.g., `http://localhost:8000/ijaa/api/v1/users/{userId}/cover-photo/file/{fileId}.jpeg`)
-      - **Direct URL Usage**: Removed server path conversion logic since backend now returns web-accessible URLs directly
-      - **Simplified Response Handling**: Updated `getProfilePhotoUrl` and `getCoverPhotoUrl` functions to use photo URLs directly from API response
-      - **Removed Path Conversion**: Removed `convertServerPathToWebUrl` function as it's no longer needed
-      - **Enhanced Test Coverage**: Updated photo API tests to reflect new response format with full URLs
-      - **PhotoManager Component Updates**: Updated PhotoManager component to properly handle new full URL format
-      - **Profile and ViewProfile Integration**: Ensured both Profile and ViewProfile components properly display photos using new URL format
-      - **Comprehensive Testing**: Added extensive test coverage for new photo URL format including error handling and fallback scenarios
-      - **API Response Format**: Backend now returns photo URLs in format: `http://localhost:8000/ijaa/api/v1/users/{userId}/{photo-type}/file/{fileId}.{extension}`
-      - **Error Handling**: Maintained robust error handling for cases where photos are not available or API calls fail
-      - **Fallback Images**: Preserved fallback image functionality for cases where photo URLs are null or invalid
+### E2E Testing
+- **Cypress**: End-to-end testing framework
+- **Test Categories**: Authentication, user flows, accessibility, performance
+- **Browser Support**: Chrome, Firefox, Edge
+- **Viewport Testing**: Mobile, tablet, desktop responsive testing
+- **Visual Testing**: Screenshot comparison and visual regression
 
----
+### Test Configuration
+- **Jest Config**: Custom configuration with module mapping
+- **Cypress Config**: Browser and viewport configuration
+- **Coverage Reports**: HTML, LCOV, JSON, and text formats
+- **Test Environment**: jsdom for React component testing
 
-## 🔄 API Versioning
+### CI/CD Testing
+- **GitHub Actions**: Automated testing workflow
+- **Matrix Testing**: Multiple Node.js versions
+- **Parallel Jobs**: Unit tests, E2E tests, security tests
+- **Artifact Upload**: Test results and coverage reports
 
-All endpoints use version `v1`. Future updates will use `v2`, `v3`, etc., ensuring backward compatibility.
+## Development Guidelines
+- **Component Design**: Functional components with hooks
+- **State Management**: Context API for global state, local state for component-specific data
+- **Styling**: Tailwind CSS with consistent design system
+- **Error Handling**: Comprehensive error boundaries and user feedback
+- **Performance**: Optimized rendering and lazy loading
+- **Accessibility**: WCAG compliance and keyboard navigation
+- **Code Quality**: ESLint and Prettier for consistent code style
+- **TypeScript**: Gradual TypeScript adoption with type definitions
 
----
+## Design System
 
-## 📊 Data Models
+### Tailwind Configuration
+- **Custom Colors**: Professional LinkedIn-inspired color palette
+- **Typography**: Inter font family with custom font sizes
+- **Spacing**: Extended spacing scale
+- **Shadows**: Modern shadow system with LinkedIn-style variants
+- **Animations**: Smooth CSS animations and transitions
+- **Dark Mode**: Class-based dark mode support
+- **Responsive**: Mobile-first responsive design
 
-### Event Types
+### Color Palette
+```javascript
+// Primary Colors (Blue)
+primary: { 50: "#f0f9ff", ..., 950: "#082f49" }
 
-```json
-{
-  "NETWORKING": "Networking events",
-  "WORKSHOP": "Workshop and training events",
-  "CONFERENCE": "Conference and seminar events",
-  "SOCIAL": "Social and recreational events",
-  "CAREER": "Career development events",
-  "MENTORSHIP": "Mentorship and guidance events"
+// Secondary Colors (Gray)
+secondary: { 50: "#f8fafc", ..., 950: "#020617" }
+
+// Semantic Colors
+success: { 50: "#f0fdf4", ..., 950: "#052e16" }
+warning: { 50: "#fffbeb", ..., 950: "#451a03" }
+error: { 50: "#fef2f2", ..., 950: "#450a0a" }
+
+// LinkedIn-inspired Colors
+linkedin: {
+  blue: "#0a66c2",
+  "blue-dark": "#004182",
+  gray: "#666666",
+  "gray-light": "#f3f2ef",
+  "gray-dark": "#191919",
+  white: "#ffffff"
 }
 ```
 
-### Event Privacy Levels
+## Deployment
+- **Build Process**: Vite-optimized production builds
+- **Environment Configuration**: Environment-specific settings
+- **Performance Monitoring**: Real-time performance tracking
+- **Error Tracking**: Comprehensive error monitoring and reporting
+- **Static Assets**: Optimized asset delivery with caching
 
-```json
-{
-  "PUBLIC": "Visible to all users",
-  "PRIVATE": "Visible only to invited users",
-  "ALUMNI_ONLY": "Visible only to verified alumni"
-}
+## Recent Improvements
+- **Comprehensive Feature Flag Integration**: Implemented feature flag protection across the entire application
+- **Page-Level Protection**: All major pages now have feature flag protection with proper fallback messages
+- **Component-Level Protection**: Individual components and sections are protected with feature flags
+- **Navigation Protection**: Navbar items are conditionally shown based on feature flag status
+- **Admin Route Protection**: All admin routes are protected with appropriate feature flags
+- **Public Route Protection**: Authentication routes (login/registration) are protected
+- **File Upload Protection**: Photo upload components are protected with feature flags
+- **Profile Section Protection**: Individual profile sections (experiences, interests, password change) are protected
+- **Modern Feature Flag UI**: Complete redesign with hierarchical grouping, modern styling, and improved UX
+- **Removed Redundant Elements**: Eliminated unnecessary refresh buttons for cleaner interface
+- **Enhanced Visual Design**: Gradient headers, better spacing, and improved typography
+- **Improved Accessibility**: Better keyboard navigation and screen reader support
+- **Optimized Performance**: Reduced unnecessary re-renders and improved loading states
+- **Fixed Feature Flag Duplication Issues**: Resolved duplicate feature display in admin panel
+- **Improved Parent-Child Relationship Display**: Features now properly show as individual items with dropdown controls for children
+- **Enhanced Test Coverage**: Updated and expanded test suite for AdminFeatureFlags component
+- **Consistent Admin Panel Theme**: Feature flags page now matches the overall admin panel design system
+- **Build Tool Migration**: Migrated from Create React App to Vite for faster development
+- **Enhanced Testing Infrastructure**: Comprehensive testing setup with Jest, React Testing Library, and Cypress
+- **CI/CD Pipeline**: GitHub Actions workflow for automated testing and deployment
+- **Code Quality Tools**: ESLint and Prettier integration for consistent code style
+- **TypeScript Support**: Added TypeScript configuration and type definitions
+- **Advanced Scripts**: Extensive npm script ecosystem for development workflows
+
+## Comprehensive Feature Flag Implementation (Latest)
+
+### Application-Wide Feature Flag Protection
+
+#### **Page-Level Protection**
+- **Events Page**: Protected by `events` feature flag with "Events Unavailable" fallback
+- **Search Page**: Protected by `alumni.search` feature flag with "Alumni Search Unavailable" fallback
+- **Notifications Page**: Protected by `notifications` feature flag with "Notifications Unavailable" fallback
+- **Contact Support Page**: Protected by `reports` feature flag with "Contact Support Unavailable" fallback
+- **Profile Page**: Protected by `user.profile` feature flag with "Profile Management Unavailable" fallback
+- **View Profile Page**: Protected by `user.profile` feature flag with "Profile View Unavailable" fallback
+- **Dashboard Page**: Protected by `user.profile` feature flag with "Dashboard Unavailable" fallback
+- **SignIn Page**: Protected by `user.login` feature flag with "Login Unavailable" fallback
+- **SignUp Page**: Protected by `user.registration` feature flag with "Registration Unavailable" fallback
+
+#### **Admin Route Protection**
+- **Admin Dashboard**: Protected by `admin.features` feature flag
+- **Admin Users**: Protected by `admin.user-management` feature flag
+- **Admin Announcements**: Protected by `admin.announcements` feature flag
+- **Admin Reports**: Protected by `admin.reports` feature flag
+- **Admin Settings**: Protected by `admin.auth` feature flag
+- **Admin Management**: Protected by `admin.features` feature flag
+
+#### **Component-Level Protection**
+- **Password Change Section**: Protected by `user.password-change` feature flag (hidden when disabled)
+- **Experiences Section**: Protected by `user.experiences` feature flag (hidden when disabled)
+- **Interests Section**: Protected by `user.interests` feature flag (hidden when disabled)
+- **Profile Photo Upload**: Protected by `file-upload.profile-photo` feature flag (hidden when disabled)
+- **Cover Photo Upload**: Protected by `file-upload.cover-photo` feature flag (hidden when disabled)
+
+#### **Navigation Protection**
+- **Events Navigation**: Only shown when `events` feature flag is enabled
+- **Search Navigation**: Only shown when `alumni.search` feature flag is enabled
+- **Notifications Icon**: Only shown when `notifications` feature flag is enabled
+- **Help Menu Item**: Only shown when `reports` feature flag is enabled
+- **Landing Page Sign-In**: Only shown when `user.login` feature flag is enabled
+- **Landing Page Join Now**: Only shown when `user.registration` feature flag is enabled
+
+### Feature Flag Behavior Patterns
+
+#### **Page-Level Behavior**
+- **When Enabled**: Page renders normally with full functionality
+- **When Disabled**: Shows comprehensive "Feature Unavailable" page with:
+  - Appropriate icon for the feature
+  - Clear explanation message
+  - "Go Back" button for navigation
+  - Consistent styling across all pages
+
+#### **Component-Level Behavior**
+- **When Enabled**: Component renders normally
+- **When Disabled**: Component is completely hidden (no fallback shown)
+- **Rationale**: Components are part of larger pages, so hiding them provides cleaner UX
+
+#### **Navigation Behavior**
+- **When Enabled**: Navigation item appears in navbar/menu
+- **When Disabled**: Navigation item is completely hidden
+- **Rationale**: Prevents users from navigating to disabled features
+
+### Database Structure Alignment
+Updated feature flag constants to match exact database structure:
+```javascript
+// Admin Features
+ADMIN_FEATURES: 'admin.features',
+ADMIN_USER_MANAGEMENT: 'admin.user-management',
+ADMIN_ANNOUNCEMENTS: 'admin.announcements',
+ADMIN_REPORTS: 'admin.reports',
+ADMIN_AUTH: 'admin.auth',
+
+// User Features
+USER_PROFILE: 'user.profile',
+USER_REGISTRATION: 'user.registration',
+USER_LOGIN: 'user.login',
+USER_EXPERIENCES: 'user.experiences',
+USER_INTERESTS: 'user.interests',
+USER_PASSWORD_CHANGE: 'user.password-change',
+
+// Events System
+EVENTS: 'events',
+EVENTS_CREATION: 'events.creation',
+EVENTS_UPDATE: 'events.update',
+EVENTS_DELETE: 'events.delete',
+EVENTS_PARTICIPATION: 'events.participation',
+EVENTS_INVITATIONS: 'events.invitations',
+EVENTS_COMMENTS: 'events.comments',
+EVENTS_MEDIA: 'events.media',
+EVENTS_TEMPLATES: 'events.templates',
+EVENTS_RECURRING: 'events.recurring',
+EVENTS_ANALYTICS: 'events.analytics',
+EVENTS_REMINDERS: 'events.reminders',
+CALENDAR_INTEGRATION: 'calendar.integration',
+
+// File Management
+FILE: 'file',
+FILE_DOWNLOAD: 'file-download',
+FILE_DELETE: 'file-delete',
+FILE_UPLOAD: 'file-upload',
+FILE_UPLOAD_COVER_PHOTO: 'file-upload.cover-photo',
+FILE_UPLOAD_PROFILE_PHOTO: 'file-upload.profile-photo',
+
+// Other Features
+ALUMNI_SEARCH: 'alumni.search',
+ANNOUNCEMENTS: 'announcements',
+REPORTS: 'reports',
+NOTIFICATIONS: 'notifications'
 ```
 
-### Participation Status
+### Test Coverage
+- **Comprehensive Integration Tests**: Created `feature-flag-integration.test.jsx` with 20+ test cases
+- **Page-Level Tests**: Tests for all major pages with feature flag protection
+- **Component-Level Tests**: Tests for individual component protection
+- **Admin Route Tests**: Tests for admin feature flag protection
+- **Public Route Tests**: Tests for authentication route protection
+- **Loading State Tests**: Tests for feature flag loading states
+- **Error Handling Tests**: Tests for graceful error handling
 
-```json
-{
-  "PENDING": "RSVP pending",
-  "CONFIRMED": "Confirmed attendance",
-  "DECLINED": "Declined attendance",
-  "MAYBE": "Maybe attending",
-  "CANCELLED": "Cancelled participation"
-}
-```
+### Implementation Benefits
+1. **Granular Control**: Each feature can be independently enabled/disabled
+2. **User Experience**: Disabled features show appropriate messages instead of errors
+3. **Navigation Safety**: Users can't navigate to disabled features
+4. **Admin Control**: Admins can control feature availability through the admin panel
+5. **Consistent Behavior**: All features follow the same enable/disable patterns
+6. **Performance**: Disabled features don't load unnecessary components
+7. **Maintenance**: Easy to add new feature flags following established patterns
+8. **Landing Page Protection**: Sign-in and "Join Now" buttons are protected by feature flags
 
-### Admin Roles
+### Technical Implementation Details
+- **FeatureFlagWrapper**: Reusable component for conditional rendering
+- **useFeatureFlag Hook**: Custom hook for checking feature flag status
+- **Route-Level Protection**: Feature flags applied at React Router level
+- **Component-Level Protection**: Feature flags applied to individual components
+- **Navigation Protection**: Feature flags applied to navbar items
+- **Fallback Messages**: Consistent, user-friendly messages for disabled features
+- **Loading States**: Proper loading indicators while checking feature flags
+- **Error Handling**: Graceful error handling for API failures
 
-```json
-{
-  "SUPER_ADMIN": "Full system access",
-  "ADMIN": "Standard admin access",
-  "MODERATOR": "Limited admin access"
-}
-```
+## Feature Flag System Improvements (Previous)
 
-### Feature Flag Types
+### Bug Fixes
+- **Duplicate Feature Display**: Fixed issue where features appeared both as individual items and as children in dropdowns
+- **Proper Grouping**: Features now display correctly with parent features showing individually and children accessible via dropdown
+- **Consistent Styling**: Admin feature flags page now uses the same design system as other admin pages
 
-```json
-{
-  "NEW_UI": "Modern user interface",
-  "CHAT_FEATURE": "Real-time chat functionality",
-  "EVENT_REGISTRATION": "Event registration system",
-  "PAYMENT_INTEGRATION": "Payment processing",
-  "SOCIAL_LOGIN": "Social media login options",
-  "DARK_MODE": "Dark mode theme",
-  "NOTIFICATIONS": "Push notifications",
-  "ADVANCED_SEARCH": "Advanced search with filters",
-  "ALUMNI_DIRECTORY": "Public alumni directory",
-  "MENTORSHIP_PROGRAM": "Mentorship program matching"
-}
-```
+### UI/UX Enhancements
+- **Individual Feature Cards**: Each feature (parent or child) is displayed as a separate card with full controls
+- **Dropdown Controls**: Parent features with children have dropdown buttons to show/hide children
+- **Visual Indicators**: Clear distinction between parent features, child features, and standalone features
+- **Consistent Controls**: All features have the same enable/disable, edit, and delete controls
 
-### Photo API Response Format
+### Technical Improvements
+- **Updated Data Processing**: Modified `processFeatureFlags` function to handle API response structure correctly
+- **Enhanced State Management**: Improved handling of expanded/collapsed states for feature groups
+- **Better Error Handling**: More robust error handling for API calls and state updates
+- **Comprehensive Testing**: Updated test suite with 19 passing tests covering all major functionality
 
-```json
-{
-  "success": true,
-  "message": "Cover photo URL retrieved successfully",
-  "data": {
-    "photoUrl": "http://localhost:8000/ijaa/api/v1/users/e76dbb07-7790-4862-95b0-e0aa96f7b2a3/cover-photo/file/7dd13a8d-5097-40bc-a07b-affe7222df28.jpeg",
-    "message": "Cover photo found",
-    "exists": true
-  },
-  "timestamp": 1756067818705
-}
-```
+### Test Coverage
+- **Component Rendering**: Tests for proper display of feature flags with correct indicators
+- **User Interactions**: Tests for creating, editing, deleting, and toggling feature flags
+- **Filter Functionality**: Tests for filter dropdown and options
+- **Error Handling**: Tests for graceful handling of API errors
+- **State Management**: Tests for proper state updates and UI feedback
 
-### Photo API Endpoints
+### API Endpoint Fixes
+- **URL Encoding Issue**: Feature flag names with dots (like `alumni.search`) were not being URL-encoded properly
+- **Solution**: Added `encodeURIComponent()` to all feature flag API endpoints
+- **Fixed Endpoints**:
+  - `checkFeatureFlag()` in `featureFlagApi.js`
+  - `getFeatureFlag()` in `adminApi.js`
+  - `updateFeatureFlag()` in `adminApi.js`
+  - `deleteFeatureFlag()` in `adminApi.js`
+  - `toggleFeatureFlag()` in `adminApi.js`
+- **Result**: API calls now work correctly with feature flag names containing dots
 
-```json
-{
-  "Profile Photo": {
-    "Upload": "POST /api/v1/users/{userId}/profile-photo",
-    "Get": "GET /api/v1/users/{userId}/profile-photo",
-    "Delete": "DELETE /api/v1/users/{userId}/profile-photo"
-  },
-  "Cover Photo": {
-    "Upload": "POST /api/v1/users/{userId}/cover-photo",
-    "Get": "GET /api/v1/users/{userId}/cover-photo",
-    "Delete": "DELETE /api/v1/users/{userId}/cover-photo"
+### Final API Endpoint Fix
+- **Issue**: Feature flag API endpoint mismatch with backend implementation
+- **Root Cause**: Using incorrect endpoint path that doesn't match the backend API structure
+- **Solution**:
+  1. **Correct Endpoint**: Updated to use the exact admin endpoint from backend: `http://localhost:8000/ijaa/api/v1/admin/feature-flags/{name}/enabled`
+  2. **User Token Support**: Modified to use user tokens (not admin tokens) with the admin endpoint
+  3. **Direct Axios Call**: Implemented direct axios call to bypass API client base URL conflicts
+  4. **Proper Headers**: Added correct headers including `Authorization: Bearer {user_token}` and `accept: application/json`
+- **Result**: Feature flag API now correctly matches the backend endpoint structure and works with user authentication
+
+### Data Structure Fix
+- **Issue**: Feature flag API returning correct response but search tab still not showing
+- **Root Cause**: Incorrect data structure handling in `useFeatureFlag` hook
+- **API Response Structure**:
+  ```json
+  {
+    "message": "Feature flag status retrieved successfully",
+    "code": "200",
+    "data": {
+      "name": "alumni.search",
+      "enabled": true
+    }
   }
-}
-```
-
----
-
-## Recent Updates and Fixes
-
-### Profile Photo Integration in Navbar and Search Page (Latest)
-- **Issue**: Navbar profile icon and search page user cards were not displaying actual user profile photos from the API
-- **Solution**: Implemented comprehensive profile photo integration system:
-  - **Created `useCurrentUserPhoto` hook**: Fetches current user's profile photo using photoApi
-  - **Created `useUserPhoto` hook**: Fetches profile photos for specific users by userId
-  - **Created `UserCard` component**: Reusable component that displays user information with profile photos
-  - **Updated Navbar component**: Now displays current user's actual profile photo instead of fallback image
-  - **Updated Search page**: Now uses UserCard component to display user profile photos in search results
-- **Result**: 
-  - Navbar profile icon now shows the current user's actual profile photo
-  - Search page user cards now display each user's profile photo from the API
-  - Fallback images are used when profile photos are not available
-- **Testing**: Created comprehensive tests for all new components and hooks
-- **Files Modified**: 
-  - `src/hooks/useCurrentUserPhoto.js` - New hook for current user's profile photo
-  - `src/hooks/useUserPhoto.js` - New hook for specific user's profile photo
-  - `src/components/UserCard.jsx` - New reusable user card component
-  - `src/components/Navbar.jsx` - Updated to use current user's profile photo
-  - `src/pages/Search.jsx` - Updated to use UserCard component with profile photos
-  - `src/__tests__/hooks/useCurrentUserPhoto.test.js` - Tests for current user photo hook
-  - `src/__tests__/hooks/useUserPhoto.test.js` - Tests for user photo hook
-  - `src/__tests__/components/UserCard.test.jsx` - Tests for UserCard component
-  - `src/__tests__/components/Navbar.test.jsx` - Updated tests for profile photo functionality
-
-### Photo API URL Conversion Fix (Previous)
-- **Issue**: Backend was returning relative URLs (e.g., `/ijaa/api/v1/users/{userId}/profile-photo/file/{fileId}.jpg`) but frontend needed absolute URLs
-- **Solution**: Implemented `convertToAbsoluteUrl` helper function in `photoApi.js` that:
-  - Detects if URL is already absolute (starts with http/https)
-  - Extracts domain and port from base URL (removes path components)
-  - Converts relative URLs to absolute URLs by prepending domain
-  - Handles URLs with and without leading slashes
-- **Result**: Profile and cover photos now display correctly with full URLs like `http://localhost:8000/ijaa/api/v1/users/{userId}/profile-photo/file/{fileId}.jpg`
-- **Testing**: Updated all photo-related tests to verify URL conversion functionality
-- **Files Modified**: 
-  - `src/utils/photoApi.js` - Added URL conversion logic
-  - `src/__tests__/utils/photoApi.test.js` - Added URL conversion tests
-  - `src/__tests__/components/PhotoManager.test.jsx` - Updated photo tests
-  - `src/__tests__/pages/Profile.test.jsx` - Updated profile photo tests
-  - `src/__tests__/pages/ViewProfile.test.jsx` - Updated view profile photo tests
-
-### User Password Change API Integration (Latest)
-- **API Endpoint**: `POST /api/v1/user/change-password` (updated from PUT to POST to match backend)
-- **Request Format**: JSON with `currentPassword`, `newPassword`, `confirmPassword`
-- **Response Format**: `{ message: "Password changed successfully", code: "200", data: null }`
-- **Authentication**: Requires JWT token in Authorization header and X-USER_ID header
-- **Validation**: Comprehensive password validation including length (8-128 chars), complexity (lowercase, uppercase, number, special char), and confirmation matching
-- **Integration**: Integrated into Profile page with admin-style UI and validation
-- **Testing**: Comprehensive test coverage for API function and component integration
-- **Curl Example**: 
-  ```bash
-  curl -X 'POST' \
-    'http://localhost:8000/ijaa/api/v1/user/change-password' \
-    -H 'accept: application/json' \
-    -H 'Authorization: Bearer <JWT_TOKEN>' \
-    -H 'Content-Type: application/json' \
-    -d '{
-      "currentPassword": "oldPassword",
-      "newPassword": "newPassword123!",
-      "confirmPassword": "newPassword123!"
-    }'
   ```
-- **Files Modified**:
-  - `src/utils/apiClient.js` - Updated changeUserPassword function to use POST method
-  - `src/pages/Profile.jsx` - Integrated password change form with admin-style UI
-  - `src/__tests__/utils/changeUserPassword.test.js` - New comprehensive API tests
-  - `src/__tests__/pages/Profile.test.jsx` - Updated component tests for password functionality
-
----
-
-This summary provides a complete, shareable context for the `ijaa-frontend` React project, suitable for onboarding, prompt engineering, or integration with AI tools. The project has been cleaned up to remove unnecessary documentation files and build artifacts, maintaining only essential project files and comprehensive test coverage.
+- **Solution**: Updated `useFeatureFlag` hook to access `response?.data?.enabled` instead of `response?.enabled`
+- **Result**: Search tab now correctly appears when `alumni.search` feature flag is enabled

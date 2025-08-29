@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
 import eventService from '../../services/eventService';
 
 /**
@@ -7,7 +7,7 @@ import eventService from '../../services/eventService';
  * Handles loading, error states, and event data management for Group 1: Basic Event Management
  */
 export const useEvents = () => {
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   
   // State management
   const [events, setEvents] = useState([]);
@@ -21,7 +21,10 @@ export const useEvents = () => {
    */
   const loadEvents = useCallback(async () => {
     if (!user?.token) {
-      setError('Authentication required');
+      // Don't set error for missing authentication - this is expected for unauthenticated users
+      setEvents([]);
+      setMyEvents([]);
+      setLoading(false);
       return;
     }
 

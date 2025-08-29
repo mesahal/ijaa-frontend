@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
 import { eventApi } from '../../utils/eventApi';
 
 /**
@@ -7,7 +7,7 @@ import { eventApi } from '../../utils/eventApi';
  * Handles template CRUD operations, search, and template-based event creation
  */
 export const useEventTemplates = () => {
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   
   // State management
   const [templates, setTemplates] = useState([]);
