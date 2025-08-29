@@ -92,7 +92,10 @@ export const adminApi = {
   getFeatureFlags: () => adminApiCall('/feature-flags'),
   
   // 1.2 Get specific feature flag
-  getFeatureFlag: (featureName) => adminApiCall(`/feature-flags/${featureName}`),
+  getFeatureFlag: (featureName) => adminApiCall(`/feature-flags/${encodeURIComponent(featureName)}`),
+  
+  // 1.2.1 Check if feature flag is enabled
+  checkFeatureFlagEnabled: (featureName) => adminApiCall(`/feature-flags/${encodeURIComponent(featureName)}/enabled`),
   
   // 1.3 Create feature flag
   createFeatureFlag: (featureFlagData) => adminApiCall('/feature-flags', {
@@ -101,13 +104,13 @@ export const adminApi = {
   }),
   
   // 1.4 Update feature flag
-  updateFeatureFlag: (featureName, featureFlagData) => adminApiCall(`/feature-flags/${featureName}`, {
+  updateFeatureFlag: (featureName, featureFlagData) => adminApiCall(`/feature-flags/${encodeURIComponent(featureName)}`, {
     method: 'PUT',
     body: JSON.stringify(featureFlagData)
   }),
   
   // 1.5 Delete feature flag
-  deleteFeatureFlag: (featureName) => adminApiCall(`/feature-flags/${featureName}`, { method: 'DELETE' }),
+  deleteFeatureFlag: (featureName) => adminApiCall(`/feature-flags/${encodeURIComponent(featureName)}`, { method: 'DELETE' }),
   
   // ===== GROUP 2: FEATURE FLAG STATUS MANAGEMENT =====
   
@@ -116,6 +119,9 @@ export const adminApi = {
   
   // 2.2 Get disabled feature flags
   getDisabledFeatureFlags: () => adminApiCall('/feature-flags/disabled'),
+  
+  // 2.3 Refresh feature flag cache
+  refreshFeatureFlagCache: () => adminApiCall('/feature-flags/refresh-cache', { method: 'POST' }),
   
   // ===== GROUP 2 ADDITIONAL UTILITY METHODS =====
   
@@ -144,7 +150,7 @@ export const adminApi = {
   },
   
   // Legacy method for backward compatibility
-  toggleFeatureFlag: (featureName, enabled) => adminApiCall(`/feature-flags/${featureName}`, {
+  toggleFeatureFlag: (featureName, enabled) => adminApiCall(`/feature-flags/${encodeURIComponent(featureName)}`, {
     method: 'PUT',
     body: JSON.stringify({ enabled })
   }),

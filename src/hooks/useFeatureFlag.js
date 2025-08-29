@@ -17,8 +17,12 @@ export const useFeatureFlag = (featureName, defaultValue = false) => {
       try {
         setLoading(true);
         setError(null);
+        
+
+        
         const response = await featureFlagApi.checkFeatureFlag(featureName);
-        setIsEnabled(response.data?.enabled || false);
+        // The response has a nested data property: { data: { name: "alumni.search", enabled: true } }
+        setIsEnabled(response?.data?.enabled || false);
       } catch (err) {
         console.error(`Error checking feature flag ${featureName}:`, err);
         setError(err.message);

@@ -159,17 +159,33 @@ describe('Search', () => {
     expect(screen.getByText(/skills/i)).toBeInTheDocument();
   });
 
-  test('handles filter changes', () => {
-    render(
-      <MemoryRouter>
-        <Search />
-      </MemoryRouter>
-    );
+  test('handles filter changes', async () => {
+    mockUseAuth.mockReturnValue({
+      user: mockUser,
+      loading: false
+    });
 
-    const departmentSelect = screen.getByLabelText(/department/i);
-    fireEvent.change(departmentSelect, { target: { value: 'CSE' } });
+    render(<Search />);
 
-    expect(departmentSelect.value).toBe('CSE');
+    // Wait for initial load to complete
+    await waitFor(() => {
+      expect(global.fetch).toHaveBeenCalled();
+    });
+
+    const filterButton = screen.getByRole('button', { name: /filters/i });
+    fireEvent.click(filterButton);
+
+    // Wait for filters to be visible
+    await waitFor(() => {
+      expect(screen.getByText('Batch Year')).toBeInTheDocument();
+    });
+
+    // Find the batch select element specifically by its label
+    const batchSelect = screen.getByDisplayValue('All Batches');
+    fireEvent.change(batchSelect, { target: { value: '2020' } });
+
+    // The select value should be updated
+    expect(batchSelect.value).toBe('2020');
   });
 
   test('renders search results with proper information', async () => {
@@ -293,6 +309,7 @@ describe('Search', () => {
     await waitFor(() => {
       expect(screen.getByText('John Doe')).toBeInTheDocument();
     });
+
   });
 
   test('handles empty search query', async () => {

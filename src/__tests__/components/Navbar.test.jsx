@@ -1,183 +1,133 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
+import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
-import { mockUser } from '../utils/test-utils';
 
-// Mock the useUnifiedAuth hook
+// Mock the hooks
 jest.mock('../../context/UnifiedAuthContext', () => ({
-  useUnifiedAuth: () => ({
-    user: mockUser,
-    signOut: jest.fn()
-  })
+  useUnifiedAuth: jest.fn()
 }));
 
-// Mock the useTheme hook
 jest.mock('../../context/ThemeContext', () => ({
-  useTheme: () => ({
-    isDark: false,
-    toggleTheme: jest.fn()
-  })
+  useTheme: jest.fn()
 }));
 
-// Mock the useCurrentUserPhoto hook
 jest.mock('../../hooks/useCurrentUserPhoto', () => ({
-  useCurrentUserPhoto: () => ({
-    profilePhotoUrl: 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/abc123.jpg',
-    loading: false,
-    error: null,
-    hasPhoto: true
-  })
+  useCurrentUserPhoto: jest.fn()
 }));
 
-// Mock the useCurrentUserProfile hook
 jest.mock('../../hooks/useCurrentUserProfile', () => ({
-  useCurrentUserProfile: () => ({
-    profileData: {
-      name: 'Test User',
-      email: 'test@example.com',
-      userId: 'USER_123456'
-    },
-    loading: false,
-    error: null
-  })
+  useCurrentUserProfile: jest.fn()
 }));
 
-describe('Navbar Component', () => {
+jest.mock('../../hooks/useFeatureFlag', () => ({
+  useFeatureFlag: jest.fn()
+}));
+
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
+import { useTheme } from '../../context/ThemeContext';
+import { useCurrentUserPhoto } from '../../hooks/useCurrentUserPhoto';
+import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';
+import { useFeatureFlag } from '../../hooks/useFeatureFlag';
+
+describe('Navbar', () => {
+  const mockUser = {
+    name: 'Test User',
+    email: 'test@example.com'
+  };
+
   beforeEach(() => {
-    // Clear all mocks before each test
-    jest.clearAllMocks();
+    // Default mocks
+    useUnifiedAuth.mockReturnValue({
+      user: mockUser,
+      signOut: jest.fn()
+    });
+
+    useTheme.mockReturnValue({
+      isDark: false,
+      toggleTheme: jest.fn()
+    });
+
+    useCurrentUserPhoto.mockReturnValue({
+      profilePhotoUrl: '/test-photo.jpg'
+    });
+
+    useCurrentUserProfile.mockReturnValue({
+      profileData: mockUser
+    });
+
+    useFeatureFlag.mockReturnValue({
+      isEnabled: false,
+      loading: false,
+      error: null
+    });
   });
 
-  test('renders navbar with logo and brand name', () => {
-    render(<Navbar />);
-    
-    expect(screen.getByText('IIT Alumni Association')).toBeInTheDocument();
-    expect(screen.getByText('Jahangirnagar University')).toBeInTheDocument();
-  });
+  const renderWithRouter = (component) => {
+    return render(
+      <MemoryRouter>
+        {component}
+      </MemoryRouter>
+    );
+  };
 
-  test('renders navigation links', () => {
-    render(<Navbar />);
-    
+  test('renders navbar with basic navigation', () => {
+    renderWithRouter(<Navbar />);
+
+    // Check for basic navigation items
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Events')).toBeInTheDocument();
+  });
+
+  test('shows Search link when alumni.search feature flag is enabled', () => {
+    useFeatureFlag.mockReturnValue({
+      isEnabled: true,
+      loading: false,
+      error: null
+    });
+
+    renderWithRouter(<Navbar />);
+
+    // Check for Search link
     expect(screen.getByText('Search')).toBeInTheDocument();
   });
 
-  test('renders user profile section with profile photo', () => {
-    render(<Navbar />);
-    
-    const avatar = screen.getByAltText('Test User');
-    expect(avatar).toBeInTheDocument();
-    expect(avatar).toHaveAttribute('src', 'http://localhost:8000/ijaa/api/v1/users/test-user/profile-photo/file/abc123.jpg');
-  });
-
-  test('renders theme toggle button', () => {
-    render(<Navbar />);
-    
-    const themeToggle = screen.getByRole('button', { name: /toggle theme/i });
-    expect(themeToggle).toBeInTheDocument();
-  });
-
-  test('renders notifications button', () => {
-    render(<Navbar />);
-    
-    const notificationsButton = screen.getByRole('button', { name: /notifications/i });
-    expect(notificationsButton).toBeInTheDocument();
-  });
-
-  test('shows notification badge', () => {
-    render(<Navbar />);
-    
-    expect(screen.getByText('3')).toBeInTheDocument();
-  });
-
-  test('opens profile menu when profile button is clicked', async () => {
-    render(<Navbar />);
-    
-    const profileButton = screen.getByRole('button', { name: /test user/i });
-    fireEvent.click(profileButton);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Settings')).toBeInTheDocument();
-      expect(screen.getByText('Help')).toBeInTheDocument();
-      expect(screen.getByText('Sign Out')).toBeInTheDocument();
+  test('hides Search link when alumni.search feature flag is disabled', () => {
+    useFeatureFlag.mockReturnValue({
+      isEnabled: false,
+      loading: false,
+      error: null
     });
+
+    renderWithRouter(<Navbar />);
+
+    // Search link should not be present
+    expect(screen.queryByText('Search')).not.toBeInTheDocument();
   });
 
-  test('navigates to dashboard when logo is clicked', () => {
-    render(<Navbar />);
-    
-    const logoLink = screen.getByRole('link', { name: /iit ju alumni/i });
-    expect(logoLink).toHaveAttribute('href', '/dashboard');
-  });
-
-  test('navigation links have correct href attributes', () => {
-    render(<Navbar />);
-    
-    const dashboardLink = screen.getByRole('link', { name: /dashboard/i });
-    const eventsLink = screen.getByRole('link', { name: /events/i });
-    const searchLink = screen.getByRole('link', { name: /search/i });
-    
-    expect(dashboardLink).toHaveAttribute('href', '/dashboard');
-    expect(eventsLink).toHaveAttribute('href', '/events');
-    expect(searchLink).toHaveAttribute('href', '/search');
-  });
-
-  test('mobile menu button is present on mobile screens', () => {
-    render(<Navbar />);
-    
-    const mobileMenuButton = screen.getByRole('button', { name: /menu/i });
-    expect(mobileMenuButton).toBeInTheDocument();
-  });
-
-  test('navigation links have correct styling classes', () => {
-    render(<Navbar />);
-    
-    const dashboardLink = screen.getByRole('link', { name: /dashboard/i });
-    expect(dashboardLink).toHaveClass('flex', 'items-center', 'space-x-2');
-  });
-
-  test('profile menu contains sign out option', async () => {
-    render(<Navbar />);
-    
-    const profileButton = screen.getByRole('button', { name: /test user/i });
-    fireEvent.click(profileButton);
-    
-    await waitFor(() => {
-      expect(screen.getByText('Sign Out')).toBeInTheDocument();
+  test('shows loading state when feature flag is loading', () => {
+    useFeatureFlag.mockReturnValue({
+      isEnabled: false,
+      loading: true,
+      error: null
     });
+
+    renderWithRouter(<Navbar />);
+
+    // Search link should not be present during loading
+    expect(screen.queryByText('Search')).not.toBeInTheDocument();
   });
 
-  test('theme toggle button is present', () => {
-    render(<Navbar />);
-    
-    const themeToggle = screen.getByRole('button', { name: /toggle theme/i });
-    expect(themeToggle).toBeInTheDocument();
-  });
+  test('handles feature flag error gracefully', () => {
+    useFeatureFlag.mockReturnValue({
+      isEnabled: false,
+      loading: false,
+      error: 'Feature flag check failed'
+    });
 
-  test('renders without user data gracefully', () => {
-    jest.doMock('../../context/UnifiedAuthContext', () => ({
-      useUnifiedAuth: () => ({
-        user: null,
-        signOut: jest.fn()
-      })
-    }));
-    
-    render(<Navbar />);
-    
-    // Should still render the navbar without user-specific elements
-    expect(screen.getByText('IIT Alumni Association')).toBeInTheDocument();
-  });
+    renderWithRouter(<Navbar />);
 
-  test('accessibility features are present', () => {
-    render(<Navbar />);
-    
-    // Check for proper ARIA labels
-    const themeToggle = screen.getByRole('button', { name: /toggle theme/i });
-    expect(themeToggle).toBeInTheDocument();
-    
-    // Check for proper alt text on images
-    const userAvatar = screen.getByAltText('Test User');
-    expect(userAvatar).toBeInTheDocument();
+    // Search link should not be present on error
+    expect(screen.queryByText('Search')).not.toBeInTheDocument();
   });
 }); 

@@ -21,6 +21,7 @@ const Button = React.forwardRef(({
     secondary: 'bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-gray-400 dark:hover:border-gray-500 shadow-sm hover:shadow-md rounded-lg',
     ghost: 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg',
     danger: 'bg-error-600 hover:bg-error-700 active:bg-error-800 text-white shadow-sm hover:shadow-md rounded-lg',
+    error: 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white shadow-sm hover:shadow-md rounded-lg',
     success: 'bg-success-600 hover:bg-success-700 active:bg-success-800 text-white shadow-sm hover:shadow-md rounded-lg',
     outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg',
     link: 'text-primary-600 hover:text-primary-700 underline-offset-4 hover:underline',

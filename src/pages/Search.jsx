@@ -21,6 +21,7 @@ import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import apiClient from "../utils/apiClient";
 import { Button, Input, Card, Avatar, Badge } from "../components/ui";
 import UserCard from "../components/UserCard";
+import FeatureFlagWrapper from "../components/FeatureFlagWrapper";
 
 const Search = () => {
   // const { user } = useUnifiedAuth(); // Unused variable
@@ -191,24 +192,8 @@ const Search = () => {
   const Pagination = () => {
     if (pagination.totalPages <= 1) return null;
 
-    const pages = [];
-    const maxVisiblePages = 5;
-    let startPage = Math.max(
-      0,
-      pagination.page - Math.floor(maxVisiblePages / 2)
-    );
-    let endPage = Math.min(
-      pagination.totalPages - 1,
-      startPage + maxVisiblePages - 1
-    );
-
-    if (endPage - startPage < maxVisiblePages - 1) {
-      startPage = Math.max(0, endPage - maxVisiblePages + 1);
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      pages.push(i);
-    }
+    const startPage = Math.max(0, pagination.page - 2);
+    const endPage = Math.min(pagination.totalPages - 1, pagination.page + 2);
 
     return (
       <div className="flex items-center justify-center space-x-2 mt-8">
@@ -216,266 +201,318 @@ const Search = () => {
           variant="outline"
           size="sm"
           onClick={() => handlePageChange(pagination.page - 1)}
-          disabled={pagination.first || loading}
-          icon={<ChevronLeft className="h-4 w-4" />}
+          disabled={pagination.first}
+          className="flex items-center space-x-1"
         >
-          Previous
+          <ChevronLeft className="h-4 w-4" />
+          <span>Previous</span>
         </Button>
 
-        {pages.map((page) => (
-          <Button
-            key={page}
-            variant={page === pagination.page ? "primary" : "outline"}
-            size="sm"
-            onClick={() => handlePageChange(page)}
-            disabled={loading}
-          >
-            {page + 1}
-          </Button>
-        ))}
+        {startPage > 0 && (
+          <>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(0)}
+              className="px-3"
+            >
+              1
+            </Button>
+            {startPage > 1 && (
+              <span className="text-gray-500 dark:text-gray-400">...</span>
+            )}
+          </>
+        )}
+
+        {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(
+          (pageNum) => (
+            <Button
+              key={pageNum}
+              variant={pageNum === pagination.page ? "default" : "outline"}
+              size="sm"
+              onClick={() => handlePageChange(pageNum)}
+              className="px-3"
+            >
+              {pageNum + 1}
+            </Button>
+          )
+        )}
+
+        {endPage < pagination.totalPages - 1 && (
+          <>
+            {endPage < pagination.totalPages - 2 && (
+              <span className="text-gray-500 dark:text-gray-400">...</span>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(pagination.totalPages - 1)}
+              className="px-3"
+            >
+              {pagination.totalPages}
+            </Button>
+          </>
+        )}
 
         <Button
           variant="outline"
           size="sm"
           onClick={() => handlePageChange(pagination.page + 1)}
-          disabled={pagination.last || loading}
-          icon={<ChevronRight className="h-4 w-4" />}
-          iconPosition="right"
+          disabled={pagination.last}
+          className="flex items-center space-x-1"
         >
-          Next
+          <span>Next</span>
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
     );
   };
 
-  return (
+  // Feature disabled fallback component
+  const FeatureDisabledFallback = () => (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Find Alumni
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            Connect with fellow graduates from IIT Jahangirnagar University
-          </p>
-        </div>
-
-        {/* Search Bar */}
-        <Card className="p-6 mb-8">
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <Input
-                placeholder="Search by name, profession, or bio..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                leftIcon={<SearchIcon className="h-5 w-5" />}
-                disabled={loading}
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <Button
-                onClick={handleSearch}
-                variant="primary"
-                size="lg"
-                icon={<SearchIcon className="h-5 w-5" />}
-                disabled={loading}
-              >
-                Search
-              </Button>
-
-              <Button
-                onClick={() => setShowFilters(!showFilters)}
-                variant="outline"
-                size="lg"
-                icon={<Filter className="h-5 w-5" />}
-                disabled={loading}
-              >
-                Filters
-              </Button>
-            </div>
+        <div className="text-center">
+          <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+            <SearchIcon className="h-6 w-6 text-gray-400" />
           </div>
-
-          {/* Advanced Filters */}
-          {showFilters && (
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Batch
-                  </label>
-                  <select
-                    value={filters.batch}
-                    onChange={(e) => handleFilterChange("batch", e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    disabled={loading}
-                  >
-                    <option value="">All Batches</option>
-                    {batchYears.map((batch) => (
-                      <option key={batch} value={batch}>
-                        Batch {batch}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <Input
-                    label="Profession"
-                    placeholder="e.g., Software Engineer"
-                    value={filters.profession}
-                    onChange={(e) => handleFilterChange("profession", e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div>
-                  <Input
-                    label="Location"
-                    placeholder="e.g., Dhaka"
-                    value={filters.location}
-                    onChange={(e) => handleFilterChange("location", e.target.value)}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between mt-4">
-                <div className="flex items-center space-x-4">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Sort by:
-                  </label>
-                  <select
-                    value={filters.sortBy}
-                    onChange={(e) => handleFilterChange("sortBy", e.target.value)}
-                    className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                    disabled={loading}
-                  >
-                    <option value="relevance">Relevance</option>
-                    <option value="name">Name</option>
-                    <option value="batch">Batch</option>
-                    <option value="connections">Connections</option>
-                  </select>
-                </div>
-
-                <div className="flex gap-2">
-                  <Button
-                    onClick={clearFilters}
-                    variant="ghost"
-                    size="sm"
-                    icon={<X className="h-4 w-4" />}
-                    disabled={loading}
-                  >
-                    Clear Filters
-                  </Button>
-                  <Button
-                    onClick={handleSearch}
-                    variant="primary"
-                    size="sm"
-                    disabled={loading}
-                  >
-                    Apply Filters
-                  </Button>
-                </div>
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* Error Message */}
-        {error && (
-          <Card className="mb-6 border-error-200 dark:border-error-700">
-            <div className="p-4">
-              <div className="flex items-center space-x-3">
-                <Loader2 className="h-5 w-5 text-error-500 flex-shrink-0" />
-                <p className="text-error-700 dark:text-error-300">{error}</p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Results */}
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-gray-600 dark:text-gray-300">
-            {loading ? (
-              <span className="flex items-center space-x-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span>Searching...</span>
-              </span>
-            ) : (
-              <>
-                Found {pagination.totalElements} alumni
-                {searchQuery && ` for "${searchQuery}"`}
-              </>
-            )}
+          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+            Alumni Search Unavailable
+          </h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6">
+            The alumni search feature is currently disabled. Please check back later or contact support for assistance.
           </p>
-
-          {pagination.totalElements > 0 && (
-            <p className="text-gray-500 text-sm">
-              Page {pagination.page + 1} of {pagination.totalPages}
-            </p>
-          )}
+          <Button onClick={() => navigate("/dashboard")} variant="default">
+            Return to Dashboard
+          </Button>
         </div>
-
-        {/* Alumni Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {alumni.map((person) => (
-            <UserCard
-              key={person.userId}
-              user={person}
-              onConnect={handleConnect}
-              onMessage={handleMessage}
-              onViewProfile={handleViewProfile}
-              loading={loading}
-            />
-          ))}
-        </div>
-
-        {/* Loading State */}
-        {loading && alumni.length === 0 && (
-          <Card className="p-12">
-            <div className="text-center">
-              <Loader2 className="h-16 w-16 text-primary-600 mx-auto mb-4 animate-spin" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                Searching Alumni...
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300">
-                Please wait while we find alumni matching your criteria.
-              </p>
-            </div>
-          </Card>
-        )}
-
-        {/* Empty State */}
-        {!loading && alumni.length === 0 && !error && (
-          <Card className="p-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
-                <SearchIcon className="h-8 w-8 text-gray-400" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                No alumni found
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-6">
-                Try adjusting your search terms or filters to find more alumni.
-              </p>
-              <Button
-                onClick={clearFilters}
-                variant="outline"
-                icon={<X className="h-4 w-4" />}
-              >
-                Clear All Filters
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Pagination */}
-        <Pagination />
       </div>
     </div>
+  );
+
+  return (
+    <FeatureFlagWrapper 
+      featureName="alumni.search"
+      fallback={<FeatureDisabledFallback />}
+      defaultValue={false}
+    >
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+              Search Alumni
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              Find and connect with fellow alumni from IIT JU
+            </p>
+          </div>
+
+          {/* Search Form */}
+          <Card className="mb-6">
+            <div className="p-6">
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Search Input */}
+                <div className="flex-1">
+                  <Input
+                    type="text"
+                    placeholder="Search by name, profession, or bio..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    className="w-full"
+                    icon={<SearchIcon className="h-4 w-4" />}
+                  />
+                </div>
+
+                {/* Search Button */}
+                <Button
+                  onClick={handleSearch}
+                  disabled={loading}
+                  className="lg:w-auto"
+                >
+                  {loading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <SearchIcon className="h-4 w-4 mr-2" />
+                  )}
+                  Search
+                </Button>
+
+                {/* Filter Toggle */}
+                <Button
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="lg:w-auto"
+                >
+                  <Filter className="h-4 w-4 mr-2" />
+                  Filters
+                </Button>
+              </div>
+
+              {/* Advanced Filters */}
+              {showFilters && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Batch Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Batch Year
+                      </label>
+                      <select
+                        value={filters.batch}
+                        onChange={(e) => handleFilterChange("batch", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      >
+                        <option value="">All Batches</option>
+                        {batchYears.map((year) => (
+                          <option key={year} value={year}>
+                            {year}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Profession Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Profession
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="e.g., Software Engineer"
+                        value={filters.profession}
+                        onChange={(e) => handleFilterChange("profession", e.target.value)}
+                        icon={<Briefcase className="h-4 w-4" />}
+                      />
+                    </div>
+
+                    {/* Location Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Location
+                      </label>
+                      <Input
+                        type="text"
+                        placeholder="e.g., Dhaka, Bangladesh"
+                        value={filters.location}
+                        onChange={(e) => handleFilterChange("location", e.target.value)}
+                        icon={<MapPin className="h-4 w-4" />}
+                      />
+                    </div>
+
+                    {/* Sort By */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Sort By
+                      </label>
+                      <select
+                        value={filters.sortBy}
+                        onChange={(e) => handleFilterChange("sortBy", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                      >
+                        <option value="relevance">Relevance</option>
+                        <option value="name">Name</option>
+                        <option value="batch">Batch</option>
+                        <option value="connections">Connections</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Clear Filters */}
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      onClick={clearFilters}
+                      className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Clear Filters
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Error Message */}
+          {error && (
+            <Card className="mb-6 border-error-200 dark:border-error-700">
+              <div className="p-4">
+                <div className="flex items-center space-x-3">
+                  <Loader2 className="h-5 w-5 text-error-500 flex-shrink-0" />
+                  <p className="text-error-700 dark:text-error-300">{error}</p>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Results */}
+          <div className="mb-6 flex items-center justify-between">
+            <p className="text-gray-600 dark:text-gray-300">
+              {loading ? (
+                <span className="flex items-center space-x-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  <span>Searching...</span>
+                </span>
+              ) : (
+                <>
+                  Found {pagination.totalElements} alumni
+                  {searchQuery && ` for "${searchQuery}"`}
+                </>
+              )}
+            </p>
+
+            {pagination.totalElements > 0 && (
+              <p className="text-gray-500 text-sm">
+                Page {pagination.page + 1} of {pagination.totalPages}
+              </p>
+            )}
+          </div>
+
+          {/* Alumni Grid */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {alumni.map((person) => (
+              <UserCard
+                key={person.userId}
+                user={person}
+                onConnect={handleConnect}
+                onMessage={handleMessage}
+                onViewProfile={handleViewProfile}
+                loading={loading}
+              />
+            ))}
+          </div>
+
+          {/* Loading State */}
+          {loading && alumni.length === 0 && (
+            <div className="text-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400">Searching for alumni...</p>
+            </div>
+          )}
+
+          {/* No Results */}
+          {!loading && alumni.length === 0 && pagination.totalElements === 0 && (
+            <div className="text-center py-12">
+              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                No alumni found
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                Try adjusting your search criteria or filters
+              </p>
+              <Button onClick={clearFilters} variant="outline">
+                Clear Filters
+              </Button>
+            </div>
+          )}
+
+          {/* Pagination */}
+          <Pagination />
+        </div>
+      </div>
+    </FeatureFlagWrapper>
   );
 };
 

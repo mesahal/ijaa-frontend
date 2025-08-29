@@ -12,6 +12,19 @@ import {
   EyeOff,
   AlertTriangle,
   UserPlus,
+  RefreshCw,
+  Filter as FilterIcon,
+  Crown,
+  Users,
+  Activity,
+  Calendar,
+  Mail,
+  TrendingUp,
+  UserCheck,
+  UserX,
+  Settings,
+  Lock,
+  User,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button, Input, Card, Badge, Avatar } from "../components/ui";
@@ -108,22 +121,6 @@ const AdminManagement = () => {
     }
   };
 
-  const handleFormChange = (e) => {
-    const { name, value } = e.target;
-    setCreateForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-
-    // Clear error when user starts typing
-    if (formErrors[name]) {
-      setFormErrors((prev) => ({
-        ...prev,
-        [name]: "",
-      }));
-    }
-  };
-
   const validateCreateForm = () => {
     const errors = {};
 
@@ -134,7 +131,7 @@ const AdminManagement = () => {
     if (!createForm.email.trim()) {
       errors.email = "Email is required";
     } else if (!/\S+@\S+\.\S+/.test(createForm.email)) {
-      errors.email = "Please enter a valid email address";
+      errors.email = "Email is invalid";
     }
 
     if (!createForm.password) {
@@ -166,23 +163,67 @@ const AdminManagement = () => {
     setShowConfirmPassword(false);
   };
 
-  // Filter admins based on search and status
   const filteredAdmins = admins.filter((admin) => {
-    const matchesSearch =
-      admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      admin.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus =
+    const matchesSearch = (admin.name || "")
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase()) ||
+      (admin.email || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter =
       statusFilter === "all" ||
       (statusFilter === "active" && admin.active) ||
       (statusFilter === "inactive" && !admin.active);
-    return matchesSearch && matchesStatus;
+    return matchesSearch && matchesFilter;
   });
+
+  // Calculate statistics
+  const totalAdmins = admins.length;
+  const activeAdmins = admins.filter(admin => admin.active).length;
+  const inactiveAdmins = admins.filter(admin => !admin.active).length;
+  const superAdmins = admins.filter(admin => admin.role === "SUPER_ADMIN").length;
+  const recentAdmins = admins.filter(admin => {
+    const adminDate = new Date(admin.createdAt || 0);
+    const weekAgo = new Date();
+    weekAgo.setDate(weekAgo.getDate() - 7);
+    return adminDate > weekAgo;
+  }).length;
+
+  const getRoleBadge = (role) => {
+    const variants = {
+      SUPER_ADMIN: "error",
+      ADMIN: "primary",
+    };
+    
+    return (
+      <Badge variant={variants[role] || "secondary"} size="sm">
+        {role === "SUPER_ADMIN" ? (
+          <Crown className="h-3 w-3 mr-1" />
+        ) : (
+          <Shield className="h-3 w-3 mr-1" />
+        )}
+        {role.replace('_', ' ')}
+      </Badge>
+    );
+  };
+
+  // Check if admin is available
+  if (!currentAdmin) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading admin data...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
 
   if (loading) {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       </AdminLayout>
     );
@@ -190,133 +231,199 @@ const AdminManagement = () => {
 
   return (
     <AdminLayout>
-      <div className="max-w-7xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between">
+      <div className="space-y-8">
+        {/* Enhanced Header - Consistent with AdminUsers */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-8 text-white shadow-xl">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Admin Management</h1>
+              <p className="text-indigo-100 text-lg">
+                Manage administrator accounts and permissions
+              </p>
+              <p className="text-indigo-200 text-sm mt-1">
+                Create, activate, and manage admin access levels
+              </p>
+            </div>
             <div className="flex items-center space-x-4">
-              <div className="bg-gradient-to-r from-primary-600 to-primary-700 text-white rounded-xl p-3 shadow-lg">
-                <Shield className="h-8 w-8" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                  Admin Management
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400 mt-1">
-                  Manage admin accounts and permissions
+              <div className="text-right">
+                <p className="text-indigo-200 text-sm">Last Updated</p>
+                <p className="font-semibold">
+                  {new Date().toLocaleTimeString()}
                 </p>
               </div>
+              <Button
+                variant="outline"
+                onClick={fetchAdmins}
+                icon={<Activity className="h-4 w-4" />}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                disabled={loading}
+              >
+                Refresh
+              </Button>
             </div>
-            <Button
-              variant="primary"
-              size="lg"
-              onClick={() => setShowCreateModal(true)}
-              icon={<Plus className="h-5 w-5" />}
-              iconPosition="left"
-            >
-              Add Admin
-            </Button>
           </div>
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
         </div>
 
-        {/* Search and Filters */}
-        <Card className="mb-6">
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {/* Search */}
+        {/* Statistics Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-600 dark:text-blue-400">Total Admins</p>
+                <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{totalAdmins}</p>
+              </div>
+              <div className="p-3 bg-blue-500/10 rounded-full">
+                <Shield className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-green-600 dark:text-green-400">Active</p>
+                <p className="text-2xl font-bold text-green-900 dark:text-green-100">{activeAdmins}</p>
+              </div>
+              <div className="p-3 bg-green-500/10 rounded-full">
+                <UserCheck className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border-red-200 dark:border-red-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-red-600 dark:text-red-400">Inactive</p>
+                <p className="text-2xl font-bold text-red-900 dark:text-red-100">{inactiveAdmins}</p>
+              </div>
+              <div className="p-3 bg-red-500/10 rounded-full">
+                <UserX className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
+            </div>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Super Admins</p>
+                <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{superAdmins}</p>
+              </div>
+              <div className="p-3 bg-purple-500/10 rounded-full">
+                <Crown className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Search and Filter Controls */}
+        <Card>
+          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+            <div className="flex-1 w-full lg:w-auto">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search admins..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-all duration-200"
                 />
               </div>
-
-              {/* Status Filter */}
-              <div>
+            </div>
+            
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-2">
+                <FilterIcon className="h-4 w-4 text-gray-500" />
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
                 >
-                  <option value="all">All Status</option>
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
+                  <option value="all">All Admins</option>
+                  <option value="active">Active Only</option>
+                  <option value="inactive">Inactive Only</option>
                 </select>
               </div>
 
-              {/* Results Count */}
-              <div className="flex items-center justify-end text-sm text-gray-600 dark:text-gray-400">
-                {filteredAdmins.length} of {admins.length} admins
-              </div>
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateModal(true)}
+                icon={<UserPlus className="h-4 w-4" />}
+                className="h-10 px-4"
+              >
+                Create Admin
+              </Button>
             </div>
           </div>
         </Card>
 
         {/* Admins Table */}
         <Card className="overflow-hidden">
+          <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              Administrators ({filteredAdmins.length})
+            </h3>
+          </div>
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
               <thead className="bg-gray-50 dark:bg-gray-700">
                 <tr>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Admin
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                    Email
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Role
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Status
                   </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Created
                   </th>
-                  <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                     Actions
                   </th>
                 </tr>
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredAdmins.map((admin) => (
-                  <tr
-                    key={admin.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
+                  <tr key={admin.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Avatar
-                          size="lg"
-                          src={`/logo-2.jpg`}
+                          size="md"
+                          src={admin.profilePicture}
                           alt={admin.name}
                           fallback={admin.name}
+                          className="w-10 h-10"
                         />
                         <div className="ml-4">
-                          <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">
                             {admin.name}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
-                            {admin.email}
+                            {admin.batch || "N/A"}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <Badge
-                        variant={
-                          admin.role === "SUPER_ADMIN"
-                            ? "error"
-                            : admin.role === "ADMIN"
-                            ? "primary"
-                            : "success"
-                        }
-                        size="sm"
-                      >
-                        <Shield className="h-3 w-3 mr-1" />
-                        {admin.role}
-                      </Badge>
+                      <div className="flex items-center">
+                        <Mail className="h-4 w-4 text-gray-400 mr-2" />
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {admin.email}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {getRoleBadge(admin.role)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge
@@ -331,44 +438,51 @@ const AdminManagement = () => {
                         {admin.active ? "Active" : "Inactive"}
                       </Badge>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
-                      {new Date(admin.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <Calendar className="h-4 w-4 text-gray-400 mr-2" />
+                        <span className="text-sm text-gray-900 dark:text-white">
+                          {new Date(admin.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       {admin.id !== currentAdmin?.id && (
-                        <div className="flex items-center justify-end space-x-3">
+                        <div className="flex items-center justify-end space-x-2">
                           {admin.active ? (
-                            <button
+                            <Button
+                              variant="error"
+                              size="sm"
                               onClick={() => handleDeactivateAdmin(admin.id)}
                               disabled={actionLoading}
-                              className="inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 hover:shadow-md transition-all duration-200 min-w-[100px] dark:bg-red-900/20 dark:text-red-400 dark:border-red-700 dark:hover:bg-red-900/30 dark:hover:border-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Deactivate Admin"
-                            >
-                              {actionLoading ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                              className="h-8 px-3 font-medium"
+                              icon={actionLoading ? (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                               ) : (
-                                <XCircle className="h-4 w-4 mr-2" />
+                                <XCircle className="h-3 w-3" />
                               )}
+                            >
                               Deactivate
-                            </button>
+                            </Button>
                           ) : (
-                            <button
+                            <Button
+                              variant="success"
+                              size="sm"
                               onClick={() => handleActivateAdmin(admin.id)}
                               disabled={actionLoading}
-                              className="inline-flex items-center justify-center px-4 py-2 rounded-lg font-medium text-sm bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 hover:border-green-300 hover:shadow-md transition-all duration-200 min-w-[100px] dark:bg-green-900/20 dark:text-green-400 dark:border-green-700 dark:hover:bg-green-900/30 dark:hover:border-green-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                              title="Activate Admin"
-                            >
-                              {actionLoading ? (
-                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2"></div>
+                              className="h-8 px-3 font-medium"
+                              icon={actionLoading ? (
+                                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-current"></div>
                               ) : (
-                                <CheckCircle className="h-4 w-4 mr-2" />
+                                <CheckCircle className="h-3 w-3" />
                               )}
+                            >
                               Activate
-                            </button>
+                            </Button>
                           )}
                         </div>
                       )}
@@ -378,118 +492,175 @@ const AdminManagement = () => {
               </tbody>
             </table>
           </div>
-
-          {/* Empty State */}
-          {filteredAdmins.length === 0 && (
-            <div className="text-center py-12">
-              <div className="mx-auto h-12 w-12 text-gray-400">
-                <Shield className="h-12 w-12" />
-              </div>
-              <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
-                {searchTerm || statusFilter !== "all"
-                  ? "No admins found"
-                  : "No admins"}
-              </h3>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                {searchTerm || statusFilter !== "all"
-                  ? "Try adjusting your search or filter criteria."
-                  : "Get started by creating a new admin account."}
-              </p>
-              {!searchTerm && statusFilter === "all" && (
-                <div className="mt-6">
-                  <Button
-                    variant="primary"
-                    onClick={() => setShowCreateModal(true)}
-                    icon={<Plus className="h-4 w-4" />}
-                    iconPosition="left"
-                  >
-                    Add Admin
-                  </Button>
-                </div>
-              )}
-            </div>
-          )}
         </Card>
+
+        {/* Empty State */}
+        {filteredAdmins.length === 0 && (
+          <Card className="text-center py-12">
+            <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
+              <Shield className="h-12 w-12" />
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+              {searchTerm || statusFilter !== "all"
+                ? "No admins found"
+                : "No admins"}
+            </h3>
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {searchTerm || statusFilter !== "all"
+                ? "Try adjusting your search or filter criteria."
+                : "Get started by creating a new admin account."}
+            </p>
+            {!searchTerm && statusFilter === "all" && (
+              <Button
+                variant="primary"
+                onClick={() => setShowCreateModal(true)}
+                icon={<UserPlus className="h-4 w-4" />}
+                className="h-10 px-4"
+              >
+                Create Admin
+              </Button>
+            )}
+          </Card>
+        )}
 
         {/* Create Admin Modal */}
         {showCreateModal && (
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-            <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-2xl bg-white dark:bg-gray-800">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  Create New Admin
-                </h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setShowCreateModal(false)}
-                  icon={<XCircle className="h-6 w-6" />}
-                />
-              </div>
-
-              <form onSubmit={handleCreateAdmin} className="space-y-4">
-                <Input
-                  label="Name"
-                  name="name"
-                  value={createForm.name}
-                  onChange={handleFormChange}
-                  placeholder="Enter admin name"
-                  error={formErrors.name}
-                  required
-                />
-
-                <Input
-                  label="Email"
-                  type="email"
-                  name="email"
-                  value={createForm.email}
-                  onChange={handleFormChange}
-                  placeholder="Enter admin email"
-                  error={formErrors.email}
-                  required
-                />
-
-                <Input
-                  label="Password"
-                  type="password"
-                  name="password"
-                  value={createForm.password}
-                  onChange={handleFormChange}
-                  placeholder="Enter password"
-                  error={formErrors.password}
-                  required
-                />
-
-                <Input
-                  label="Confirm Password"
-                  type="password"
-                  name="confirmPassword"
-                  value={createForm.confirmPassword}
-                  onChange={handleFormChange}
-                  placeholder="Confirm password"
-                  error={formErrors.confirmPassword}
-                  required
-                />
-
-                <div className="flex items-center justify-end space-x-3 pt-4">
-                  <Button
-                    variant="outline"
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+            <Card className="max-w-md w-full mx-4">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    Create New Admin
+                  </h3>
+                  <button
                     onClick={() => setShowCreateModal(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                   >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    loading={actionLoading}
-                    icon={<UserPlus className="h-4 w-4" />}
-                    iconPosition="left"
-                  >
-                    {actionLoading ? "Creating..." : "Create Admin"}
-                  </Button>
+                    <XCircle className="h-6 w-6" />
+                  </button>
                 </div>
-              </form>
-            </div>
+
+                <form onSubmit={handleCreateAdmin} className="space-y-4">
+                  <Input
+                    label="Full Name"
+                    type="text"
+                    name="name"
+                    value={createForm.name}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, name: e.target.value })
+                    }
+                    placeholder="Enter full name"
+                    error={formErrors.name}
+                    leftIcon={<User className="h-4 w-4" />}
+                    required
+                  />
+
+                  <Input
+                    label="Email Address"
+                    type="email"
+                    name="email"
+                    value={createForm.email}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, email: e.target.value })
+                    }
+                    placeholder="Enter email address"
+                    error={formErrors.email}
+                    leftIcon={<Mail className="h-4 w-4" />}
+                    required
+                  />
+
+                  <Input
+                    label="Password"
+                    type={showPassword ? "text" : "password"}
+                    name="password"
+                    value={createForm.password}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, password: e.target.value })
+                    }
+                    placeholder="Enter password"
+                    error={formErrors.password}
+                    leftIcon={<Lock className="h-4 w-4" />}
+                    rightIcon={
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    }
+                    required
+                  />
+
+                  <Input
+                    label="Confirm Password"
+                    type={showConfirmPassword ? "text" : "password"}
+                    name="confirmPassword"
+                    value={createForm.confirmPassword}
+                    onChange={(e) =>
+                      setCreateForm({ ...createForm, confirmPassword: e.target.value })
+                    }
+                    placeholder="Confirm password"
+                    error={formErrors.confirmPassword}
+                    leftIcon={<Lock className="h-4 w-4" />}
+                    rightIcon={
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    }
+                    required
+                  />
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Role
+                    </label>
+                    <select
+                      value={createForm.role}
+                      onChange={(e) =>
+                        setCreateForm({ ...createForm, role: e.target.value })
+                      }
+                      className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white transition-all duration-200"
+                    >
+                      <option value="ADMIN">Admin</option>
+                      <option value="SUPER_ADMIN">Super Admin</option>
+                    </select>
+                  </div>
+
+                  <div className="flex justify-end space-x-3 pt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setShowCreateModal(false)}
+                      disabled={actionLoading}
+                      className="h-10 px-4"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      loading={actionLoading}
+                      icon={<UserPlus className="h-4 w-4" />}
+                      className="h-10 px-4"
+                    >
+                      {actionLoading ? "Creating..." : "Create Admin"}
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </Card>
           </div>
         )}
       </div>

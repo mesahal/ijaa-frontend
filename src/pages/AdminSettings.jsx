@@ -28,9 +28,14 @@ import {
   UserPlus,
   UserCheck,
   Tag,
+  RefreshCw,
+  Activity,
+  Database,
+  Bell,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button, Input, Card, Badge, Avatar } from "../components/ui";
+import FeatureFlagWrapper from "../components/FeatureFlagWrapper";
 
 const AdminSettings = () => {
   const { admin } = useUnifiedAuth();
@@ -103,11 +108,6 @@ const AdminSettings = () => {
       errors.confirmPassword = "Passwords do not match";
     }
 
-    if (passwordForm.currentPassword === passwordForm.newPassword) {
-      errors.newPassword =
-        "New password must be different from current password";
-    }
-
     setPasswordErrors(errors);
     return Object.keys(errors).length === 0;
   };
@@ -121,11 +121,12 @@ const AdminSettings = () => {
 
     try {
       setPasswordLoading(true);
-      await adminApi.changeAdminPassword(passwordForm);
+      await adminApi.changePassword({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword,
+      });
 
       toast.success("Password changed successfully");
-
-      // Reset form
       setPasswordForm({
         currentPassword: "",
         newPassword: "",
@@ -140,18 +141,25 @@ const AdminSettings = () => {
     }
   };
 
+  // Check if admin is available
+  if (!admin) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Loading admin data...</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   if (loading) {
     return (
       <AdminLayout>
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="animate-pulse">
-            <div className="bg-gray-300 h-48 rounded-t-2xl"></div>
-            <div className="bg-white dark:bg-gray-800 p-8 rounded-b-2xl">
-              <div className="h-6 bg-gray-300 rounded w-1/4 mb-4"></div>
-              <div className="h-4 bg-gray-300 rounded w-1/3 mb-2"></div>
-              <div className="h-4 bg-gray-300 rounded w-1/4"></div>
-            </div>
-          </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       </AdminLayout>
     );
@@ -159,44 +167,51 @@ const AdminSettings = () => {
 
   return (
     <AdminLayout>
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Back Button */}
-        <button
-          onClick={() => window.history.back()}
-          className="mb-4 flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
-        >
-          <ArrowLeft className="h-5 w-5" />
-          <span>Back to Dashboard</span>
-        </button>
-
-        {profile && (
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
-            {/* Cover Photo */}
-            <div className="h-48 bg-gradient-to-r from-primary-600 to-secondary-600 relative">
-              <div className="absolute inset-0 bg-black/20"></div>
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="text-center text-white">
-                  {/* <Shield className="h-16 w-16 mx-auto mb-2 opacity-80" /> */}
-                  {/* <h2 className="text-2xl font-bold">Admin Panel</h2> */}
-                  {/* <p className="text-primary-100">System Administration</p> */}
-                </div>
-              </div>
+      <div className="space-y-8">
+        {/* Enhanced Header - Consistent with AdminUsers */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 p-8 text-white shadow-xl">
+          <div className="absolute inset-0 bg-black/10"></div>
+          <div className="relative z-10 flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Settings</h1>
+              <p className="text-purple-100 text-lg">
+                Manage your account and security preferences
+              </p>
+              <p className="text-purple-200 text-sm mt-1">
+                Update your profile, password, and system settings
+              </p>
             </div>
-
-            <div className="px-4 sm:px-8 pb-8 relative">
-              {/* Profile Picture */}
-              <div className="absolute -top-16 left-4 sm:left-8">
-                <Avatar
-                  size="xl"
-                  src={`/logo-2.jpg`}
-                  alt={profile.name}
-                  fallback={profile.name}
-                  className="w-24 h-24 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-800 shadow-lg"
-                />
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-purple-200 text-sm">Last Updated</p>
+                <p className="font-semibold">
+                  {new Date().toLocaleTimeString()}
+                </p>
               </div>
+              <Button
+                variant="outline"
+                onClick={fetchAdminProfile}
+                icon={<Activity className="h-4 w-4" />}
+                className="bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                disabled={loading}
+              >
+                Refresh
+              </Button>
+            </div>
+          </div>
+          {/* Decorative elements */}
+          <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-16 translate-x-16"></div>
+          <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-12 -translate-x-12"></div>
+        </div>
 
-              {/* Header Content */}
-              <div className="pt-12 sm:pt-20">
+        {/* Profile Information */}
+        {profile && (
+          <Card className="overflow-hidden">
+            <div className="relative">
+              {/* Background gradient */}
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20"></div>
+              
+              <div className="relative p-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div className="space-y-2 flex-1">
                     {/* Name */}
@@ -205,9 +220,12 @@ const AdminSettings = () => {
                     </h1>
 
                     {/* Role */}
-                    <p className="text-lg text-gray-600 dark:text-gray-300">
-                      {profile.role}
-                    </p>
+                    <div className="flex items-center space-x-2">
+                      <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                      <Badge variant="primary" size="sm">
+                        {profile.role}
+                      </Badge>
+                    </div>
 
                     {/* Status and Info */}
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
@@ -240,49 +258,103 @@ const AdminSettings = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
         )}
 
-        <div className="space-y-8">
-          {/* Security Settings */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Change Password
-            </h3>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+        {/* Security Settings */}
+        <FeatureFlagWrapper
+          featureName="admin.auth"
+          showFallback={false}
+        >
+          <Card>
+            <div className="p-6">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="p-2 bg-red-100 dark:bg-red-900/50 rounded-full">
+                  <Shield className="h-6 w-6 text-red-600 dark:text-red-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    Change Password
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Update your account password
+                  </p>
+                </div>
+              </div>
+              
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
               <Input
                 label="Current Password"
-                type="password"
+                type={showCurrentPassword ? "text" : "password"}
                 name="currentPassword"
                 value={passwordForm.currentPassword}
                 onChange={handlePasswordChange}
                 placeholder="Enter current password"
                 error={passwordErrors.currentPassword}
                 leftIcon={<Key className="h-4 w-4" />}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showCurrentPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                }
                 required
               />
 
               <Input
                 label="New Password"
-                type="password"
+                type={showNewPassword ? "text" : "password"}
                 name="newPassword"
                 value={passwordForm.newPassword}
                 onChange={handlePasswordChange}
                 placeholder="Enter new password"
                 error={passwordErrors.newPassword}
                 leftIcon={<Lock className="h-4 w-4" />}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(!showNewPassword)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showNewPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                }
                 required
               />
 
               <Input
                 label="Confirm New Password"
-                type="password"
+                type={showConfirmPassword ? "text" : "password"}
                 name="confirmPassword"
                 value={passwordForm.confirmPassword}
                 onChange={handlePasswordChange}
                 placeholder="Confirm new password"
                 error={passwordErrors.confirmPassword}
                 leftIcon={<Lock className="h-4 w-4" />}
+                rightIcon={
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                  </button>
+                }
                 required
               />
 
@@ -313,7 +385,8 @@ const AdminSettings = () => {
               </div>
             </div>
           </div>
-        </div>
+        </Card>
+        </FeatureFlagWrapper>
       </div>
     </AdminLayout>
   );

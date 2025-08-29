@@ -19,6 +19,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useCurrentUserPhoto } from "../hooks/useCurrentUserPhoto";
 import { useCurrentUserProfile } from "../hooks/useCurrentUserProfile";
 import { Button, Avatar, Badge } from "./ui";
+import { useFeatureFlag } from "../hooks/useFeatureFlag";
 
 const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,6 +32,12 @@ const Navbar = () => {
   const { isDark, toggleTheme } = useTheme();
   const { profilePhotoUrl } = useCurrentUserPhoto();
   const { profileData } = useCurrentUserProfile();
+  
+  // Check if features are enabled
+  const { isEnabled: isAlumniSearchEnabled, loading: isSearchFlagLoading, error: searchFlagError } = useFeatureFlag("alumni.search", false);
+  const { isEnabled: isEventsEnabled, loading: isEventsFlagLoading, error: eventsFlagError } = useFeatureFlag("events", false);
+  const { isEnabled: isNotificationsEnabled, loading: isNotificationsFlagLoading, error: notificationsFlagError } = useFeatureFlag("notifications", false);
+  const { isEnabled: isReportsEnabled, loading: isReportsFlagLoading, error: reportsFlagError } = useFeatureFlag("reports", false);
 
   // Handle scroll effect
   useEffect(() => {
@@ -56,19 +63,32 @@ const Navbar = () => {
     navigate("/");
   };
 
+  // Build navigation items based on feature flags
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
-    { path: "/events", icon: Calendar, label: "Events" },
-    { path: "/search", icon: Search, label: "Search" },
+    // Only include Events if the feature flag is enabled
+    ...(isEventsEnabled ? [{ path: "/events", icon: Calendar, label: "Events" }] : []),
+    // Only include Search if the feature flag is enabled
+    ...(isAlumniSearchEnabled ? [{ path: "/search", icon: Search, label: "Search" }] : []),
   ];
+
+  // Debug logging
+  console.log('Feature Flag Debug:', {
+    alumniSearch: { isEnabled: isAlumniSearchEnabled, loading: isSearchFlagLoading, error: searchFlagError },
+    events: { isEnabled: isEventsEnabled, loading: isEventsFlagLoading, error: eventsFlagError },
+    notifications: { isEnabled: isNotificationsEnabled, loading: isNotificationsFlagLoading, error: notificationsFlagError },
+    reports: { isEnabled: isReportsEnabled, loading: isReportsFlagLoading, error: reportsFlagError },
+    navItems: navItems
+  });
 
   const profileMenuItems = [
     { icon: Settings, label: "Settings", action: () => navigate("/profile") },
-    {
+    // Only include Help if reports feature is enabled
+    ...(isReportsEnabled ? [{
       icon: HelpCircle,
       label: "Help",
       action: () => navigate("/contact-support"),
-    },
+    }] : []),
     { icon: LogOut, label: "Sign Out", action: handleSignOut, danger: true },
   ];
 
@@ -145,26 +165,27 @@ const Navbar = () => {
             </Button>
 
             {/* Notifications */}
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowNotifications(!showNotifications);
-                }}
-                className="p-2 rounded-lg relative"
-                aria-label="Notifications"
-              >
-                <Bell className="h-5 w-5" />
-                <Badge
-                  variant="error"
+            {isNotificationsEnabled && (
+              <div className="relative">
+                <Button
+                  variant="ghost"
                   size="sm"
-                  className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowNotifications(!showNotifications);
+                  }}
+                  className="p-2 rounded-lg relative"
+                  aria-label="Notifications"
                 >
-                  3
-                </Badge>
-              </Button>
+                  <Bell className="h-5 w-5" />
+                  <Badge
+                    variant="error"
+                    size="sm"
+                    className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center text-xs"
+                  >
+                    3
+                  </Badge>
+                </Button>
 
               {/* Notifications Dropdown */}
               {showNotifications && (
@@ -202,7 +223,8 @@ const Navbar = () => {
                   </div>
                 </div>
               )}
-            </div>
+              </div>
+            )}
 
             {/* Profile Menu */}
             <div className="relative">

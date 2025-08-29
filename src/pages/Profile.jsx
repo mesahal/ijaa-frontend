@@ -41,6 +41,7 @@ import {
   CoverPhotoUploadButton,
   usePhotoManager,
 } from "../components/PhotoManager";
+import FeatureFlagWrapper from "../components/FeatureFlagWrapper";
 import { toast } from "react-toastify";
 
 const Profile = () => {
@@ -970,20 +971,24 @@ const Profile = () => {
           </div>
 
           {/* Experience Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Experience
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAddExperience(true)}
-                icon={<Plus className="h-4 w-4" />}
-              >
-                Add Experience
-              </Button>
-            </div>
+          <FeatureFlagWrapper
+            featureName="user.experiences"
+            showFallback={false}
+          >
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Experience
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAddExperience(true)}
+                  icon={<Plus className="h-4 w-4" />}
+                >
+                  Add Experience
+                </Button>
+              </div>
 
             {showAddExperience && (
               <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
@@ -1107,22 +1112,27 @@ const Profile = () => {
               </div>
             )}
           </div>
+          </FeatureFlagWrapper>
 
           {/* Interests Section */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                Interests
-              </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowAddInterest(true)}
-                icon={<Plus className="h-4 w-4" />}
-              >
-                Add Interest
-              </Button>
-            </div>
+          <FeatureFlagWrapper
+            featureName="user.interests"
+            showFallback={false}
+          >
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  Interests
+                </h2>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowAddInterest(true)}
+                  icon={<Plus className="h-4 w-4" />}
+                >
+                  Add Interest
+                </Button>
+              </div>
 
             {showAddInterest && (
               <div className="mb-6 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800">
@@ -1176,76 +1186,82 @@ const Profile = () => {
               </div>
             )}
           </div>
+          </FeatureFlagWrapper>
 
           {/* Change Password */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Change Password
-            </h3>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <Input
-                label="Current Password"
-                type="password"
-                name="currentPassword"
-                value={passwordData.currentPassword}
-                onChange={handlePasswordChange}
-                placeholder="Enter current password"
-                error={passwordErrors.currentPassword}
-                leftIcon={<Key className="h-4 w-4" />}
-                required
-              />
+          <FeatureFlagWrapper
+            featureName="user.password-change"
+            showFallback={false}
+          >
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                Change Password
+              </h3>
+              <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                <Input
+                  label="Current Password"
+                  type="password"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter current password"
+                  error={passwordErrors.currentPassword}
+                  leftIcon={<Key className="h-4 w-4" />}
+                  required
+                />
 
-              <Input
-                label="New Password"
-                type="password"
-                name="newPassword"
-                value={passwordData.newPassword}
-                onChange={handlePasswordChange}
-                placeholder="Enter new password"
-                error={passwordErrors.newPassword}
-                leftIcon={<Lock className="h-4 w-4" />}
-                required
-              />
+                <Input
+                  label="New Password"
+                  type="password"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Enter new password"
+                  error={passwordErrors.newPassword}
+                  leftIcon={<Lock className="h-4 w-4" />}
+                  required
+                />
 
-              <Input
-                label="Confirm New Password"
-                type="password"
-                name="confirmPassword"
-                value={passwordData.confirmPassword}
-                onChange={handlePasswordChange}
-                placeholder="Confirm new password"
-                error={passwordErrors.confirmPassword}
-                leftIcon={<Lock className="h-4 w-4" />}
-                required
-              />
+                <Input
+                  label="Confirm New Password"
+                  type="password"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handlePasswordChange}
+                  placeholder="Confirm new password"
+                  error={passwordErrors.confirmPassword}
+                  leftIcon={<Lock className="h-4 w-4" />}
+                  required
+                />
 
-              <Button
-                type="submit"
-                variant="primary"
-                size="lg"
-                fullWidth
-                loading={passwordLoading}
-                icon={<Save className="h-4 w-4" />}
-                iconPosition="left"
-              >
-                {passwordLoading ? "Changing Password..." : "Update Password"}
-              </Button>
-            </form>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  loading={passwordLoading}
+                  icon={<Save className="h-4 w-4" />}
+                  iconPosition="left"
+                >
+                  {passwordLoading ? "Changing Password..." : "Update Password"}
+                </Button>
+              </form>
 
-            {/* Security Tips */}
-            <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                <Shield className="h-4 w-4 mr-2 text-gray-600 dark:text-gray-400" />
-                Security Tips
-              </h4>
-              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                <p>• Use at least 8 characters</p>
-                <p>• Include uppercase, lowercase, numbers, and symbols</p>
-                <p>• Don't share your password with anyone</p>
-                <p>• Change your password regularly</p>
+              {/* Security Tips */}
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+                  <Shield className="h-4 w-4 mr-2 text-gray-600 dark:text-gray-400" />
+                  Security Tips
+                </h4>
+                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                  <p>• Use at least 8 characters</p>
+                  <p>• Include uppercase, lowercase, numbers, and symbols</p>
+                  <p>• Don't share your password with anyone</p>
+                  <p>• Change your password regularly</p>
+                </div>
               </div>
             </div>
-          </div>
+          </FeatureFlagWrapper>
         </div>
 
         {/* Sidebar */}
