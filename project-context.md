@@ -5,12 +5,82 @@ IJAA (International Journal of Applied Arts) is a comprehensive web application 
 
 ## Technology Stack
 - **Frontend Framework**: React 18 with functional components and hooks
-- **Styling**: Tailwind CSS with dark mode support
-- **State Management**: React Context API (UnifiedAuthContext, FeatureFlagContext)
+- **Build Tool**: Vite (with React plugin) for fast development and optimized builds
+- **Styling**: Tailwind CSS with dark mode support and custom design system
+- **State Management**: React Context API (UnifiedAuthContext, FeatureFlagContext, ThemeContext)
 - **HTTP Client**: Axios for API communication
-- **Testing**: Jest with React Testing Library
-- **Icons**: Lucide React for consistent iconography
-- **Routing**: React Router for navigation
+- **Testing**: Jest with React Testing Library and Cypress for E2E testing
+- **Icons**: Lucide React and FontAwesome for consistent iconography
+- **Routing**: React Router v6 for navigation
+- **TypeScript**: Partial TypeScript support with type definitions
+- **Code Quality**: ESLint with TypeScript support, Prettier for formatting
+- **Fonts**: @fontsource/noto-sans for typography
+- **Notifications**: React Toastify for user feedback
+- **Email Integration**: EmailJS for email functionality
+
+## Build and Development Tools
+
+### Package Manager
+- **npm**: Primary package manager with comprehensive script ecosystem
+
+### Build Configuration
+- **Vite**: Modern build tool with React plugin
+- **PostCSS**: CSS processing with Tailwind CSS
+- **Tailwind CSS**: Utility-first CSS framework with custom configuration
+
+### Development Scripts
+The project includes an extensive set of npm scripts for development, testing, and deployment:
+
+#### **Core Development**
+- `npm start`: Start development server
+- `npm run build`: Build for production
+- `npm run eject`: Eject from Create React App (if needed)
+
+#### **Testing Infrastructure**
+- `npm test`: Run unit tests in watch mode
+- `npm run test:coverage`: Run tests with coverage report
+- `npm run test:ci`: Run tests in CI mode (no watch)
+- `npm run test:unit`: Run only unit tests
+- `npm run test:integration`: Run only integration tests
+- `npm run test:components`: Run component tests
+- `npm run test:context`: Run context tests
+- `npm run test:utils`: Run utility tests
+- `npm run test:pages`: Run page tests
+
+#### **E2E Testing with Cypress**
+- `npm run cypress:open`: Open Cypress test runner
+- `npm run cypress:run`: Run Cypress tests
+- `npm run cypress:run:headless`: Run Cypress tests headlessly
+- `npm run cypress:run:chrome/firefox/edge`: Run tests in specific browsers
+- `npm run cypress:run:mobile/tablet/desktop`: Run tests with different viewports
+- `npm run test:e2e`: Run E2E tests headlessly
+- `npm run test:e2e:all`: Run all E2E tests
+
+#### **Code Quality**
+- `npm run lint`: Run ESLint
+- `npm run lint:fix`: Fix ESLint issues automatically
+- `npm run lint:check`: Check for linting issues
+- `npm run format`: Format code with Prettier
+- `npm run format:check`: Check code formatting
+- `npm run format:write`: Write formatted code
+
+#### **Advanced Testing**
+- `npm run test:snapshot`: Run snapshot tests
+- `npm run test:accessibility`: Run accessibility tests
+- `npm run test:performance`: Run performance tests
+- `npm run test:regression`: Run regression tests
+- `npm run test:security`: Run security tests
+- `npm run test:visual`: Run visual regression tests
+
+#### **Development Workflows**
+- `npm run dev:test`: Start dev server with Cypress
+- `npm run dev:test:parallel`: Run dev server, tests, and Cypress in parallel
+- `npm run dev:test:full`: Complete development testing workflow
+
+#### **CI/CD Scripts**
+- `npm run ci:test`: Run tests for CI environment
+- `npm run ci:build`: Build for CI environment
+- `npm run ci:deploy`: Deploy from CI
 
 ## Core Features
 
@@ -19,6 +89,7 @@ IJAA (International Journal of Applied Arts) is a comprehensive web application 
 - **Multi-role Support**: Users, Authors, Reviewers, Admins, Super Admins
 - **Session Management**: JWT token-based authentication with automatic refresh
 - **Protected Routes**: Role-based access control for different sections
+- **Admin Authentication**: Separate admin authentication system
 
 ### 2. Feature Flag System (Modern Implementation)
 The feature flag system provides granular control over application functionality with a modern, hierarchical interface.
@@ -67,6 +138,8 @@ The feature flag system provides granular control over application functionality
 - **useMultiFeatureFlag Hook**: Check multiple feature flags simultaneously
 - **FeatureFlagWrapper**: Conditional rendering based on feature flag status
 - **MultiFeatureFlag**: Advanced component for complex feature combinations
+- **FeatureFlagDemo**: Demonstration component for feature flag usage
+- **FeatureFlagDebugPanel**: Debug panel for feature flag management
 
 #### **Admin Panel Integration**
 - **Modern Interface**: Beautiful, intuitive admin panel for feature flag management
@@ -96,12 +169,17 @@ The feature flag system provides granular control over application functionality
 'NEW_UI', 'CHAT_FEATURE', 'EVENT_REGISTRATION', 'PAYMENT_INTEGRATION', 'SOCIAL_LOGIN', 'DARK_MODE', 'NOTIFICATIONS', 'ADVANCED_SEARCH', 'ALUMNI_DIRECTORY', 'MENTORSHIP_PROGRAM', 'EVENT_ANALYTICS', 'EVENT_TEMPLATES', 'RECURRING_EVENTS', 'EVENT_MEDIA', 'EVENT_COMMENTS'
 ```
 
-### 3. Event Management
+### 3. Event Management System
 - **Event Creation**: Rich text editor with media upload support
-- **Event Categories**: Organized event classification system
+- **Event Categories**: Organized event classification system (NETWORKING, WORKSHOP, CONFERENCE, SOCIAL, CAREER, MENTORSHIP)
 - **Registration System**: Attendee management with capacity limits
 - **Event Analytics**: Comprehensive reporting and insights
 - **Recurring Events**: Support for series and patterns
+- **Event Templates**: Predefined templates for common event types
+- **Event Invitations**: Email-based invitation system
+- **Event Comments**: Social interaction features
+- **Event Media**: Photo and video sharing
+- **Event Search**: Advanced search and filtering capabilities
 
 ### 4. Publication System
 - **Manuscript Submission**: Multi-step submission process
@@ -114,6 +192,9 @@ The feature flag system provides granular control over application functionality
 - **Role-based Access**: Granular permissions for different user types
 - **Alumni Network**: Professional networking and mentorship features
 - **Notification System**: Real-time updates and email notifications
+- **Photo Management**: Profile and cover photo upload/management
+- **Experience Tracking**: Professional experience and achievements
+- **Interest Management**: User interests and preferences
 
 ### 6. Admin Panel
 - **Dashboard**: Real-time analytics and system overview
@@ -121,16 +202,30 @@ The feature flag system provides granular control over application functionality
 - **Content Moderation**: Tools for managing submissions and events
 - **System Configuration**: Feature flags and system settings
 - **Reporting**: Comprehensive analytics and reporting tools
+- **Announcements**: System-wide announcement management
+- **Settings**: System configuration and maintenance
 
 ## File Structure
 ```
 src/
 ├── components/          # Reusable UI components
+│   ├── events/         # Event-specific components
+│   ├── ui/             # Base UI components
+│   └── ...             # Other component categories
 ├── context/            # React Context providers
 ├── hooks/              # Custom React hooks
+│   └── events/         # Event-specific hooks
 ├── pages/              # Main application pages
+├── services/           # Service layer for API calls
+├── types/              # TypeScript type definitions
 ├── utils/              # Utility functions and API clients
 ├── __tests__/          # Test files
+│   ├── components/     # Component tests
+│   ├── context/        # Context tests
+│   ├── hooks/          # Hook tests
+│   ├── pages/          # Page tests
+│   ├── utils/          # Utility tests
+│   └── __mocks__/      # Test mocks
 └── setupTests.js       # Test configuration
 ```
 
@@ -139,22 +234,63 @@ src/
 ### Context Providers
 - **UnifiedAuthContext**: Centralized authentication state
 - **FeatureFlagContext**: Feature flag state management
+- **ThemeContext**: Dark/light mode theme management
+- **AdminAuthContext**: Admin-specific authentication
 
 ### Custom Hooks
 - **useFeatureFlag**: Single feature flag checking
 - **useMultiFeatureFlag**: Multiple feature flag checking
 - **useUnifiedAuth**: Authentication state access
+- **useCurrentUserProfile**: Current user profile management
+- **useCurrentUserPhoto**: User photo management
+- **useUserPhoto**: User photo utilities
+- **Event Hooks**: Comprehensive event management hooks
 
 ### API Utilities
 - **adminApi**: Admin-specific API endpoints
 - **featureFlagApi**: Feature flag management APIs
-- **axios**: HTTP client configuration
+- **eventService**: Event management service layer
+- **photoApi**: Photo upload/management APIs
+- **apiClient**: Base HTTP client configuration
+- **authHelper**: Authentication utilities
+- **sessionManager**: Session management utilities
+
+### UI Components
+- **Button**: Reusable button component
+- **Input**: Form input component
+- **Card**: Card layout component
+- **Navbar**: Navigation component
+- **UserCard**: User profile card
+- **RoleBadge**: Role indicator component
+- **PhotoManager**: Photo management component
 
 ## Testing Strategy
-- **Unit Tests**: Component and hook testing with Jest
-- **Integration Tests**: API integration and user flow testing
+
+### Unit Testing
+- **Jest**: Primary testing framework
+- **React Testing Library**: Component testing utilities
+- **Coverage Threshold**: 70% minimum coverage requirement
 - **Mock Strategy**: Comprehensive mocking of external dependencies
-- **Test Coverage**: High coverage for critical functionality
+- **Test Categories**: Unit, integration, component, context, utility tests
+
+### E2E Testing
+- **Cypress**: End-to-end testing framework
+- **Test Categories**: Authentication, user flows, accessibility, performance
+- **Browser Support**: Chrome, Firefox, Edge
+- **Viewport Testing**: Mobile, tablet, desktop responsive testing
+- **Visual Testing**: Screenshot comparison and visual regression
+
+### Test Configuration
+- **Jest Config**: Custom configuration with module mapping
+- **Cypress Config**: Browser and viewport configuration
+- **Coverage Reports**: HTML, LCOV, JSON, and text formats
+- **Test Environment**: jsdom for React component testing
+
+### CI/CD Testing
+- **GitHub Actions**: Automated testing workflow
+- **Matrix Testing**: Multiple Node.js versions
+- **Parallel Jobs**: Unit tests, E2E tests, security tests
+- **Artifact Upload**: Test results and coverage reports
 
 ## Development Guidelines
 - **Component Design**: Functional components with hooks
@@ -163,12 +299,50 @@ src/
 - **Error Handling**: Comprehensive error boundaries and user feedback
 - **Performance**: Optimized rendering and lazy loading
 - **Accessibility**: WCAG compliance and keyboard navigation
+- **Code Quality**: ESLint and Prettier for consistent code style
+- **TypeScript**: Gradual TypeScript adoption with type definitions
+
+## Design System
+
+### Tailwind Configuration
+- **Custom Colors**: Professional LinkedIn-inspired color palette
+- **Typography**: Inter font family with custom font sizes
+- **Spacing**: Extended spacing scale
+- **Shadows**: Modern shadow system with LinkedIn-style variants
+- **Animations**: Smooth CSS animations and transitions
+- **Dark Mode**: Class-based dark mode support
+- **Responsive**: Mobile-first responsive design
+
+### Color Palette
+```javascript
+// Primary Colors (Blue)
+primary: { 50: "#f0f9ff", ..., 950: "#082f49" }
+
+// Secondary Colors (Gray)
+secondary: { 50: "#f8fafc", ..., 950: "#020617" }
+
+// Semantic Colors
+success: { 50: "#f0fdf4", ..., 950: "#052e16" }
+warning: { 50: "#fffbeb", ..., 950: "#451a03" }
+error: { 50: "#fef2f2", ..., 950: "#450a0a" }
+
+// LinkedIn-inspired Colors
+linkedin: {
+  blue: "#0a66c2",
+  "blue-dark": "#004182",
+  gray: "#666666",
+  "gray-light": "#f3f2ef",
+  "gray-dark": "#191919",
+  white: "#ffffff"
+}
+```
 
 ## Deployment
-- **Build Process**: Optimized production builds
+- **Build Process**: Vite-optimized production builds
 - **Environment Configuration**: Environment-specific settings
 - **Performance Monitoring**: Real-time performance tracking
 - **Error Tracking**: Comprehensive error monitoring and reporting
+- **Static Assets**: Optimized asset delivery with caching
 
 ## Recent Improvements
 - **Comprehensive Feature Flag Integration**: Implemented feature flag protection across the entire application
@@ -188,6 +362,12 @@ src/
 - **Improved Parent-Child Relationship Display**: Features now properly show as individual items with dropdown controls for children
 - **Enhanced Test Coverage**: Updated and expanded test suite for AdminFeatureFlags component
 - **Consistent Admin Panel Theme**: Feature flags page now matches the overall admin panel design system
+- **Build Tool Migration**: Migrated from Create React App to Vite for faster development
+- **Enhanced Testing Infrastructure**: Comprehensive testing setup with Jest, React Testing Library, and Cypress
+- **CI/CD Pipeline**: GitHub Actions workflow for automated testing and deployment
+- **Code Quality Tools**: ESLint and Prettier integration for consistent code style
+- **TypeScript Support**: Added TypeScript configuration and type definitions
+- **Advanced Scripts**: Extensive npm script ecosystem for development workflows
 
 ## Comprehensive Feature Flag Implementation (Latest)
 

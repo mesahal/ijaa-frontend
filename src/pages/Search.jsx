@@ -16,10 +16,12 @@ import {
   Loader2,
   Tag,
   X,
+  ChevronsLeft,
+  ChevronsRight,
 } from "lucide-react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import apiClient from "../utils/apiClient";
-import { Button, Input, Card, Avatar, Badge } from "../components/ui";
+import { Button, Input, Card, Avatar, Badge, Pagination } from "../components/ui";
 import UserCard from "../components/UserCard";
 import FeatureFlagWrapper from "../components/FeatureFlagWrapper";
 
@@ -47,12 +49,13 @@ const Search = () => {
     first: true,
     last: true,
   });
+  const [pageSizeOptions] = useState([6, 12, 24, 48]);
 
   // Batch years from 1 to 16
   const batchYears = Array.from({ length: 16 }, (_, i) => i + 1);
 
   // Search alumni function
-  const searchAlumni = async (page = 0) => {
+  const searchAlumni = async (page = 0, size = pagination.size) => {
     setLoading(true);
     setError(null);
 
@@ -64,7 +67,7 @@ const Search = () => {
         location: filters.location?.trim() || null,
         sortBy: filters.sortBy || "relevance",
         page: page,
-        size: pagination.size,
+        size: size,
       };
 
       const response = await apiClient.post(`/alumni/search`, requestBody);
@@ -133,8 +136,19 @@ const Search = () => {
   };
 
   const handlePageChange = (newPage) => {
-    if (newPage >= 0 && newPage < pagination.totalPages) {
+    if (newPage >= 0 && newPage < pagination.totalPages && !loading) {
       searchAlumni(newPage);
+      // Scroll to top of results
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handlePageSizeChange = (newSize) => {
+    if (newSize !== pagination.size && !loading) {
+      // Reset to first page when changing page size
+      searchAlumni(0, newSize);
+      // Scroll to top when changing page size
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   };
 
@@ -188,82 +202,26 @@ const Search = () => {
     }
   };
 
-  // Pagination component
-  const Pagination = () => {
-    if (pagination.totalPages <= 1) return null;
-
-    const startPage = Math.max(0, pagination.page - 2);
-    const endPage = Math.min(pagination.totalPages - 1, pagination.page + 2);
+  // Pagination component using the reusable Pagination component
+  const PaginationComponent = () => {
+    // Always show pagination if there are results, even if only one page
+    if (pagination.totalElements === 0) return null;
 
     return (
-      <div className="flex items-center justify-center space-x-2 mt-8">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(pagination.page - 1)}
-          disabled={pagination.first}
-          className="flex items-center space-x-1"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          <span>Previous</span>
-        </Button>
-
-        {startPage > 0 && (
-          <>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(0)}
-              className="px-3"
-            >
-              1
-            </Button>
-            {startPage > 1 && (
-              <span className="text-gray-500 dark:text-gray-400">...</span>
-            )}
-          </>
-        )}
-
-        {Array.from({ length: endPage - startPage + 1 }, (_, i) => startPage + i).map(
-          (pageNum) => (
-            <Button
-              key={pageNum}
-              variant={pageNum === pagination.page ? "default" : "outline"}
-              size="sm"
-              onClick={() => handlePageChange(pageNum)}
-              className="px-3"
-            >
-              {pageNum + 1}
-            </Button>
-          )
-        )}
-
-        {endPage < pagination.totalPages - 1 && (
-          <>
-            {endPage < pagination.totalPages - 2 && (
-              <span className="text-gray-500 dark:text-gray-400">...</span>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange(pagination.totalPages - 1)}
-              className="px-3"
-            >
-              {pagination.totalPages}
-            </Button>
-          </>
-        )}
-
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => handlePageChange(pagination.page + 1)}
-          disabled={pagination.last}
-          className="flex items-center space-x-1"
-        >
-          <span>Next</span>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+      <div className="mt-8">
+        <Pagination
+          currentPage={pagination.page}
+          totalPages={pagination.totalPages}
+          totalElements={pagination.totalElements}
+          pageSize={pagination.size}
+          onPageChange={handlePageChange}
+          onPageSizeChange={handlePageSizeChange}
+          pageSizeOptions={pageSizeOptions}
+          loading={loading}
+          showPageSizeSelector={true}
+          showInfo={false} // We show info in the results section instead
+          className=""
+        />
       </div>
     );
   };
@@ -448,47 +406,76 @@ const Search = () => {
           )}
 
           {/* Results */}
-          <div className="mb-6 flex items-center justify-between">
-            <p className="text-gray-600 dark:text-gray-300">
+          <div className="mb-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center space-x-2">
               {loading ? (
                 <span className="flex items-center space-x-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  <span>Searching...</span>
+                  <span className="text-gray-600 dark:text-gray-300">Searching...</span>
                 </span>
               ) : (
-                <>
-                  Found {pagination.totalElements} alumni
-                  {searchQuery && ` for "${searchQuery}"`}
-                </>
+                <div className="flex flex-col sm:flex-row sm:items-center space-y-1 sm:space-y-0 sm:space-x-2">
+                  <p className="text-gray-600 dark:text-gray-300">
+                    Found {pagination.totalElements} alumni
+                    {searchQuery && ` for "${searchQuery}"`}
+                  </p>
+                  {pagination.totalElements > 0 && (
+                    <p className="text-gray-500 text-sm">
+                      (Page {pagination.page + 1} of {pagination.totalPages})
+                    </p>
+                  )}
+                </div>
               )}
-            </p>
+            </div>
 
-            {pagination.totalElements > 0 && (
-              <p className="text-gray-500 text-sm">
-                Page {pagination.page + 1} of {pagination.totalPages}
-              </p>
+            {pagination.totalElements > 0 && !loading && (
+              <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                <span>
+                  Showing {pagination.page * pagination.size + 1} to{" "}
+                  {Math.min((pagination.page + 1) * pagination.size, pagination.totalElements)} of{" "}
+                  {pagination.totalElements} results
+                </span>
+                <span className="text-gray-400">•</span>
+                <span className="text-gray-400">
+                  {pagination.size} per page
+                </span>
+              </div>
             )}
           </div>
 
           {/* Alumni Grid */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {alumni.map((person) => (
-              <UserCard
-                key={person.userId}
-                user={person}
-                onConnect={handleConnect}
-                onMessage={handleMessage}
-                onViewProfile={handleViewProfile}
-                loading={loading}
-              />
-            ))}
+          <div className="relative">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {alumni.map((person) => (
+                <UserCard
+                  key={person.userId}
+                  user={person}
+                  onConnect={handleConnect}
+                  onMessage={handleMessage}
+                  onViewProfile={handleViewProfile}
+                  loading={loading}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Loading State */}
           {loading && alumni.length === 0 && (
             <div className="text-center py-12">
               <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400">Searching for alumni...</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                {pagination.totalElements > 0 ? "Loading page..." : "Searching for alumni..."}
+              </p>
+            </div>
+          )}
+
+          {/* Loading Overlay for Pagination */}
+          {loading && alumni.length > 0 && (
+            <div className="absolute inset-0 bg-white dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
+              <div className="flex items-center space-x-2">
+                <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
+                <span className="text-gray-600 dark:text-gray-300">Loading...</span>
+              </div>
             </div>
           )}
 
@@ -509,7 +496,7 @@ const Search = () => {
           )}
 
           {/* Pagination */}
-          <Pagination />
+          <PaginationComponent />
         </div>
       </div>
     </FeatureFlagWrapper>

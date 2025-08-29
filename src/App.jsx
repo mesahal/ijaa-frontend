@@ -537,7 +537,7 @@ function AppRoutes() {
                     </div>
                   </div>
                 }
-                defaultValue={false}
+                defaultValue={true}
               >
                 <Events />
               </FeatureFlagWrapper>

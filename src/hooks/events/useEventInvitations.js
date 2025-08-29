@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useAuth } from '../../context/AuthContext';
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
 import eventService from '../../services/eventService';
 
 /**
@@ -8,7 +8,7 @@ import eventService from '../../services/eventService';
  * Enhanced with Phase 5: Advanced Invitation Management
  */
 export const useEventInvitations = () => {
-  const { user } = useAuth();
+  const { user } = useUnifiedAuth();
   
   // State management
   const [myParticipations, setMyParticipations] = useState([]);
