@@ -109,7 +109,7 @@ describe('PhotoManager Components', () => {
 
       const img = screen.getByAltText('Test Cover');
       expect(img).toBeInTheDocument();
-      expect(img).toHaveAttribute('src', '/cover-image.jpg');
+      expect(img).toHaveAttribute('src', '/cover.jpg');
     });
 
     it('should handle image error and show fallback', async () => {

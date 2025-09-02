@@ -1,11 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
-import {
-  Shield,
-  Lock,
-  AlertTriangle,
-} from "lucide-react";
+import { Shield, Lock, AlertTriangle } from "lucide-react";
 import { toast } from "react-toastify";
 import { Button, Input, Card } from "../components/ui";
 
@@ -37,7 +33,7 @@ const AdminLogin = () => {
         <div className="text-center mb-8">
           <div className="mx-auto h-16 w-16 bg-white rounded-md flex items-center justify-center shadow-lg mb-4 p-2">
             <img
-              src="/logo-2.png"
+              src="/logo.png"
               alt="IIT JU Alumni Logo"
               className="h-12 w-12 object-contain"
             />
@@ -83,8 +79,6 @@ const AdminLogin = () => {
             {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
-
-        
       </Card>
     </div>
   );

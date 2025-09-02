@@ -171,6 +171,8 @@ The feature flag system provides granular control over application functionality
 
 ### 3. Event Management System
 - **Event Creation**: Rich text editor with media upload support
+- **Create Event Page**: Full-page form replacing popup modal (`/events/create`)
+- **Event Editing**: Edit mode support on same page (`/events/edit/:eventId`)
 - **Event Categories**: Organized event classification system (NETWORKING, WORKSHOP, CONFERENCE, SOCIAL, CAREER, MENTORSHIP)
 - **Registration System**: Attendee management with capacity limits
 - **Event Analytics**: Comprehensive reporting and insights
@@ -180,6 +182,8 @@ The feature flag system provides granular control over application functionality
 - **Event Comments**: Social interaction features
 - **Event Media**: Photo and video sharing
 - **Event Search**: Advanced search and filtering capabilities
+- **Default Event Images**: Automatic fallback to `/cover.jpg` for event cover images
+- **Banner Image Upload**: Integrated banner image upload for events with preview, drag-and-drop support, and edit mode management
 
 ### 4. Publication System
 - **Manuscript Submission**: Multi-step submission process
@@ -192,7 +196,8 @@ The feature flag system provides granular control over application functionality
 - **Role-based Access**: Granular permissions for different user types
 - **Alumni Network**: Professional networking and mentorship features
 - **Notification System**: Real-time updates and email notifications
-- **Photo Management**: Profile and cover photo upload/management
+- **Photo Management**: Profile and cover photo upload/management with default images
+- **Default Images**: Automatic fallback to `/dp.png` for profile photos and `/cover.jpg` for cover photos
 - **Experience Tracking**: Professional experience and achievements
 - **Interest Management**: User interests and preferences
 
@@ -249,11 +254,12 @@ src/
 ### API Utilities
 - **adminApi**: Admin-specific API endpoints
 - **featureFlagApi**: Feature flag management APIs
-- **eventService**: Event management service layer
+- **eventService**: Event management service layer with comprehensive comment API integration
 - **photoApi**: Photo upload/management APIs
 - **apiClient**: Base HTTP client configuration
 - **authHelper**: Authentication utilities
 - **sessionManager**: Session management utilities
+ - **themeApi**: Theme and Settings API client and helpers for cross-device theme persistence
 
 ### UI Components
 - **Button**: Reusable button component
@@ -263,6 +269,8 @@ src/
 - **UserCard**: User profile card
 - **RoleBadge**: Role indicator component
 - **PhotoManager**: Photo management component
+- **CommentCard**: Advanced comment component with edit, delete, like, and reply functionality
+- **ThemeSettingsCard**: Compact theme selection card with API-fetched dropdown options for profile integration
 
 ## Testing Strategy
 
@@ -345,6 +353,113 @@ linkedin: {
 - **Static Assets**: Optimized asset delivery with caching
 
 ## Recent Improvements
+- **User Theme Preference Integration**: Integrated Theme and Settings APIs for persistent theme across devices with profile-embedded theme settings
+  - **Context Refactor**: Updated `src/context/ThemeContext.jsx` to default to LIGHT theme for unauthenticated users, fetch/update theme via `themeApi`, manage `DARK | LIGHT | DEVICE`, apply `dark`/`light` classes, and listen to system changes
+  - **API Utility**: Added `src/utils/themeApi.js` with axios client, interceptors, endpoints, and helpers (`THEME_OPTIONS`, `isValidTheme`, conversions)
+  - **Theme Settings Card**: Created `src/components/ThemeSettingsCard.jsx` as a standard theme selection card with "Theme" label and dropdown showing "System", "Dark", "Light" options fetched from API, integrated directly into the profile page
+  - **Profile Integration**: Added ThemeSettingsCard to `src/pages/Profile.jsx` for seamless theme management within user profile
+  - **Removed Settings Page**: Eliminated dedicated `/settings` page and route, removed Settings link from Navbar profile menu for cleaner UX
+  - **Default Light Theme**: Site defaults to light theme for all unauthenticated sessions, with user-specific themes applied after login
+  - **Toast Theme**: `ToastContainer` theme now reflects current `document.documentElement` class
+  - **Tests**: Added/updated tests for ThemeContext (updated initialization expectations), ThemeSettingsCard component, removed UserSettings page tests, with proper mocks for `matchMedia`, `localStorage`, `sessionManager`, and axios
+- **Events Page Modernization**: Successfully modernized the Events page with clean, Facebook-style design
+  - **Search Page Alignment**: Updated Events page layout to match the Search page design for consistency
+  - **Pagination Integration**: Added comprehensive pagination functionality matching the Search page implementation
+    - **Pagination Component**: Integrated reusable Pagination component with page size selector
+    - **Pagination Info Display**: Shows current page, total pages, and results count like Search page
+    - **Page Navigation**: Smooth scrolling to top when changing pages or page size
+    - **Page Size Options**: Configurable page sizes (6, 12, 24, 48) with automatic page reset
+    - **Loading States**: Proper loading indicators during pagination operations
+    - **Null Safety**: Added comprehensive null checks for pagination state to prevent runtime errors
+  - **UI/UX Improvements**: Streamlined Events page layout and functionality
+    - **Event Overview Removal**: Removed Event Overview section to simplify the interface and focus on core functionality
+    - **Create Event Button Positioning**: Moved Create Event button to the same line as the page title for better space utilization and cleaner layout
+    - **Duplicate Button Fix**: Removed duplicate "Advanced Filters" button, keeping only the "Advanced" button within the EventFilters component
+    - **Improved Layout**: Better responsive design with title and button on the same line using flexbox layout
+    - **Cleaner Interface**: Simplified search and filter form without redundant buttons
+  - **Event Detail Page Implementation**: Created modern event detail page with dark theme design
+    - **Clickable Event Cards**: Removed view buttons and made entire event cards clickable for better UX
+    - **Modern Dark Theme**: Implemented dark-themed event detail page matching the provided design reference
+    - **Banner Header**: Large gradient banner with event title, date, and time prominently displayed
+    - **Event Information Section**: Comprehensive event details with icons, organizer info, and location
+    - **Action Buttons**: Attend, Share, and More options buttons with modern styling
+    - **Tab Navigation**: Details and Comments tabs with active state indicators
+    - **About Section**: Event description with "See more" functionality
+    - **Comments System**: Full comments functionality with add, display, and interaction features
+    - **RSVP Integration**: Full RSVP functionality with participation status management
+    - **Responsive Design**: Mobile-first responsive design with proper breakpoints
+    - **Navigation**: Back button to return to events list
+    - **Loading States**: Proper loading indicators and error handling
+    - **API Error Handling**: Robust error handling with fallback to mock data for development
+    - **Mock Data Support**: Development-friendly mock data when API is unavailable
+    - **ViewProfile-Style Layout**: Complete redesign to match ViewProfile page structure with clean white/dark cards, grid layout, and professional appearance
+      - **Main Container**: Consistent `max-w-4xl mx-auto px-4 py-8` layout matching ViewProfile
+      - **Event Card**: Large card with cover photo, event icon, and header information
+      - **Full-Width Layout**: Single column layout using full width for better content display
+      - **Clean Cards**: White/dark cards with rounded corners, shadows, and borders
+      - **Professional Styling**: Consistent with ViewProfile's clean, modern design
+      - **Removed Tabs**: Simplified layout without tab navigation for cleaner UX
+      - **Integrated Event Information**: All event details (date/time, location, attendance, organizer, status) displayed directly below the event title in the main header area
+      - **Improved Layout Alignment**: Event information now displays in a structured grid layout:
+        - **Date & Time and Location**: Side by side in first row
+        - **Attendance and Organizer**: Side by side in second row  
+        - **Status**: Full width on third row
+        - **Event Link**: Full width when available
+      - **Button Text Update**: Changed "Attend" button to "Join" to match event cards
+      - **Removed Profile Photo**: Eliminated event icon/profile photo for cleaner banner-only design
+      - **Removed Sidebar**: Eliminated sidebar cards for cleaner, more focused layout
+    - **Full Comment System Integration**: Complete comment functionality using real API endpoints
+      - **Comment Creation**: Real-time comment posting with API integration
+      - **Comment Editing**: In-place comment editing with permission checks
+      - **Comment Deletion**: Secure comment deletion with confirmation
+      - **Comment Liking**: Like/unlike functionality with real-time updates
+      - **Nested Replies**: Support for threaded comments with proper indentation
+      - **Permission System**: Users can only edit/delete their own comments
+      - **Loading States**: Proper loading indicators for all comment operations
+      - **Error Handling**: Comprehensive error handling with user-friendly messages
+      - **Real-time Updates**: Immediate UI updates after comment operations
+  - **Clean Header Design**: Consistent with project theme using white background and subtle borders
+  - **Enhanced Event Cards**: Modern card design with clean backgrounds, improved typography, and social interaction buttons
+  - **Modern Tabs**: Redesigned tabs with icons, better spacing, and improved visual hierarchy (removed from main layout)
+  - **Advanced Filters**: Modern search and filter interface with active filter display and clear functionality
+  - **View Mode Toggle**: Grid and list view options with modern toggle controls
+  - **Responsive Design**: Mobile-first responsive design with proper breakpoints
+  - **Social Features**: Like, share, and interaction buttons similar to Facebook events
+  - **Modern Icons**: Consistent use of Lucide React icons throughout the interface
+  - **Improved UX**: Better loading states, error handling, and user feedback
+  - **Theme Consistency**: Updated design to match project's clean, professional theme
+  - **Bug Fixes**: Fixed function name mismatches and added proper default props to prevent runtime errors
+  - **Layout Restructuring**: Removed dedicated header section, integrated filters into Card component, aligned with Search page structure
+  - **Test Status**: Modern design tests passing, EventDetail layout changes implemented and tested
+  - **Dashboard Enhancement**: Complete redesign with real data integration and engaging user experience
+    - **Real Data Integration**: Uses actual user profile, events, participations, and alumni data instead of dummy content
+    - **User Profile Data**: Integrates `useCurrentUserProfile` hook for real user information and statistics
+    - **Event Data**: Uses `useEventDiscovery` and `useEventParticipation` hooks for real upcoming events and user participations
+    - **Alumni Search**: Integrates real alumni search API for suggested connections
+    - **Connection Management**: Real connection requests with API integration
+    - **Modern Header**: Personalized welcome message with real user name and navigation buttons
+    - **Statistics Cards**: Real metrics from user profile and participation data (connections and events attended only)
+    - **Quick Actions**: Functional navigation buttons to events, search, and profile pages
+    - **Profile Summary**: Real user profile display with avatar, name, profession, and connection count
+    - **Upcoming Events**: Real events from API with proper formatting and navigation
+    - **Recent Activities**: Real user participations with event details and status
+    - **Suggested Connections**: Real alumni from search API with connection functionality
+    - **Loading States**: Proper loading indicators for all data fetching operations
+    - **Error Handling**: Graceful error handling with fallback content
+    - **Responsive Design**: Fully responsive layout that works on all device sizes
+    - **Interactive Elements**: Hover effects, transitions, and engaging visual feedback
+- **Component Modernization**: Updated EventCard, EventTabs, and EventFilters components
+  - **EventCard**: Dual view modes (grid/list), modern styling, social interaction buttons
+  - **EventTabs**: Icon-based navigation with modern styling and responsive design
+  - **EventFilters**: Advanced search interface with active filter display
+- **Testing Infrastructure**: Comprehensive test coverage for modern design features
+  - **Modern Design Tests**: Created dedicated test suite for modern design features
+  - **Component Tests**: Updated existing tests to work with modern design
+  - **Visual Regression**: Tests for gradient headers, modern styling, and responsive design
+- **Bug Fixes**: Resolved critical issues in event management
+  - **Function Name Fixes**: Corrected function name mismatches in EventDetailsModal
+  - **Default Props**: Added proper default values to prevent runtime errors
+  - **Error Handling**: Improved error handling for missing functions and props
 - **Comprehensive Feature Flag Integration**: Implemented feature flag protection across the entire application
 - **Page-Level Protection**: All major pages now have feature flag protection with proper fallback messages
 - **Component-Level Protection**: Individual components and sections are protected with feature flags
@@ -567,3 +682,168 @@ NOTIFICATIONS: 'notifications'
   ```
 - **Solution**: Updated `useFeatureFlag` hook to access `response?.data?.enabled` instead of `response?.enabled`
 - **Result**: Search tab now correctly appears when `alumni.search` feature flag is enabled
+
+### Phase 4: Event Interaction Implementation (Latest)
+**Status: ✅ COMPLETED**
+
+**Implemented Features:**
+- **Comment System**: Complete comment functionality with add, edit, delete, and like operations
+- **Comment Management**: Users can create, update, and delete their own comments
+- **Comment Likes**: Like/unlike functionality for comments with real-time updates
+- **Comment Pagination**: Efficient pagination for large comment threads
+- **Comment Permissions**: Proper permission checks for comment operations
+- **Comment Integration**: Seamless integration with event details modal
+
+**Technical Achievements:**
+- **Service Layer Extensions**: Added Phase 4 methods to `eventService.js`:
+  - `getEventComments()`: Fetch comments for events with pagination
+  - `addEventComment()`: Add new comments to events
+  - `updateComment()`: Update existing comments
+  - `deleteComment()`: Delete comments with proper permissions
+  - `toggleCommentLike()`: Like/unlike comments
+- **Custom Hook**: `useEventInteraction` hook for comment and interaction state management
+- **UI Components**: New components for interaction features:
+  - `CommentForm`: Form component for adding and editing comments
+  - `CommentCard`: Individual comment display with actions
+  - `CommentsSection`: Main comments section with pagination
+- **Enhanced EventComments**: Refactored existing component to use new hook
+- **Comment State Management**: Complete state management for comments and interactions
+
+**Testing:**
+- **Hook Tests**: Comprehensive unit tests for `useEventInteraction` hook
+- **Test Coverage**: 24 test cases covering all interaction scenarios:
+  - Load comments (success, error, pagination)
+  - Add comments (success, error, validation)
+  - Update comments (success, error, validation)
+  - Delete comments (success, error)
+  - Toggle comment likes (success, error)
+  - Pagination methods (next, previous, specific page)
+  - Error clearing methods
+  - Utility methods (permission checks)
+- **API Mocking**: Proper mocking of interaction API endpoints
+- **State Management Tests**: Verification of correct state updates and pagination
+
+**UX Enhancements:**
+- **Real-time Updates**: Immediate UI updates for comment operations
+- **Interactive Comments**: Like/unlike functionality with visual feedback
+- **Comment Permissions**: Clear indication of user permissions for comment actions
+- **Pagination Controls**: Smooth pagination for large comment threads
+- **Loading States**: Proper loading indicators for all comment operations
+- **Error Handling**: User-friendly error messages for failed operations
+
+**Performance Optimizations:**
+- **Efficient Pagination**: Smart pagination handling for comment threads
+- **Optimistic Updates**: Immediate UI feedback for better responsiveness
+- **State Management**: Efficient state updates for comment operations
+- **Memory Management**: Proper cleanup of comment state
+
+**Integration Features:**
+- **EventDetailsModal Integration**: Comments tab integrated into event details modal
+- **Cross-Phase Compatibility**: Seamless integration with all previous phases
+- **Consistent UX**: Unified user experience across all event features
+- **Permission System**: Proper integration with user authentication and roles
+
+**Security & Validation:**
+- **Authentication Checks**: Proper authentication for all comment operations
+- **Permission Validation**: User can only edit/delete their own comments
+- **Admin Permissions**: Admin users can delete any comment
+- **Input Validation**: Validation of comment content and operations
+- **Error Handling**: Comprehensive error handling for failed operations
+
+**Component Architecture:**
+- **Modular Design**: Clean separation of concerns between components
+- **Reusable Components**: CommentForm and CommentCard are reusable
+- **Hook Abstraction**: useEventInteraction provides clean API for comment operations
+- **State Consistency**: Maintained data consistency across all comment operations
+
+### Phase 5: Advanced Features Implementation (Latest)
+**Status: ✅ COMPLETED**
+
+**Implemented Features:**
+- **Advanced Search**: Comprehensive search with multiple filters (title, description, location, category, date range, organizer, participant count)
+- **Event Recommendations**: Personalized event recommendations based on user preferences and behavior
+- **Similar Events**: Find similar events based on content, category, and location
+- **High Engagement Events**: Discover popular events with high participation rates
+- **Location-Based Filtering**: Find events by specific locations
+- **Organizer-Based Filtering**: Browse events by specific organizers
+- **Advanced Analytics**: Engagement metrics and popularity indicators
+
+**Technical Achievements:**
+- **Service Layer Extensions**: Added Phase 5 methods to `eventService.js`:
+  - `advancedSearch()`: Advanced search with multiple criteria
+  - `getEventRecommendations()`: Personalized event recommendations
+  - `getSimilarEvents()`: Find similar events for a given event
+  - `getHighEngagementEvents()`: High engagement/popular events
+  - `getEventsByLocation()`: Location-based event filtering
+  - `getEventsByOrganizer()`: Organizer-based event filtering
+- **Custom Hook**: `useEventAdvancedFeatures` hook for advanced features state management
+- **Comprehensive State Management**: Separate state for each advanced feature:
+  - Advanced search results and pagination
+  - Event recommendations
+  - Similar events
+  - High engagement events
+  - Location-based events
+  - Organizer-based events
+- **Flexible Response Handling**: Support for both paginated and array responses
+- **URL Encoding**: Proper URL encoding for location and organizer parameters
+
+**Testing:**
+- **Hook Tests**: Comprehensive unit tests for `useEventAdvancedFeatures` hook
+- **Test Coverage**: 25 test cases covering all advanced feature scenarios:
+  - Advanced search (success, error, pagination)
+  - Event recommendations (success, error)
+  - Similar events (success, error, validation)
+  - High engagement events (success, error, pagination)
+  - Location-based events (success, error, validation)
+  - Organizer-based events (success, error, validation)
+  - Error clearing methods for all features
+  - Pagination handling for searchable features
+  - Array response handling for recommendations and similar events
+- **API Mocking**: Proper mocking of all Phase 5 API endpoints
+- **Authentication Tests**: Verification of authentication requirements
+- **Validation Tests**: Input validation for required parameters
+
+**UX Enhancements:**
+- **Advanced Search Interface**: Comprehensive search form with multiple filters
+- **Recommendation Engine**: Personalized event suggestions
+- **Discovery Features**: Multiple ways to discover relevant events
+- **Location Intelligence**: Location-based event discovery
+- **Organizer Profiles**: Organizer-focused event browsing
+- **Engagement Metrics**: Visual indicators for event popularity
+- **Loading States**: Proper loading indicators for all advanced operations
+- **Error Handling**: User-friendly error messages for failed operations
+
+**Performance Optimizations:**
+- **Efficient Search**: Optimized search algorithms with multiple criteria
+- **Smart Caching**: Intelligent caching of search results and recommendations
+- **Pagination**: Efficient handling of large result sets
+- **Lazy Loading**: On-demand loading of advanced features
+- **Memory Management**: Proper cleanup of advanced feature state
+
+**Integration Features:**
+- **Cross-Phase Integration**: Seamless integration with all previous phases
+- **Event Discovery**: Enhanced event discovery capabilities
+- **User Experience**: Improved user experience with advanced features
+- **Data Consistency**: Maintained consistency across all event data
+- **Backward Compatibility**: Full compatibility with existing event features
+
+**Security & Validation:**
+- **Authentication Checks**: Proper authentication for all advanced features
+- **Input Validation**: Validation of search criteria and parameters
+- **Parameter Sanitization**: Proper URL encoding and parameter handling
+- **Error Handling**: Comprehensive error handling for all operations
+- **Rate Limiting**: Built-in support for API rate limiting
+
+**Analytics & Insights:**
+- **Engagement Metrics**: Track event popularity and engagement
+- **Recommendation Scoring**: Personalized recommendation algorithms
+- **Similarity Scoring**: Event similarity calculations
+- **Location Analytics**: Location-based event insights
+- **Organizer Analytics**: Organizer performance metrics
+
+**Future-Ready Architecture:**
+- **Scalable Design**: Architecture ready for future enhancements
+- **Modular Components**: Reusable components for advanced features
+- **Extensible Hooks**: Hook design allows for easy feature additions
+- **API Abstraction**: Clean service layer for easy API updates
+- **State Management**: Efficient state management for complex features

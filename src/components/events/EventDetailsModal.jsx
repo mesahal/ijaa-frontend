@@ -30,18 +30,18 @@ const EventDetailsModal = ({
   isOpen, 
   onClose, 
   event, 
-  isMyEvent, 
-  onEdit, 
-  onViewParticipants, 
-  onInvite,
-  getMyParticipationStatus,
-  getMyInvitationStatus,
-  onRsvp,
-  onCancelRsvp,
-  onAcceptInvitation,
-  onDeclineInvitation,
-  formatDate,
-  getEventTypeLabel,
+  isMyEvent = false, 
+  onEdit = () => {}, 
+  onViewParticipants = () => {}, 
+  onInvite = () => {},
+  getParticipationStatus = () => null,
+  getMyInvitationStatus = () => null,
+  onRsvp = () => {},
+  onCancelRsvp = () => {},
+  onAcceptInvitation = () => {},
+  onDeclineInvitation = () => {},
+  formatDate = (date) => new Date(date).toLocaleDateString(),
+  getEventTypeLabel = (type) => type,
   participationStatus
 }) => {
   const [activeTab, setActiveTab] = useState('details');
@@ -228,7 +228,7 @@ const EventDetailsModal = ({
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Your Response</h4>
                 <div className="flex items-center space-x-2">
                   {(() => {
-                    const myStatus = getMyParticipationStatus(event.id);
+                    const myStatus = getParticipationStatus(event.id);
                     const invitationStatus = getMyInvitationStatus(event.id);
                     
                     if (invitationStatus && !invitationStatus.isResponded) {

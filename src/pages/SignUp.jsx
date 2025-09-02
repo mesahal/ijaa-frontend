@@ -128,7 +128,7 @@ const SignUp = () => {
             <div className="flex items-center justify-center space-x-3 mb-6">
               <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
                 <img
-                  src="/logo-2.png"
+                  src="/logo.png"
                   alt="IIT JU Alumni Logo"
                   className="h-10 w-10 object-contain"
                 />

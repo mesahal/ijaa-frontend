@@ -4,39 +4,204 @@ import apiClient from '../../utils/apiClient';
 // Mock the apiClient
 jest.mock('../../utils/apiClient');
 
-describe('EventService - Group 1: Basic Event Management', () => {
+describe('EventService - Phase 1: Core Event Management', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  describe('Group 1: Basic Event Management APIs', () => {
-    describe('getMyEvents', () => {
+  describe('Phase 1: Core Event Management APIs', () => {
+    describe('getAllActiveEvents (1.1)', () => {
+      it('should fetch all active events successfully', async () => {
+        const mockResponse = {
+          data: {
+            success: true,
+            message: 'Events retrieved successfully',
+            data: {
+              content: [
+                {
+                  id: 1,
+                  title: 'Alumni Meet 2024',
+                  description: 'Annual alumni gathering',
+                  location: 'Dhaka, Bangladesh',
+                  startDate: '2024-12-15T18:00:00',
+                  endDate: '2024-12-15T22:00:00',
+                  maxParticipants: 100,
+                  currentParticipants: 45,
+                  status: 'ACTIVE',
+                  category: 'SOCIAL',
+                  organizerId: 123,
+                  organizerName: 'John Doe'
+                }
+              ],
+              totalElements: 25,
+              totalPages: 3,
+              size: 10,
+              number: 0,
+              first: true,
+              last: false
+            }
+          }
+        };
+
+        apiClient.get.mockResolvedValue(mockResponse);
+
+        const result = await eventService.getAllActiveEvents(0, 10, 'startDate,asc');
+
+        expect(apiClient.get).toHaveBeenCalledWith('/events/all-events?page=0&size=10&sort=startDate,asc');
+        expect(result).toEqual(mockResponse.data);
+      });
+
+      it('should handle errors when fetching all active events', async () => {
+        const mockError = new Error('Failed to fetch events');
+        apiClient.get.mockRejectedValue(mockError);
+
+        await expect(eventService.getAllActiveEvents()).rejects.toThrow('Failed to fetch events');
+        expect(apiClient.get).toHaveBeenCalledWith('/events/all-events?page=0&size=10&sort=startDate,asc');
+      });
+    });
+
+    describe('getEventById (1.2)', () => {
+      it('should fetch specific event details successfully', async () => {
+        const mockResponse = {
+          data: {
+            success: true,
+            message: 'Event retrieved successfully',
+            data: {
+              id: 1,
+              title: 'Alumni Meet 2024',
+              description: 'Annual alumni gathering with networking opportunities',
+              location: 'Dhaka, Bangladesh',
+              startDate: '2024-12-15T18:00:00',
+              endDate: '2024-12-15T22:00:00',
+              maxParticipants: 100,
+              currentParticipants: 45,
+              status: 'ACTIVE',
+              category: 'SOCIAL',
+              organizerId: 123,
+              organizerName: 'John Doe',
+              participants: [
+                {
+                  userId: 456,
+                  userName: 'Jane Smith',
+                  status: 'CONFIRMED',
+                  joinedAt: '2024-11-05T14:30:00'
+                }
+              ],
+              comments: [
+                {
+                  id: 1,
+                  content: 'Looking forward to this event!',
+                  userId: 456,
+                  userName: 'Jane Smith',
+                  createdAt: '2024-11-05T15:00:00',
+                  likes: 3
+                }
+              ]
+            }
+          }
+        };
+
+        apiClient.get.mockResolvedValue(mockResponse);
+
+        const result = await eventService.getEventById(1);
+
+        expect(apiClient.get).toHaveBeenCalledWith('/events/all-events/1');
+        expect(result).toEqual(mockResponse.data);
+      });
+
+      it('should handle errors when fetching event by ID', async () => {
+        const mockError = new Error('Event not found');
+        apiClient.get.mockRejectedValue(mockError);
+
+        await expect(eventService.getEventById(999)).rejects.toThrow('Event not found');
+        expect(apiClient.get).toHaveBeenCalledWith('/events/all-events/999');
+      });
+    });
+
+    describe('createEvent (1.3)', () => {
+      it('should create a new event successfully', async () => {
+        const eventData = {
+          title: 'Tech Workshop 2024',
+          description: 'Workshop on latest technologies',
+          location: 'Dhaka, Bangladesh',
+          startDate: '2024-12-20T09:00:00',
+          endDate: '2024-12-20T17:00:00',
+          maxParticipants: 50,
+          category: 'EDUCATIONAL',
+          isPublic: true,
+          requiresApproval: false
+        };
+
+        const mockResponse = {
+          data: {
+            success: true,
+            message: 'Event created successfully',
+            data: {
+              id: 2,
+              title: 'Tech Workshop 2024',
+              description: 'Workshop on latest technologies',
+              location: 'Dhaka, Bangladesh',
+              startDate: '2024-12-20T09:00:00',
+              endDate: '2024-12-20T17:00:00',
+              maxParticipants: 50,
+              currentParticipants: 0,
+              status: 'ACTIVE',
+              category: 'EDUCATIONAL',
+              organizerId: 123,
+              organizerName: 'John Doe'
+            }
+          }
+        };
+
+        apiClient.post.mockResolvedValue(mockResponse);
+
+        const result = await eventService.createEvent(eventData);
+
+        expect(apiClient.post).toHaveBeenCalledWith('/events/create', eventData);
+        expect(result).toEqual(mockResponse.data);
+      });
+
+      it('should validate required fields when creating event', async () => {
+        const invalidEventData = {
+          title: 'Tech Workshop 2024',
+          // Missing required fields: startDate, endDate, category
+        };
+
+        await expect(eventService.createEvent(invalidEventData)).rejects.toThrow('Missing required fields: startDate, endDate, category');
+      });
+
+      it('should validate dates when creating event', async () => {
+        const invalidEventData = {
+          title: 'Tech Workshop 2024',
+          startDate: '2024-12-20T17:00:00',
+          endDate: '2024-12-20T09:00:00', // End before start
+          category: 'EDUCATIONAL'
+        };
+
+        await expect(eventService.createEvent(invalidEventData)).rejects.toThrow('Start date must be before end date');
+      });
+    });
+
+    describe('getMyEvents (1.4)', () => {
       it('should fetch user events successfully', async () => {
         const mockResponse = {
           data: {
-            message: 'User events retrieved successfully',
-            code: '200',
+            success: true,
+            message: 'Events retrieved successfully',
             data: [
               {
                 id: 1,
                 title: 'Alumni Meet 2024',
                 description: 'Annual alumni gathering',
-                startDate: '2024-12-25T18:00:00',
-                endDate: '2024-12-25T22:00:00',
-                location: 'IIT Campus',
-                eventType: 'NETWORKING',
-                active: true,
-                isOnline: false,
-                meetingLink: null,
+                location: 'Dhaka, Bangladesh',
+                startDate: '2024-12-15T18:00:00',
+                endDate: '2024-12-15T22:00:00',
                 maxParticipants: 100,
-                currentParticipants: 0,
-                organizerName: 'John Doe',
-                organizerEmail: 'john@example.com',
-                createdByUsername: 'john.doe',
-                privacy: 'PUBLIC',
-                inviteMessage: 'Join our annual alumni meet!',
-                createdAt: '2024-12-01T10:00:00',
-                updatedAt: '2024-12-01T10:00:00'
+                currentParticipants: 45,
+                status: 'ACTIVE',
+                category: 'SOCIAL',
+                organizerId: 123,
+                organizerName: 'John Doe'
               }
             ]
           }
@@ -59,12 +224,97 @@ describe('EventService - Group 1: Basic Event Management', () => {
       });
     });
 
+    describe('updateEvent (1.5)', () => {
+      it('should update user event successfully', async () => {
+        const eventData = {
+          title: 'Advanced Tech Workshop 2024',
+          description: 'Advanced workshop on latest technologies',
+          location: 'Dhaka, Bangladesh',
+          startDate: '2024-12-20T09:00:00',
+          endDate: '2024-12-20T17:00:00',
+          maxParticipants: 75,
+          category: 'EDUCATIONAL'
+        };
+
+        const mockResponse = {
+          data: {
+            success: true,
+            message: 'Event updated successfully',
+            data: {
+              id: 2,
+              title: 'Advanced Tech Workshop 2024',
+              description: 'Advanced workshop on latest technologies',
+              location: 'Dhaka, Bangladesh',
+              startDate: '2024-12-20T09:00:00',
+              endDate: '2024-12-20T17:00:00',
+              maxParticipants: 75,
+              currentParticipants: 0,
+              status: 'ACTIVE',
+              category: 'EDUCATIONAL',
+              organizerId: 123,
+              organizerName: 'John Doe'
+            }
+          }
+        };
+
+        apiClient.put.mockResolvedValue(mockResponse);
+
+        const result = await eventService.updateEvent(2, eventData);
+
+        expect(apiClient.put).toHaveBeenCalledWith('/events/my-events/2', eventData);
+        expect(result).toEqual(mockResponse.data);
+      });
+
+      it('should validate required fields when updating event', async () => {
+        const invalidEventData = {
+          title: 'Advanced Tech Workshop 2024',
+          // Missing required fields: startDate, endDate, category
+        };
+
+        await expect(eventService.updateEvent(2, invalidEventData)).rejects.toThrow('Missing required fields: startDate, endDate, category');
+      });
+    });
+
+    describe('deleteEvent (1.6)', () => {
+      it('should delete user event successfully', async () => {
+        const mockResponse = {
+          data: {
+            success: true,
+            message: 'Event deleted successfully',
+            data: null
+          }
+        };
+
+        apiClient.delete.mockResolvedValue(mockResponse);
+
+        const result = await eventService.deleteEvent(2);
+
+        expect(apiClient.delete).toHaveBeenCalledWith('/events/my-events/2');
+        expect(result).toEqual(mockResponse.data);
+      });
+
+      it('should handle missing event ID when deleting', async () => {
+        await expect(eventService.deleteEvent()).rejects.toThrow('Event ID is required');
+      });
+
+      it('should handle errors when deleting event', async () => {
+        const mockError = new Error('Failed to delete event');
+        apiClient.delete.mockRejectedValue(mockError);
+
+        await expect(eventService.deleteEvent(2)).rejects.toThrow('Failed to delete event');
+        expect(apiClient.delete).toHaveBeenCalledWith('/events/my-events/2');
+      });
+    });
+  });
+
+  // Keep existing tests for other methods...
+  describe('Legacy Methods', () => {
     describe('getMyActiveEvents', () => {
       it('should fetch user active events successfully', async () => {
         const mockResponse = {
           data: {
+            success: true,
             message: 'User active events retrieved successfully',
-            code: '200',
             data: [
               {
                 id: 1,
@@ -73,10 +323,8 @@ describe('EventService - Group 1: Basic Event Management', () => {
                 startDate: '2024-12-25T18:00:00',
                 endDate: '2024-12-25T22:00:00',
                 location: 'IIT Campus',
-                eventType: 'NETWORKING',
+                category: 'SOCIAL',
                 active: true,
-                isOnline: false,
-                meetingLink: null,
                 maxParticipants: 100,
                 currentParticipants: 0,
                 organizerName: 'John Doe',
@@ -108,13 +356,14 @@ describe('EventService - Group 1: Basic Event Management', () => {
       });
     });
 
-    describe('getAllActiveEvents', () => {
-      it('should fetch all active events successfully', async () => {
+    describe('getAllEvents', () => {
+      it('should fetch all events with pagination successfully', async () => {
         const mockResponse = {
           data: {
-            message: 'All active events retrieved successfully',
-            code: '200',
-            data: [
+            success: true,
+            message: 'Events retrieved successfully',
+            data: {
+              content: [
               {
                 id: 1,
                 title: 'Alumni Meet 2024',
@@ -122,10 +371,7 @@ describe('EventService - Group 1: Basic Event Management', () => {
                 startDate: '2024-12-25T18:00:00',
                 endDate: '2024-12-25T22:00:00',
                 location: 'IIT Campus',
-                eventType: 'NETWORKING',
-                active: true,
-                isOnline: false,
-                meetingLink: null,
+                  category: 'SOCIAL',
                 maxParticipants: 100,
                 currentParticipants: 0,
                 organizerName: 'John Doe',
@@ -136,568 +382,32 @@ describe('EventService - Group 1: Basic Event Management', () => {
                 createdAt: '2024-12-01T10:00:00',
                 updatedAt: '2024-12-01T10:00:00'
               }
-            ]
-          }
-        };
-
-        apiClient.get.mockResolvedValue(mockResponse);
-
-        const result = await eventService.getAllActiveEvents();
-
-        expect(apiClient.get).toHaveBeenCalledWith('/events/all-events');
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when fetching all active events', async () => {
-        const mockError = new Error('Failed to fetch all active events');
-        apiClient.get.mockRejectedValue(mockError);
-
-        await expect(eventService.getAllActiveEvents()).rejects.toThrow('Failed to fetch all active events');
-        expect(apiClient.get).toHaveBeenCalledWith('/events/all-events');
-      });
-    });
-
-    describe('getEventById', () => {
-      it('should fetch event by ID successfully', async () => {
-        const mockResponse = {
-          data: {
-            message: 'Event retrieved successfully',
-            code: '200',
-            data: {
-              id: 1,
-              title: 'Alumni Meet 2024',
-              description: 'Annual alumni gathering',
-              startDate: '2024-12-25T18:00:00',
-              endDate: '2024-12-25T22:00:00',
-              location: 'IIT Campus',
-              eventType: 'NETWORKING',
-              active: true,
-              isOnline: false,
-              meetingLink: null,
-              maxParticipants: 100,
-              currentParticipants: 0,
-              organizerName: 'John Doe',
-              organizerEmail: 'john@example.com',
-              createdByUsername: 'john.doe',
-              privacy: 'PUBLIC',
-              inviteMessage: 'Join our annual alumni meet!',
-              createdAt: '2024-12-01T10:00:00',
-              updatedAt: '2024-12-01T10:00:00'
+              ],
+              totalElements: 1,
+              totalPages: 1,
+              size: 10,
+              number: 0,
+              first: true,
+              last: true
             }
           }
         };
 
         apiClient.get.mockResolvedValue(mockResponse);
 
-        const result = await eventService.getEventById(1);
+        const result = await eventService.getAllEvents(0, 10, 'eventDate,desc');
 
-        expect(apiClient.get).toHaveBeenCalledWith('/events/all-events/1');
+        expect(apiClient.get).toHaveBeenCalledWith('/events?page=0&size=10&sort=eventDate,desc');
         expect(result).toEqual(mockResponse.data);
       });
 
-      it('should handle errors when fetching event by ID', async () => {
-        const mockError = new Error('Event not found');
+      it('should handle errors when fetching all events', async () => {
+        const mockError = new Error('Failed to fetch events');
         apiClient.get.mockRejectedValue(mockError);
 
-        await expect(eventService.getEventById(999)).rejects.toThrow('Event not found');
-        expect(apiClient.get).toHaveBeenCalledWith('/events/all-events/999');
+        await expect(eventService.getAllEvents()).rejects.toThrow('Failed to fetch events');
+        expect(apiClient.get).toHaveBeenCalledWith('/events?page=0&size=10&sort=eventDate,desc');
       });
-    });
-
-    describe('createEvent', () => {
-      it('should create event successfully', async () => {
-        const eventData = {
-          title: 'Alumni Meet 2024',
-          description: 'Annual alumni gathering',
-          startDate: '2024-12-25T18:00:00',
-          endDate: '2024-12-25T22:00:00',
-          location: 'IIT Campus',
-          eventType: 'NETWORKING',
-          isOnline: false,
-          meetingLink: null,
-          maxParticipants: 100,
-          organizerName: 'John Doe',
-          organizerEmail: 'john@example.com',
-          privacy: 'PUBLIC',
-          inviteMessage: 'Join our annual alumni meet!'
-        };
-
-        const mockResponse = {
-          data: {
-            message: 'Event created successfully',
-            code: '201',
-            data: {
-              id: 1,
-              ...eventData,
-              createdAt: '2024-12-01T10:00:00',
-              updatedAt: '2024-12-01T10:00:00'
-            }
-          }
-        };
-
-        apiClient.post.mockResolvedValue(mockResponse);
-
-        const result = await eventService.createEvent(eventData);
-
-        expect(apiClient.post).toHaveBeenCalledWith('/events/create', eventData);
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when creating event', async () => {
-        const eventData = {
-          title: 'Alumni Meet 2024',
-          description: 'Annual alumni gathering',
-          startDate: '2024-12-25T18:00:00',
-          endDate: '2024-12-25T22:00:00',
-          location: 'IIT Campus',
-          eventType: 'NETWORKING',
-          isOnline: false,
-          meetingLink: null,
-          maxParticipants: 100,
-          organizerName: 'John Doe',
-          organizerEmail: 'john@example.com',
-          privacy: 'PUBLIC',
-          inviteMessage: 'Join our annual alumni meet!'
-        };
-
-        const mockError = new Error('Failed to create event');
-        apiClient.post.mockRejectedValue(mockError);
-
-        await expect(eventService.createEvent(eventData)).rejects.toThrow('Failed to create event');
-        expect(apiClient.post).toHaveBeenCalledWith('/events/create', eventData);
-      });
-    });
-
-    describe('updateEvent', () => {
-      it('should update event successfully', async () => {
-        const eventId = 1;
-        const eventData = {
-          title: 'Updated Alumni Meet 2024',
-          description: 'Updated annual alumni gathering',
-          startDate: '2024-12-25T18:00:00',
-          endDate: '2024-12-25T22:00:00',
-          location: 'IIT Campus',
-          eventType: 'NETWORKING',
-          isOnline: false,
-          meetingLink: null,
-          maxParticipants: 100,
-          organizerName: 'John Doe',
-          organizerEmail: 'john@example.com',
-          privacy: 'PUBLIC',
-          inviteMessage: 'Join our annual alumni meet!'
-        };
-
-        const mockResponse = {
-          data: {
-            message: 'Event updated successfully',
-            code: '200',
-            data: {
-              id: eventId,
-              ...eventData,
-              updatedAt: '2024-12-01T10:00:00'
-            }
-          }
-        };
-
-        apiClient.put.mockResolvedValue(mockResponse);
-
-        const result = await eventService.updateEvent(eventId, eventData);
-
-        expect(apiClient.put).toHaveBeenCalledWith(`/events/my-events/${eventId}`, eventData);
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when updating event', async () => {
-        const eventId = 1;
-        const eventData = {
-          title: 'Updated Alumni Meet 2024',
-          description: 'Updated annual alumni gathering',
-          startDate: '2024-12-25T18:00:00',
-          endDate: '2024-12-25T22:00:00',
-          location: 'IIT Campus',
-          eventType: 'NETWORKING',
-          isOnline: false,
-          meetingLink: null,
-          maxParticipants: 100,
-          organizerName: 'John Doe',
-          organizerEmail: 'john@example.com',
-          privacy: 'PUBLIC',
-          inviteMessage: 'Join our annual alumni meet!'
-        };
-
-        const mockError = new Error('Failed to update event');
-        apiClient.put.mockRejectedValue(mockError);
-
-        await expect(eventService.updateEvent(eventId, eventData)).rejects.toThrow('Failed to update event');
-        expect(apiClient.put).toHaveBeenCalledWith(`/events/my-events/${eventId}`, eventData);
-      });
-    });
-
-    describe('deleteEvent', () => {
-      it('should delete event successfully', async () => {
-        const eventId = 1;
-
-        const mockResponse = {
-          data: {
-            message: 'Event deleted successfully',
-            code: '200',
-            data: null
-          }
-        };
-
-        apiClient.delete.mockResolvedValue(mockResponse);
-
-        const result = await eventService.deleteEvent(eventId);
-
-        expect(apiClient.delete).toHaveBeenCalledWith(`/events/my-events/${eventId}`);
-        expect(result).toEqual(mockResponse.data);
-      });
-
-      it('should handle errors when deleting event', async () => {
-        const eventId = 1;
-
-        const mockError = new Error('Failed to delete event');
-        apiClient.delete.mockRejectedValue(mockError);
-
-        await expect(eventService.deleteEvent(eventId)).rejects.toThrow('Failed to delete event');
-        expect(apiClient.delete).toHaveBeenCalledWith(`/events/my-events/${eventId}`);
-      });
-    });
-  });
-
-  describe('Error Handling', () => {
-    it('should handle network errors', async () => {
-      const networkError = new Error('Network Error');
-      apiClient.get.mockRejectedValue(networkError);
-
-      await expect(eventService.getMyEvents()).rejects.toThrow('Network Error');
-    });
-
-    it('should handle API errors with response data', async () => {
-      const apiError = {
-        response: {
-          data: {
-            message: 'Invalid request',
-            code: '400'
-          }
-        }
-      };
-      apiClient.get.mockRejectedValue(apiError);
-
-      await expect(eventService.getMyEvents()).rejects.toEqual({
-        message: 'Invalid request',
-        code: '400'
-      });
-    });
-  });
-});
-
-describe('EventService - Group 2: Event Creation and Management', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  describe('Group 2.1: Create Event', () => {
-    const validEventData = {
-      title: 'Alumni Meet 2024',
-      description: 'Annual alumni gathering and networking event',
-      startDate: '2024-12-25T18:00:00',
-      endDate: '2024-12-25T22:00:00',
-      location: 'IIT Campus, Main Auditorium',
-      eventType: 'MEETING',
-      isOnline: false,
-      meetingLink: null,
-      maxParticipants: 100,
-      organizerName: 'John Doe',
-      organizerEmail: 'john.doe@example.com',
-      privacy: 'PUBLIC',
-      inviteMessage: 'Join us for the annual alumni meet!'
-    };
-
-    it('should create event successfully with all required fields', async () => {
-      const mockResponse = {
-        data: {
-          message: 'Event created successfully',
-          code: '201',
-          data: {
-            id: 1,
-            ...validEventData,
-            createdAt: '2024-12-01T10:00:00',
-            updatedAt: '2024-12-01T10:00:00'
-          }
-        }
-      };
-
-      apiClient.post.mockResolvedValue(mockResponse);
-
-      const result = await eventService.createEvent(validEventData);
-
-      expect(apiClient.post).toHaveBeenCalledWith('/events/create', validEventData);
-      expect(result).toEqual(mockResponse.data);
-    });
-
-    it('should create online event successfully with meeting link', async () => {
-      const onlineEventData = {
-        ...validEventData,
-        isOnline: true,
-        meetingLink: 'https://meet.google.com/abc-defg-hij'
-      };
-
-      const mockResponse = {
-        data: {
-          message: 'Event created successfully',
-          code: '201',
-          data: {
-            id: 1,
-            ...onlineEventData,
-            createdAt: '2024-12-01T10:00:00',
-            updatedAt: '2024-12-01T10:00:00'
-          }
-        }
-      };
-
-      apiClient.post.mockResolvedValue(mockResponse);
-
-      const result = await eventService.createEvent(onlineEventData);
-
-      expect(apiClient.post).toHaveBeenCalledWith('/events/create', onlineEventData);
-      expect(result).toEqual(mockResponse.data);
-    });
-
-    it('should throw error when required fields are missing', async () => {
-      const incompleteEventData = {
-        title: 'Alumni Meet 2024',
-        description: 'Annual alumni gathering'
-        // Missing required fields: startDate, endDate, organizerName, organizerEmail
-      };
-
-      await expect(eventService.createEvent(incompleteEventData)).rejects.toThrow('Missing required fields: startDate, endDate, organizerName, organizerEmail');
-      expect(apiClient.post).not.toHaveBeenCalled();
-    });
-
-    it('should throw error when start date is after end date', async () => {
-      const invalidDateEventData = {
-        ...validEventData,
-        startDate: '2024-12-25T22:00:00',
-        endDate: '2024-12-25T18:00:00'
-      };
-
-      await expect(eventService.createEvent(invalidDateEventData)).rejects.toThrow('Start date must be before end date');
-      expect(apiClient.post).not.toHaveBeenCalled();
-    });
-
-    it('should throw error when online event is missing meeting link', async () => {
-      const onlineEventWithoutLink = {
-        ...validEventData,
-        isOnline: true,
-        meetingLink: null
-      };
-
-      await expect(eventService.createEvent(onlineEventWithoutLink)).rejects.toThrow('Meeting link is required for online events');
-      expect(apiClient.post).not.toHaveBeenCalled();
-    });
-
-    it('should handle API errors when creating event', async () => {
-      const mockError = {
-        response: {
-          data: {
-            message: 'Failed to create event',
-            code: '400'
-          }
-        }
-      };
-      apiClient.post.mockRejectedValue(mockError);
-
-      await expect(eventService.createEvent(validEventData)).rejects.toEqual({
-        message: 'Failed to create event',
-        code: '400'
-      });
-      expect(apiClient.post).toHaveBeenCalledWith('/events/create', validEventData);
-    });
-  });
-
-  describe('Group 2.2: Update Event', () => {
-    const validUpdateData = {
-      title: 'Updated Alumni Meet 2024',
-      description: 'Updated annual alumni gathering and networking event',
-      startDate: '2024-12-26T18:00:00',
-      endDate: '2024-12-26T22:00:00',
-      location: 'IIT Campus, Updated Auditorium',
-      eventType: 'NETWORKING',
-      isOnline: false,
-      meetingLink: null,
-      maxParticipants: 150,
-      organizerName: 'John Doe',
-      organizerEmail: 'john.doe@example.com',
-      privacy: 'PUBLIC',
-      inviteMessage: 'Updated invite message!'
-    };
-
-    it('should update event successfully with all required fields', async () => {
-      const eventId = 1;
-      const mockResponse = {
-        data: {
-          message: 'Event updated successfully',
-          code: '200',
-          data: {
-            id: eventId,
-            ...validUpdateData,
-            updatedAt: '2024-12-02T10:00:00'
-          }
-        }
-      };
-
-      apiClient.put.mockResolvedValue(mockResponse);
-
-      const result = await eventService.updateEvent(eventId, validUpdateData);
-
-      expect(apiClient.put).toHaveBeenCalledWith(`/events/my-events/${eventId}`, validUpdateData);
-      expect(result).toEqual(mockResponse.data);
-    });
-
-    it('should update online event successfully with meeting link', async () => {
-      const eventId = 1;
-      const onlineUpdateData = {
-        ...validUpdateData,
-        isOnline: true,
-        meetingLink: 'https://meet.google.com/xyz-uvw-123'
-      };
-
-      const mockResponse = {
-        data: {
-          message: 'Event updated successfully',
-          code: '200',
-          data: {
-            id: eventId,
-            ...onlineUpdateData,
-            updatedAt: '2024-12-02T10:00:00'
-          }
-        }
-      };
-
-      apiClient.put.mockResolvedValue(mockResponse);
-
-      const result = await eventService.updateEvent(eventId, onlineUpdateData);
-
-      expect(apiClient.put).toHaveBeenCalledWith(`/events/my-events/${eventId}`, onlineUpdateData);
-      expect(result).toEqual(mockResponse.data);
-    });
-
-    it('should throw error when required fields are missing during update', async () => {
-      const eventId = 1;
-      const incompleteUpdateData = {
-        title: 'Updated Alumni Meet 2024'
-        // Missing required fields: startDate, endDate, organizerName, organizerEmail
-      };
-
-      await expect(eventService.updateEvent(eventId, incompleteUpdateData)).rejects.toThrow('Missing required fields: startDate, endDate, organizerName, organizerEmail');
-      expect(apiClient.put).not.toHaveBeenCalled();
-    });
-
-    it('should throw error when start date is after end date during update', async () => {
-      const eventId = 1;
-      const invalidDateUpdateData = {
-        ...validUpdateData,
-        startDate: '2024-12-26T22:00:00',
-        endDate: '2024-12-26T18:00:00'
-      };
-
-      await expect(eventService.updateEvent(eventId, invalidDateUpdateData)).rejects.toThrow('Start date must be before end date');
-      expect(apiClient.put).not.toHaveBeenCalled();
-    });
-
-    it('should throw error when online event is missing meeting link during update', async () => {
-      const eventId = 1;
-      const onlineUpdateWithoutLink = {
-        ...validUpdateData,
-        isOnline: true,
-        meetingLink: null
-      };
-
-      await expect(eventService.updateEvent(eventId, onlineUpdateWithoutLink)).rejects.toThrow('Meeting link is required for online events');
-      expect(apiClient.put).not.toHaveBeenCalled();
-    });
-
-    it('should handle API errors when updating event', async () => {
-      const eventId = 1;
-      const mockError = {
-        response: {
-          data: {
-            message: 'Failed to update event',
-            code: '400'
-          }
-        }
-      };
-      apiClient.put.mockRejectedValue(mockError);
-
-      await expect(eventService.updateEvent(eventId, validUpdateData)).rejects.toEqual({
-        message: 'Failed to update event',
-        code: '400'
-      });
-      expect(apiClient.put).toHaveBeenCalledWith(`/events/my-events/${eventId}`, validUpdateData);
-    });
-  });
-
-  describe('Group 2.3: Delete Event', () => {
-    it('should delete event successfully', async () => {
-      const eventId = 1;
-      const mockResponse = {
-        data: {
-          message: 'Event deleted successfully',
-          code: '200',
-          data: null
-        }
-      };
-
-      apiClient.delete.mockResolvedValue(mockResponse);
-
-      const result = await eventService.deleteEvent(eventId);
-
-      expect(apiClient.delete).toHaveBeenCalledWith(`/events/my-events/${eventId}`);
-      expect(result).toEqual(mockResponse.data);
-    });
-
-    it('should throw error when event ID is missing', async () => {
-      await expect(eventService.deleteEvent()).rejects.toThrow('Event ID is required');
-      expect(apiClient.delete).not.toHaveBeenCalled();
-    });
-
-    it('should throw error when event ID is null', async () => {
-      await expect(eventService.deleteEvent(null)).rejects.toThrow('Event ID is required');
-      expect(apiClient.delete).not.toHaveBeenCalled();
-    });
-
-    it('should throw error when event ID is empty string', async () => {
-      await expect(eventService.deleteEvent('')).rejects.toThrow('Event ID is required');
-      expect(apiClient.delete).not.toHaveBeenCalled();
-    });
-
-    it('should handle API errors when deleting event', async () => {
-      const eventId = 1;
-      const mockError = {
-        response: {
-          data: {
-            message: 'Failed to delete event',
-            code: '400'
-          }
-        }
-      };
-      apiClient.delete.mockRejectedValue(mockError);
-
-      await expect(eventService.deleteEvent(eventId)).rejects.toEqual({
-        message: 'Failed to delete event',
-        code: '400'
-      });
-      expect(apiClient.delete).toHaveBeenCalledWith(`/events/my-events/${eventId}`);
-    });
-
-    it('should handle network errors when deleting event', async () => {
-      const eventId = 1;
-      const networkError = new Error('Network Error');
-      apiClient.delete.mockRejectedValue(networkError);
-
-      await expect(eventService.deleteEvent(eventId)).rejects.toThrow('Network Error');
-      expect(apiClient.delete).toHaveBeenCalledWith(`/events/my-events/${eventId}`);
     });
   });
 });

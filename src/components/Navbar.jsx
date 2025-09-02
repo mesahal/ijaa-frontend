@@ -13,6 +13,7 @@ import {
   Calendar,
   ChevronDown,
   HelpCircle,
+  User,
 } from "lucide-react";
 import { useUnifiedAuth } from "../context/UnifiedAuthContext";
 import { useTheme } from "../context/ThemeContext";
@@ -32,12 +33,28 @@ const Navbar = () => {
   const { isDark, toggleTheme } = useTheme();
   const { profilePhotoUrl } = useCurrentUserPhoto();
   const { profileData } = useCurrentUserProfile();
-  
+
   // Check if features are enabled
-  const { isEnabled: isAlumniSearchEnabled, loading: isSearchFlagLoading, error: searchFlagError } = useFeatureFlag("alumni.search", false);
-  const { isEnabled: isEventsEnabled, loading: isEventsFlagLoading, error: eventsFlagError } = useFeatureFlag("events", false);
-  const { isEnabled: isNotificationsEnabled, loading: isNotificationsFlagLoading, error: notificationsFlagError } = useFeatureFlag("notifications", false);
-  const { isEnabled: isReportsEnabled, loading: isReportsFlagLoading, error: reportsFlagError } = useFeatureFlag("reports", false);
+  const {
+    isEnabled: isAlumniSearchEnabled,
+    loading: isSearchFlagLoading,
+    error: searchFlagError,
+  } = useFeatureFlag("alumni.search", false);
+  const {
+    isEnabled: isEventsEnabled,
+    loading: isEventsFlagLoading,
+    error: eventsFlagError,
+  } = useFeatureFlag("events", false);
+  const {
+    isEnabled: isNotificationsEnabled,
+    loading: isNotificationsFlagLoading,
+    error: notificationsFlagError,
+  } = useFeatureFlag("notifications", false);
+  const {
+    isEnabled: isReportsEnabled,
+    loading: isReportsFlagLoading,
+    error: reportsFlagError,
+  } = useFeatureFlag("reports", false);
 
   // Handle scroll effect
   useEffect(() => {
@@ -67,29 +84,53 @@ const Navbar = () => {
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Dashboard" },
     // Only include Events if the feature flag is enabled
-    ...(isEventsEnabled ? [{ path: "/events", icon: Calendar, label: "Events" }] : []),
+    ...(isEventsEnabled
+      ? [{ path: "/events", icon: Calendar, label: "Events" }]
+      : []),
     // Only include Search if the feature flag is enabled
-    ...(isAlumniSearchEnabled ? [{ path: "/search", icon: Search, label: "Search" }] : []),
+    ...(isAlumniSearchEnabled
+      ? [{ path: "/search", icon: Search, label: "Search" }]
+      : []),
   ];
 
   // Debug logging
-  console.log('Feature Flag Debug:', {
-    alumniSearch: { isEnabled: isAlumniSearchEnabled, loading: isSearchFlagLoading, error: searchFlagError },
-    events: { isEnabled: isEventsEnabled, loading: isEventsFlagLoading, error: eventsFlagError },
-    notifications: { isEnabled: isNotificationsEnabled, loading: isNotificationsFlagLoading, error: notificationsFlagError },
-    reports: { isEnabled: isReportsEnabled, loading: isReportsFlagLoading, error: reportsFlagError },
-    navItems: navItems
+  console.log("Feature Flag Debug:", {
+    alumniSearch: {
+      isEnabled: isAlumniSearchEnabled,
+      loading: isSearchFlagLoading,
+      error: searchFlagError,
+    },
+    events: {
+      isEnabled: isEventsEnabled,
+      loading: isEventsFlagLoading,
+      error: eventsFlagError,
+    },
+    notifications: {
+      isEnabled: isNotificationsEnabled,
+      loading: isNotificationsFlagLoading,
+      error: notificationsFlagError,
+    },
+    reports: {
+      isEnabled: isReportsEnabled,
+      loading: isReportsFlagLoading,
+      error: reportsFlagError,
+    },
+    navItems: navItems,
   });
 
   const profileMenuItems = [
-    { icon: Settings, label: "Settings", action: () => navigate("/profile") },
+    { icon: User, label: "Profile", action: () => navigate("/profile") },
     // Only include Help if reports feature is enabled
-    ...(isReportsEnabled ? [{
-      icon: HelpCircle,
-      label: "Help",
-      action: () => navigate("/contact-support"),
-    }] : []),
-    { icon: LogOut, label: "Sign Out", action: handleSignOut, danger: true },
+    ...(isReportsEnabled
+      ? [
+          {
+            icon: HelpCircle,
+            label: "Help",
+            action: () => navigate("/contact-support"),
+          },
+        ]
+      : []),
+    { icon: LogOut, label: "Sign Out", action: () => handleSignOut(), danger: true },
   ];
 
   return (
@@ -107,7 +148,7 @@ const Navbar = () => {
             <Link to="/dashboard" className="flex items-center space-x-3 group">
               <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
                 <img
-                  src="/logo-2.png"
+                  src="/logo.png"
                   alt="IIT JU Alumni Logo"
                   className="h-8 w-8 object-contain"
                 />
@@ -187,42 +228,42 @@ const Navbar = () => {
                   </Badge>
                 </Button>
 
-              {/* Notifications Dropdown */}
-              {showNotifications && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 animate-slide-down">
-                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
-                      Notifications
-                    </h3>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
-                      >
-                        <div className="flex items-start space-x-3">
-                          <Avatar size="sm" src={`/dp.png`} alt="User" />
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm text-gray-900 dark:text-white">
-                              <span className="font-medium">John Doe</span>{" "}
-                              commented on your post
-                            </p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                              {i} hour{i !== 1 ? "s" : ""} ago
-                            </p>
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 py-2 animate-slide-down">
+                    <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+                        Notifications
+                      </h3>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                        >
+                          <div className="flex items-start space-x-3">
+                            <Avatar size="sm" src={`/dp.png`} alt="User" />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm text-gray-900 dark:text-white">
+                                <span className="font-medium">John Doe</span>{" "}
+                                commented on your post
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                {i} hour{i !== 1 ? "s" : ""} ago
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
+                    <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
+                      <Button variant="ghost" size="sm" fullWidth>
+                        View all notifications
+                      </Button>
+                    </div>
                   </div>
-                  <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700">
-                    <Button variant="ghost" size="sm" fullWidth>
-                      View all notifications
-                    </Button>
-                  </div>
-                </div>
-              )}
+                )}
               </div>
             )}
 

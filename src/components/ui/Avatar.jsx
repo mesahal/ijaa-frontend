@@ -77,6 +77,17 @@ const Avatar = React.forwardRef(({
       );
     }
     
+    // Use default profile image if no src provided
+    if (!src) {
+      return (
+        <img
+          src="/dp.png"
+          alt={alt || 'Default Avatar'}
+          className="h-full w-full object-cover"
+        />
+      );
+    }
+    
     if (fallback) {
       return (
         <div className="h-full w-full flex items-center justify-center text-gray-600 dark:text-gray-400">

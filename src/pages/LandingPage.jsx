@@ -138,7 +138,7 @@ const LandingPage = () => {
             <div className="flex items-center space-x-3">
               <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
                 <img
-                  src="/logo-2.png"
+                  src="/logo.png"
                   alt="IIT JU Alumni Logo"
                   className="h-8 w-8 object-contain"
                 />
@@ -369,7 +369,7 @@ const LandingPage = () => {
               <div className="flex items-center space-x-3 mb-4">
                 <div className="p-1 bg-white transition-all duration-300 group-hover:scale-105 rounded-md shadow-sm">
                   <img
-                    src="/logo-2.png"
+                    src="/logo.png"
                     alt="IIT JU Alumni Logo"
                     className="h-8 w-8 object-contain"
                   />

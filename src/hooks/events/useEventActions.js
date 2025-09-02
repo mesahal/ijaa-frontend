@@ -3,31 +3,27 @@ import eventService from '../../services/eventService';
 
 /**
  * Custom hook for managing event actions (CRUD operations, RSVP, etc.)
- * Handles create, update, delete, and participation actions for Group 2: Event Creation and Management
+ * Handles create, update, delete, and participation actions for Phase 1: Core Event Management
  */
 export const useEventActions = (refreshEvents) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   /**
-   * Create or update an event (Group 2.1 & 2.2)
+   * Create or update an event (Phase 1.3 & 1.5)
    */
   const handleCreateEvent = useCallback(async (eventForm, selectedEvent = null) => {
     setLoading(true);
     setError(null);
 
     try {
-      // Enhanced validation for Group 2 requirements
-      if (!eventForm.title || !eventForm.startDate || !eventForm.endDate || !eventForm.organizerName || !eventForm.organizerEmail) {
-        throw new Error('Please fill in all required fields: title, start date, end date, organizer name, and organizer email');
+      // Enhanced validation for Phase 1 requirements
+      if (!eventForm.title || !eventForm.startDate || !eventForm.endDate || !eventForm.category) {
+        throw new Error('Please fill in all required fields: title, start date, end date, and category');
       }
 
       if (new Date(eventForm.startDate) >= new Date(eventForm.endDate)) {
         throw new Error('Start date must be before end date');
-      }
-
-      if (eventForm.isOnline && !eventForm.meetingLink) {
-        throw new Error('Meeting link is required for online events');
       }
 
       // Validate max participants
@@ -39,26 +35,22 @@ export const useEventActions = (refreshEvents) => {
       let result;
 
       if (selectedEvent) {
-        // Update existing event (Group 2.2)
+        // Update existing event (Phase 1.5)
         console.log('Updating event:', selectedEvent.id, eventForm);
         response = await eventService.updateEvent(selectedEvent.id, eventForm);
         result = response;
       } else {
-        // Create new event (Group 2.1)
+        // Create new event (Phase 1.3)
         const eventData = {
           title: eventForm.title,
           description: eventForm.description || '',
           startDate: eventForm.startDate,
           endDate: eventForm.endDate,
           location: eventForm.location || '',
-          eventType: eventForm.eventType || 'NETWORKING',
-          isOnline: eventForm.isOnline || false,
-          meetingLink: eventForm.meetingLink || null,
+          category: eventForm.category || 'SOCIAL',
           maxParticipants: eventForm.maxParticipants || 50,
-          organizerName: eventForm.organizerName,
-          organizerEmail: eventForm.organizerEmail,
-          privacy: eventForm.privacy || 'PUBLIC',
-          inviteMessage: eventForm.inviteMessage || ''
+          isPublic: eventForm.isPublic !== false, // Default to true
+          requiresApproval: eventForm.requiresApproval || false
         };
         
         console.log('Creating event:', eventData);
@@ -66,11 +58,11 @@ export const useEventActions = (refreshEvents) => {
         result = response;
       }
 
-      if ((result.code === '201' || result.code === '200' || result.code === 200) && result.data) {
+      if (result && result.success) {
         await refreshEvents();
         return { success: true, data: result.data };
       } else {
-        throw new Error(result.message || 'Failed to save event');
+        throw new Error(result?.message || 'Failed to save event');
       }
     } catch (err) {
       console.error('Error saving event:', err);
@@ -82,7 +74,7 @@ export const useEventActions = (refreshEvents) => {
   }, [refreshEvents]);
 
   /**
-   * Delete an event (Group 2.3)
+   * Delete an event (Phase 1.6)
    */
   const handleDeleteEvent = useCallback(async (eventId) => {
     if (!eventId) {
@@ -102,11 +94,11 @@ export const useEventActions = (refreshEvents) => {
       const response = await eventService.deleteEvent(eventId);
       const result = response;
 
-      if ((result.code === '200' || result.code === 200)) {
+      if (result && result.success) {
         await refreshEvents();
         return { success: true };
       } else {
-        throw new Error(result.message || 'Failed to delete event');
+        throw new Error(result?.message || 'Failed to delete event');
       }
     } catch (err) {
       console.error('Error deleting event:', err);
@@ -126,11 +118,11 @@ export const useEventActions = (refreshEvents) => {
 
     try {
       const response = await eventService.rsvpToEvent(eventId, status, message);
-      if ((response.code === '200' || response.code === 200)) {
+      if (response && response.success) {
         await refreshEvents();
         return { success: true };
       } else {
-        throw new Error(response.message || 'Failed to RSVP');
+        throw new Error(response?.message || 'Failed to RSVP');
       }
     } catch (err) {
       console.error('Error RSVPing to event:', err);
@@ -154,11 +146,11 @@ export const useEventActions = (refreshEvents) => {
 
     try {
       const response = await eventService.cancelRsvp(eventId);
-      if ((response.code === '200' || response.code === 200)) {
+      if (response && response.success) {
         await refreshEvents();
         return { success: true };
       } else {
-        throw new Error(response.message || 'Failed to cancel RSVP');
+        throw new Error(response?.message || 'Failed to cancel RSVP');
       }
     } catch (err) {
       console.error('Error canceling RSVP:', err);

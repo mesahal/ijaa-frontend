@@ -284,7 +284,7 @@ export const PhotoDisplay = ({
   alt,
   type = "profile",
   className = "",
-  fallbackSrc = type === "profile" ? "/dp.png" : "/cover-image.jpg",
+  fallbackSrc = type === "profile" ? "/dp.png" : "/cover.jpg",
 }) => {
   const [imageError, setImageError] = useState(false);
 

@@ -2,13 +2,21 @@ import React from 'react';
 import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Events from '../../pages/Events';
-import { useAuth } from '../../context/AuthContext';
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
+import { useEvents } from '../../hooks/events/useEvents';
+import { useEventActions } from '../../hooks/events/useEventActions';
+import { useEventSearch } from '../../hooks/events/useEventSearch';
+import { useEventDiscovery } from '../../hooks/events/useEventDiscovery';
+import { useEventParticipation } from '../../hooks/events/useEventParticipation';
+import { useEventInvitations } from '../../hooks/events/useEventInvitations';
 
 // Mock the dependencies
-jest.mock('../../context/AuthContext');
+jest.mock('../../context/UnifiedAuthContext');
 jest.mock('../../hooks/events/useEvents');
 jest.mock('../../hooks/events/useEventActions');
 jest.mock('../../hooks/events/useEventSearch');
+jest.mock('../../hooks/events/useEventDiscovery');
+jest.mock('../../hooks/events/useEventParticipation');
 jest.mock('../../hooks/events/useEventInvitations');
 jest.mock('../../services/eventService');
 
@@ -26,18 +34,7 @@ jest.mock('../../components/events/EventCard', () => {
   };
 });
 
-jest.mock('../../components/events/EventTabs', () => {
-  return function MockEventTabs({ activeTab, onTabChange }) {
-    return (
-      <div data-testid="event-tabs">
-        <button onClick={() => onTabChange('all')}>All Events</button>
-        <button onClick={() => onTabChange('my-events')}>My Events</button>
-        <button onClick={() => onTabChange('my-active-events')}>My Active Events</button>
-        <button onClick={() => onTabChange('invitations')}>Invitations</button>
-      </div>
-    );
-  };
-});
+
 
 jest.mock('../../components/events/EventFilters', () => {
   return function MockEventFilters({ searchQuery, onSearchChange, filterType, onFilterChange, onAdvancedSearch }) {
@@ -124,7 +121,52 @@ jest.mock('lucide-react', () => ({
   Plus: () => <div data-testid="plus-icon">Plus</div>,
   Loader2: () => <div data-testid="loader-icon">Loader2</div>,
   AlertCircle: () => <div data-testid="alertcircle-icon">AlertCircle</div>,
+  Search: () => <div data-testid="search-icon">Search</div>,
+  Filter: () => <div data-testid="filter-icon">Filter</div>,
+  Users: () => <div data-testid="users-icon">Users</div>,
+  MapPin: () => <div data-testid="mappin-icon">MapPin</div>,
+  Clock: () => <div data-testid="clock-icon">Clock</div>,
+  TrendingUp: () => <div data-testid="trending-icon">TrendingUp</div>,
+  Star: () => <div data-testid="star-icon">Star</div>,
+  Heart: () => <div data-testid="heart-icon">Heart</div>,
+  Share2: () => <div data-testid="share-icon">Share2</div>,
+  MoreHorizontal: () => <div data-testid="more-icon">MoreHorizontal</div>,
+  Grid3X3: () => <div data-testid="grid-icon">Grid3X3</div>,
+  List: () => <div data-testid="list-icon">List</div>,
+  Bell: () => <div data-testid="bell-icon">Bell</div>,
+  Bookmark: () => <div data-testid="bookmark-icon">Bookmark</div>,
 }));
+
+// Mock missing components
+jest.mock('../../components/events/UpcomingEvents', () => {
+  return function MockUpcomingEvents() {
+    return <div data-testid="upcoming-events">Upcoming Events</div>;
+  };
+});
+
+jest.mock('../../components/events/TrendingEvents', () => {
+  return function MockTrendingEvents() {
+    return <div data-testid="trending-events">Trending Events</div>;
+  };
+});
+
+jest.mock('../../components/events/AdvancedSearch', () => {
+  return function MockAdvancedSearch() {
+    return <div data-testid="advanced-search">Advanced Search</div>;
+  };
+});
+
+jest.mock('../../components/events/RSVPButtons', () => {
+  return function MockRSVPButtons() {
+    return <div data-testid="rsvp-buttons">RSVP Buttons</div>;
+  };
+});
+
+jest.mock('../../components/events/MyParticipations', () => {
+  return function MockMyParticipations() {
+    return <div data-testid="my-participations">My Participations</div>;
+  };
+});
 
 describe('Events Page - Group 1: Basic Event Management', () => {
   const mockUser = {
@@ -231,8 +273,9 @@ describe('Events Page - Group 1: Basic Event Management', () => {
 
   beforeEach(() => {
     // Mock the auth context
-    useAuth.mockReturnValue({
+    useUnifiedAuth.mockReturnValue({
       user: mockUser,
+      loading: false,
       signIn: jest.fn(),
       signOut: jest.fn()
     });
@@ -241,6 +284,53 @@ describe('Events Page - Group 1: Basic Event Management', () => {
     useEvents.mockReturnValue(mockUseEvents);
     useEventActions.mockReturnValue(mockUseEventActions);
     useEventSearch.mockReturnValue(mockUseEventSearch);
+    useEventDiscovery.mockReturnValue({
+      upcomingEvents: [],
+      upcomingLoading: false,
+      upcomingError: null,
+      upcomingPagination: {},
+      loadUpcomingEvents: jest.fn(),
+      loadNextUpcomingPage: jest.fn(),
+      loadPreviousUpcomingPage: jest.fn(),
+      trendingEvents: [],
+      trendingLoading: false,
+      trendingError: null,
+      loadTrendingEvents: jest.fn(),
+      searchResults: [],
+      searchLoading: false,
+      searchError: null,
+      searchPagination: {},
+      searchEvents: jest.fn(),
+      clearSearch: jest.fn(),
+      loadNextSearchPage: jest.fn(),
+      loadPreviousSearchPage: jest.fn()
+    });
+    useEventParticipation.mockReturnValue({
+      participations: [],
+      participationsLoading: false,
+      participationsError: null,
+      participationsPagination: {},
+      loadMyParticipations: jest.fn(),
+      loadNextParticipationsPage: jest.fn(),
+      loadPreviousParticipationsPage: jest.fn(),
+      clearParticipationsError: jest.fn(),
+      rsvpLoading: false,
+      rsvpError: null,
+      rsvpToEvent: jest.fn(),
+      clearRsvpError: jest.fn(),
+      updateLoading: false,
+      updateError: null,
+      updateParticipation: jest.fn(),
+      clearUpdateError: jest.fn(),
+      joinEvent: jest.fn(),
+      maybeAttendEvent: jest.fn(),
+      cancelRsvp: jest.fn(),
+      getParticipationStatus: jest.fn(),
+      getParticipation: jest.fn(),
+      isParticipating: jest.fn(),
+      isMaybeAttending: jest.fn(),
+      hasDeclined: jest.fn()
+    });
     useEventInvitations.mockReturnValue(mockUseEventInvitations);
 
     // Reset all mocks
@@ -261,7 +351,7 @@ describe('Events Page - Group 1: Basic Event Management', () => {
       
       await waitFor(() => {
         expect(screen.getByText('Events')).toBeInTheDocument();
-        expect(screen.getByText('Discover and manage alumni events')).toBeInTheDocument();
+        expect(screen.getByText('Discover and connect with alumni events')).toBeInTheDocument();
         expect(screen.getByText('Create Event')).toBeInTheDocument();
       });
     });
@@ -327,14 +417,14 @@ describe('Events Page - Group 1: Basic Event Management', () => {
       
       await waitFor(() => {
         expect(screen.getByText('No events found')).toBeInTheDocument();
-        expect(screen.getByText('No events match your search criteria.')).toBeInTheDocument();
+        expect(screen.getByText('No events match your search criteria. Try adjusting your filters.')).toBeInTheDocument();
       });
     });
   });
 
   describe('Group 1: Basic Event Management - Tab Navigation', () => {
     it('should handle tab changes correctly', async () => {
-      const user = userEvent.setup();
+      const user = userEvent;
       render(<Events />);
       
       await waitFor(() => {
@@ -411,7 +501,7 @@ describe('Events Page - Group 1: Basic Event Management', () => {
 
   describe('Group 1: Basic Event Management - Search and Filters', () => {
     it('should handle search input changes', async () => {
-      const user = userEvent.setup();
+      const user = userEvent;
       render(<Events />);
       
       const searchInput = screen.getByPlaceholderText('Search events...');
@@ -421,7 +511,7 @@ describe('Events Page - Group 1: Basic Event Management', () => {
     });
 
     it('should handle filter type changes', async () => {
-      const user = userEvent.setup();
+      const user = userEvent;
       render(<Events />);
       
       const filterSelect = screen.getByDisplayValue('All Types');

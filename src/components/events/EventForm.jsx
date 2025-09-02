@@ -9,6 +9,7 @@ import {
 /**
  * EventForm Component
  * Modal form for creating and editing events
+ * Updated for Phase 1: Core Event Management
  * 
  * @param {boolean} isOpen - Whether the modal is open
  * @param {Function} onClose - Callback to close the modal
@@ -17,7 +18,7 @@ import {
  * @param {Function} setFormData - Function to update form data
  * @param {Object} selectedEvent - Event being edited (null for create)
  * @param {boolean} loading - Loading state
- * @param {Array} eventTypeOptions - Available event type options
+ * @param {Array} eventCategoryOptions - Available event category options
  */
 const EventForm = ({ 
   isOpen, 
@@ -27,7 +28,7 @@ const EventForm = ({
   setFormData, 
   selectedEvent, 
   loading, 
-  eventTypeOptions = [] 
+  eventCategoryOptions = [] 
 }) => {
   if (!isOpen) return null;
 
@@ -113,73 +114,26 @@ const EventForm = ({
             </div>
           </div>
 
-          {/* Event Type and Online Status */}
+          {/* Category and Location */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label htmlFor="event-type" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Event Type
+              <label htmlFor="event-category" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Event Category *
               </label>
               <select
-                id="event-type"
-                value={formData.eventType}
-                onChange={(e) => setFormData({ ...formData, eventType: e.target.value })}
+                id="event-category"
+                required
+                value={formData.category}
+                onChange={(e) => setFormData({ ...formData, category: e.target.value })}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
               >
-                {eventTypeOptions.map((type) => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
+                {eventCategoryOptions.map((category) => (
+                  <option key={category.value} value={category.value}>
+                    {category.label}
                   </option>
                 ))}
               </select>
             </div>
-            <div>
-              <fieldset className="space-y-2">
-                <legend className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Event Format
-                </legend>
-                <div className="flex items-center space-x-4">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={!formData.isOnline}
-                      onChange={() => setFormData({ ...formData, isOnline: false })}
-                      className="mr-2"
-                      name="event-format"
-                    />
-                    <span className="text-sm">In-Person</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      checked={formData.isOnline}
-                      onChange={() => setFormData({ ...formData, isOnline: true })}
-                      className="mr-2"
-                      name="event-format"
-                    />
-                    <span className="text-sm">Online</span>
-                  </label>
-                </div>
-              </fieldset>
-            </div>
-          </div>
-
-          {/* Location or Meeting Link */}
-          {formData.isOnline ? (
-            <div>
-              <label htmlFor="meeting-link" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Meeting Link *
-              </label>
-              <input
-                id="meeting-link"
-                type="url"
-                required
-                value={formData.meetingLink}
-                onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="https://meet.google.com/..."
-              />
-            </div>
-          ) : (
             <div>
               <label htmlFor="event-location" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Location
@@ -193,110 +147,86 @@ const EventForm = ({
                 placeholder="Enter event location"
               />
             </div>
-          )}
+          </div>
 
           {/* Max Participants */}
           <div>
             <label htmlFor="max-participants" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Maximum Participants *
+              Maximum Participants
             </label>
             <input
               id="max-participants"
               type="number"
-              required
               min="1"
+              max="1000"
               value={formData.maxParticipants}
-              onChange={(e) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) })}
+              onChange={(e) => setFormData({ ...formData, maxParticipants: parseInt(e.target.value) || 50 })}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+              placeholder="50"
             />
-          </div>
-
-          {/* Organizer Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="organizer-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Organizer Name *
-              </label>
-              <input
-                id="organizer-name"
-                type="text"
-                required
-                value={formData.organizerName}
-                onChange={(e) => setFormData({ ...formData, organizerName: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="Enter organizer name"
-              />
-            </div>
-            <div>
-              <label htmlFor="organizer-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Organizer Email *
-              </label>
-              <input
-                id="organizer-email"
-                type="email"
-                required
-                value={formData.organizerEmail}
-                onChange={(e) => setFormData({ ...formData, organizerEmail: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="Enter organizer email"
-              />
-            </div>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Leave empty for unlimited participants
+            </p>
           </div>
 
           {/* Privacy Settings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="event-privacy" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Event Privacy *
-              </label>
-              <select
-                id="event-privacy"
-                value={formData.privacy}
-                onChange={(e) => setFormData({ ...formData, privacy: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-              >
-                <option value="PUBLIC">Public - Anyone can see and join</option>
-                <option value="PRIVATE">Private - Only invited users can see and join</option>
-                <option value="ALUMNI_ONLY">Alumni Only - Only verified alumni can see and join</option>
-              </select>
-            </div>
-            <div>
-              <label htmlFor="invite-message" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Invite Message
-              </label>
-              <input
-                id="invite-message"
-                type="text"
-                value={formData.inviteMessage}
-                onChange={(e) => setFormData({ ...formData, inviteMessage: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
-                placeholder="Message to show when inviting people"
-              />
-            </div>
+          <div className="space-y-4">
+            <fieldset>
+              <legend className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+                Privacy Settings
+              </legend>
+              <div className="space-y-3">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.isPublic}
+                    onChange={(e) => setFormData({ ...formData, isPublic: e.target.checked })}
+                    className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Public Event (visible to all users)
+                  </span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={formData.requiresApproval}
+                    onChange={(e) => setFormData({ ...formData, requiresApproval: e.target.checked })}
+                    className="mr-3 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">
+                    Require approval for participation
+                  </span>
+                </label>
+              </div>
+            </fieldset>
           </div>
 
           {/* Form Actions */}
-          <div className="flex items-center justify-end space-x-3 pt-4">
+          <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
             >
               {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              ) : selectedEvent ? (
-                <Edit className="h-4 w-4" aria-hidden="true" />
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  {selectedEvent ? "Updating..." : "Creating..."}
+                </>
               ) : (
-                <Plus className="h-4 w-4" aria-hidden="true" />
+                <>
+                  {selectedEvent ? <Edit className="h-4 w-4 mr-2" /> : <Plus className="h-4 w-4 mr-2" />}
+                  {selectedEvent ? "Update Event" : "Create Event"}
+                </>
               )}
-              <span>{selectedEvent ? "Update Event" : "Create Event"}</span>
             </button>
           </div>
         </form>

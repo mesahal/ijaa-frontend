@@ -590,22 +590,7 @@ class EventService {
     }
   }
 
-  /**
-   * Get event comments
-   * @param {string} eventId - Event ID
-   * @param {number} page - Page number
-   * @param {number} size - Page size
-   * @returns {Promise<Object>} Comments data
-   */
-  async getEventComments(eventId, page = 0, size = 20) {
-    try {
-      const response = await apiClient.get(`/events/comments/event/${eventId}?page=${page}&size=${size}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error getting event comments:', error);
-      throw error.response?.data || error;
-    }
-  }
+
 
   // ===== EVENT MEDIA =====
 
@@ -865,6 +850,351 @@ class EventService {
       console.error('Error reporting media:', error);
       throw error.response?.data || error;
     }
+  }
+
+  /**
+   * 3.3 Update Participation Status
+   * PUT /api/v1/user/events/participation/{participationId}
+   * Change RSVP status
+   * @param {number} participationId - Participation ID
+   * @param {string} status - New participation status
+   * @param {string} message - Optional message
+   * @returns {Promise<Object>} Updated participation data
+   */
+  async updateParticipation(participationId, status, message = '') {
+    try {
+      const response = await apiClient.put(`/events/participation/${participationId}`, {
+        status,
+        message
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error updating participation:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  // ===== PHASE 4: EVENT INTERACTION =====
+
+
+
+  // ===== PHASE 5: ADVANCED FEATURES =====
+
+  /**
+   * 5.1 Advanced Event Search
+   * POST /api/v1/user/events/advanced-search/advanced
+   * Advanced search page with multiple filters
+   * @param {Object} searchCriteria - Advanced search criteria
+   * @returns {Promise<Object>} Advanced search results
+   */
+  async advancedSearch(searchCriteria = {}) {
+    try {
+      const response = await apiClient.post('/events/advanced-search/advanced', searchCriteria);
+      return response.data;
+    } catch (error) {
+      console.error('Error performing advanced search:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * 5.2 Get Event Recommendations
+   * GET /api/v1/user/events/advanced-search/recommendations
+   * Personalized recommendations section
+   * @param {number} limit - Number of recommendations to return
+   * @returns {Promise<Object>} Event recommendations data
+   */
+  async getEventRecommendations(limit = 5) {
+    try {
+      const response = await apiClient.get(`/events/advanced-search/recommendations?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting event recommendations:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * 5.3 Get Similar Events
+   * GET /api/v1/user/events/advanced-search/similar/{eventId}
+   * "Similar events" section on event detail page
+   * @param {number} eventId - Event ID to find similar events for
+   * @param {number} limit - Number of similar events to return
+   * @returns {Promise<Object>} Similar events data
+   */
+  async getSimilarEvents(eventId, limit = 5) {
+    try {
+      const response = await apiClient.get(`/events/advanced-search/similar/${eventId}?limit=${limit}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting similar events:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * 5.4 Get High Engagement Events
+   * GET /api/v1/user/events/advanced-search/high-engagement
+   * Popular events section
+   * @param {number} threshold - Engagement threshold percentage
+   * @param {number} page - Page number
+   * @param {number} size - Page size
+   * @returns {Promise<Object>} High engagement events data
+   */
+  async getHighEngagementEvents(threshold = 50, page = 0, size = 10) {
+    try {
+      const response = await apiClient.get(`/events/advanced-search/high-engagement?threshold=${threshold}&page=${page}&size=${size}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting high engagement events:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * 5.5 Get Events by Location
+   * GET /api/v1/user/events/advanced-search/location/{location}
+   * Location-based event filtering
+   * @param {string} location - Location to filter by
+   * @param {number} page - Page number
+   * @param {number} size - Page size
+   * @returns {Promise<Object>} Events by location data
+   */
+  async getEventsByLocation(location, page = 0, size = 10) {
+    try {
+      const response = await apiClient.get(`/events/advanced-search/location/${encodeURIComponent(location)}?page=${page}&size=${size}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting events by location:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * 5.6 Get Events by Organizer
+   * GET /api/v1/user/events/advanced-search/organizer/{organizerName}
+   * Organizer profile page
+   * @param {string} organizerName - Organizer name to filter by
+   * @param {number} page - Page number
+   * @param {number} size - Page size
+   * @returns {Promise<Object>} Events by organizer data
+   */
+  async getEventsByOrganizer(organizerName, page = 0, size = 10) {
+    try {
+      const response = await apiClient.get(`/events/advanced-search/organizer/${encodeURIComponent(organizerName)}?page=${page}&size=${size}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting events by organizer:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  // ===== EVENT COMMENTS API =====
+
+  /**
+   * Create Comment
+   * POST /api/v1/user/events/comments
+   * @param {Object} commentData - Comment data
+   * @param {number} commentData.eventId - Event ID
+   * @param {string} commentData.content - Comment content
+   * @param {number} commentData.parentCommentId - Parent comment ID (optional)
+   * @returns {Promise<Object>} Created comment data
+   */
+  async createComment(commentData) {
+    try {
+      const response = await apiClient.post('/events/comments', commentData);
+      return response.data;
+    } catch (error) {
+      console.error('Error creating comment:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Get Event Comments with Nested Replies
+   * GET /api/v1/user/events/comments/event/{eventId}
+   * @param {number} eventId - Event ID
+   * @returns {Promise<Object>} Event comments data
+   */
+  async getEventComments(eventId) {
+    try {
+      const response = await apiClient.get(`/events/comments/event/${eventId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting event comments:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Get Comment by ID
+   * GET /api/v1/user/events/comments/{commentId}
+   * @param {number} commentId - Comment ID
+   * @returns {Promise<Object>} Comment data
+   */
+  async getCommentById(commentId) {
+    try {
+      const response = await apiClient.get(`/events/comments/${commentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting comment by ID:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Update Comment
+   * PUT /api/v1/user/events/comments/{commentId}
+   * @param {number} commentId - Comment ID
+   * @param {Object} commentData - Updated comment data
+   * @param {number} commentData.eventId - Event ID
+   * @param {string} commentData.content - Updated comment content
+   * @returns {Promise<Object>} Updated comment data
+   */
+  async updateComment(commentId, commentData) {
+    try {
+      const response = await apiClient.put(`/events/comments/${commentId}`, commentData);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating comment:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Delete Comment
+   * DELETE /api/v1/user/events/comments/{commentId}
+   * @param {number} commentId - Comment ID
+   * @returns {Promise<Object>} Deletion result
+   */
+  async deleteComment(commentId) {
+    try {
+      const response = await apiClient.delete(`/events/comments/${commentId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Toggle Comment Like
+   * POST /api/v1/user/events/comments/{commentId}/like
+   * @param {number} commentId - Comment ID
+   * @returns {Promise<Object>} Updated comment data
+   */
+  async toggleCommentLike(commentId) {
+    try {
+      const response = await apiClient.post(`/events/comments/${commentId}/like`);
+      return response.data;
+    } catch (error) {
+      console.error('Error toggling comment like:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Get Popular Comments by Event
+   * GET /api/v1/user/events/comments/popular?eventId={eventId}&page={page}&size={size}
+   * @param {number} eventId - Event ID
+   * @param {number} page - Page number (default: 0)
+   * @param {number} size - Page size (default: 10)
+   * @returns {Promise<Object>} Popular comments data
+   */
+  async getPopularComments(eventId, page = 0, size = 10) {
+    try {
+      const response = await apiClient.get(`/events/comments/popular?eventId=${eventId}&page=${page}&size=${size}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting popular comments:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Get Recent Comments by Event
+   * GET /api/v1/user/events/comments/recent?eventId={eventId}&page={page}&size={size}
+   * @param {number} eventId - Event ID
+   * @param {number} page - Page number (default: 0)
+   * @param {number} size - Page size (default: 10)
+   * @returns {Promise<Object>} Recent comments data
+   */
+  async getRecentComments(eventId, page = 0, size = 10) {
+    try {
+      const response = await apiClient.get(`/events/comments/recent?eventId=${eventId}&page=${page}&size=${size}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting recent comments:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  // ===== EVENT BANNER MANAGEMENT =====
+
+  /**
+   * Upload Event Banner
+   * POST /api/v1/user/events/banner/{eventId}
+   * @param {string} eventId - Event ID
+   * @param {File} file - Banner image file
+   * @returns {Promise<Object>} Upload result with file URL
+   */
+  async uploadEventBanner(eventId, file) {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await apiClient.post(`/events/banner/${eventId}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading event banner:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Get Event Banner URL
+   * GET /api/v1/user/events/banner/{eventId}
+   * @param {string} eventId - Event ID
+   * @returns {Promise<Object>} Banner URL data
+   */
+  async getEventBannerUrl(eventId) {
+    try {
+      const response = await apiClient.get(`/events/banner/${eventId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error getting event banner URL:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Delete Event Banner
+   * DELETE /api/v1/user/events/banner/{eventId}
+   * @param {string} eventId - Event ID
+   * @returns {Promise<Object>} Deletion result
+   */
+  async deleteEventBanner(eventId) {
+    try {
+      const response = await apiClient.delete(`/events/banner/${eventId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error deleting event banner:', error);
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Get Event Banner File URL (Public)
+   * @param {string} eventId - Event ID
+   * @param {string} fileName - Banner file name
+   * @returns {string} Public banner file URL
+   */
+  getEventBannerFileUrl(eventId, fileName) {
+    return `${apiClient.defaults.baseURL}/events/${eventId}/banner/file/${fileName}`;
   }
 }
 

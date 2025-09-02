@@ -46,7 +46,7 @@ export const useEventSearch = () => {
    */
   const filterByType = useCallback((events) => {
     if (filterType === 'all') return events;
-    return events.filter((event) => event.eventType === filterType);
+    return events.filter((event) => event.category === filterType || event.eventType === filterType);
   }, [filterType]);
 
   /**

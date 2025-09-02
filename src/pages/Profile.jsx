@@ -43,6 +43,7 @@ import {
 } from "../components/PhotoManager";
 import FeatureFlagWrapper from "../components/FeatureFlagWrapper";
 import { toast } from "react-toastify";
+import ThemeSettingsCard from "../components/ThemeSettingsCard";
 
 const Profile = () => {
   const { user } = useUnifiedAuth();
@@ -690,6 +691,8 @@ const Profile = () => {
                 )}
               </div>
             </div>
+
+
           </div>
         </div>
       </div>
@@ -1247,19 +1250,7 @@ const Profile = () => {
                 </Button>
               </form>
 
-              {/* Security Tips */}
-              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h4 className="text-sm font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
-                  <Shield className="h-4 w-4 mr-2 text-gray-600 dark:text-gray-400" />
-                  Security Tips
-                </h4>
-                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                  <p>• Use at least 8 characters</p>
-                  <p>• Include uppercase, lowercase, numbers, and symbols</p>
-                  <p>• Don't share your password with anyone</p>
-                  <p>• Change your password regularly</p>
-                </div>
-              </div>
+              
             </div>
           </FeatureFlagWrapper>
         </div>
@@ -1320,6 +1311,11 @@ const Profile = () => {
                 </div>
               )}
           </div>
+
+          {/* Theme Settings Card */}
+          <ThemeSettingsCard />
+
+          
         </div>
       </div>
     </div>

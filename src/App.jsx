@@ -12,6 +12,8 @@ import Profile from "./pages/Profile";
 import ViewProfile from "./pages/ViewProfile";
 import Search from "./pages/Search";
 import Events from "./pages/Events";
+import EventDetail from "./pages/EventDetail";
+import CreateEvent from "./pages/CreateEvent";
 
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -449,7 +451,7 @@ function AppRoutes() {
                     <div className="text-center">
                       <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
                         <svg className="h-6 w-6 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                       </div>
                       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -544,6 +546,108 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/events/create"
+          element={
+            <ProtectedRoute>
+              <FeatureFlagWrapper 
+                featureName="events"
+                fallback={
+                  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                        <Calendar className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                        Events Unavailable
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 mb-6">
+                        The events feature is currently disabled. Please check back later or contact support for assistance.
+                      </p>
+                      <button 
+                        onClick={() => window.history.back()} 
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                      >
+                        Go Back
+                      </button>
+                    </div>
+                  </div>
+                }
+                defaultValue={true}
+              >
+                <CreateEvent />
+              </FeatureFlagWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events/edit/:eventId"
+          element={
+            <ProtectedRoute>
+              <FeatureFlagWrapper 
+                featureName="events"
+                fallback={
+                  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                        <Calendar className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                        Events Unavailable
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 mb-6">
+                        The events feature is currently disabled. Please check back later or contact support for assistance.
+                      </p>
+                      <button 
+                        onClick={() => window.history.back()} 
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                      >
+                        Go Back
+                      </button>
+                    </div>
+                  </div>
+                }
+                defaultValue={true}
+              >
+                <CreateEvent />
+              </FeatureFlagWrapper>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/events/:eventId"
+          element={
+            <ProtectedRoute>
+              <FeatureFlagWrapper 
+                featureName="events"
+                fallback={
+                  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-gray-100 dark:bg-gray-800 mb-4">
+                        <Calendar className="h-6 w-6 text-gray-400" />
+                      </div>
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
+                        Events Unavailable
+                      </h3>
+                      <p className="text-gray-500 dark:text-gray-400 mb-6">
+                        The events feature is currently disabled. Please check back later or contact support for assistance.
+                      </p>
+                      <button 
+                        onClick={() => window.history.back()} 
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                      >
+                        Go Back
+                      </button>
+                    </div>
+                  </div>
+                }
+                defaultValue={true}
+              >
+                <EventDetail />
+              </FeatureFlagWrapper>
+            </ProtectedRoute>
+          }
+        />
 
         <Route
           path="/notifications"
@@ -633,7 +737,7 @@ function AppRoutes() {
         pauseOnFocusLoss
         draggable
         pauseOnHover
-        theme={localStorage.getItem("theme") === "dark" ? "dark" : "light"}
+        theme={document.documentElement.classList.contains("dark") ? "dark" : "light"}
       />
     </div>
   );

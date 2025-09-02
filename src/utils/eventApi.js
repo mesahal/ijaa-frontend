@@ -455,7 +455,15 @@ export const EVENT_PRIVACY = {
   ALUMNI_ONLY: 'ALUMNI_ONLY'
 };
 
-// Constants for event types
+// Constants for event categories (Phase 1 API)
+export const EVENT_CATEGORIES = {
+  SOCIAL: 'SOCIAL',
+  EDUCATIONAL: 'EDUCATIONAL',
+  NETWORKING: 'NETWORKING',
+  PROFESSIONAL: 'PROFESSIONAL'
+};
+
+// Constants for event types (legacy compatibility)
 export const EVENT_TYPES = {
   NETWORKING: 'NETWORKING',
   WORKSHOP: 'WORKSHOP',
@@ -463,6 +471,13 @@ export const EVENT_TYPES = {
   SOCIAL: 'SOCIAL',
   CAREER: 'CAREER',
   MENTORSHIP: 'MENTORSHIP'
+};
+
+// Event status constants
+export const EVENT_STATUS = {
+  ACTIVE: 'ACTIVE',
+  CANCELLED: 'CANCELLED',
+  COMPLETED: 'COMPLETED'
 };
 
 // Helper function to format date for API
