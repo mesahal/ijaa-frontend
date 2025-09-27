@@ -19,7 +19,7 @@ global.fetch = jest.fn();
 
 // Test component that simulates the App.jsx navbar visibility logic
 const TestAppComponent = () => {
-  const { user, admin, loading, isUser, isAdmin } = useUnifiedAuth();
+  const { user, admin, loading, isUser, isAdmin } = useAuth();
   const location = { pathname: '/dashboard' }; // Simulate being on a user page
 
   if (loading) {
@@ -94,7 +94,7 @@ const signInAdmin = async () => {
   global.fetch.mockResolvedValue(mockResponse);
   
   // Simulate the adminSignIn call
-  const response = await fetch('http://localhost:8000/ijaa/api/v1/admin/login', {
+  const response = await fetch(`${process.env.REACT_APP_API_ADMIN_URL}/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: 'admin@test.com', password: 'admin123' })

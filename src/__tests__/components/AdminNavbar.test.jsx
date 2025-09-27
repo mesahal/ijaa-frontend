@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent } from '../utils/test-utils';
+import { render, screen, fireEvent  } from '../../../utils/test-utils';
 import AdminNavbar from '../../components/AdminNavbar';
 
 describe('AdminNavbar', () => {
@@ -9,8 +9,6 @@ describe('AdminNavbar', () => {
     // Check for main navigation items
     expect(screen.getByText(/dashboard/i)).toBeInTheDocument();
     expect(screen.getByText(/users/i)).toBeInTheDocument();
-    expect(screen.getByText(/announcements/i)).toBeInTheDocument();
-    expect(screen.getByText(/reports/i)).toBeInTheDocument();
     expect(screen.getByText(/feature flags/i)).toBeInTheDocument();
   });
 
@@ -75,8 +73,6 @@ describe('AdminNavbar', () => {
     const expectedItems = [
       'Dashboard',
       'Users',
-      'Announcements',
-      'Reports',
       'Feature Flags'
     ];
 

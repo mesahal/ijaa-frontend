@@ -20,12 +20,21 @@ jest.mock('../../utils/adminApi', () => ({
     refreshFeatureFlagCache: jest.fn()
   }
 }));
-import { featureFlagApi, FEATURE_FLAGS, FEATURE_FLAG_DESCRIPTIONS } from '../../utils/featureFlagApi';
+
+// Mock axios for direct API calls
+jest.mock('axios', () => ({
+  get: jest.fn(),
+  post: jest.fn(),
+  put: jest.fn(),
+  delete: jest.fn()
+}));
+import { featureFlagApi, FEATURE_FLAGS, FEATURE_FLAG_DESCRIPTIONS  } from '../../../utils/featureFlagApi';
 
 
 
 import apiClient from '../../utils/apiClient';
-import { adminApi } from '../../utils/adminApi';
+import { adminApi  } from '../../../utils/adminApi';
+import axios from 'axios';
 
 describe('featureFlagApi', () => {
   beforeEach(() => {
@@ -151,11 +160,19 @@ describe('featureFlagApi', () => {
           enabled: true
         }
       };
-      apiClient.get.mockResolvedValue(mockResponse);
+      axios.get.mockResolvedValue(mockResponse);
 
       const result = await featureFlagApi.checkFeatureFlag('events.creation');
       expect(result).toEqual(mockResponse.data);
-      expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/events.creation/enabled');
+      expect(axios.get).toHaveBeenCalledWith(
+        `${process.env.REACT_APP_API_BASE_URL}/admin/feature-flags/events.creation/enabled`,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+          })
+        })
+      );
     });
 
     it('should check multiple feature flags', async () => {
@@ -164,7 +181,7 @@ describe('featureFlagApi', () => {
         { data: { name: 'events.creation', enabled: false } }
       ];
       
-      apiClient.get
+      axios.get
         .mockResolvedValueOnce(mockResponses[0])
         .mockResolvedValueOnce(mockResponses[1]);
 
@@ -176,7 +193,7 @@ describe('featureFlagApi', () => {
     });
 
     it('should handle errors in multiple feature flag check', async () => {
-      apiClient.get
+      axios.get
         .mockRejectedValueOnce(new Error('API Error'))
         .mockResolvedValueOnce({ data: { name: 'events.creation', enabled: true } });
 
@@ -198,7 +215,7 @@ describe('featureFlagApi', () => {
           enabled: true
         }
       };
-      apiClient.get.mockResolvedValue(mockResponse);
+      axios.get.mockResolvedValue(mockResponse);
 
       // First call should hit the API
       const result1 = await featureFlagApi.checkFeatureFlagCached('events.creation');
@@ -209,7 +226,7 @@ describe('featureFlagApi', () => {
       expect(result2).toEqual(mockResponse.data);
 
       // API should only be called once
-      expect(apiClient.get).toHaveBeenCalledTimes(1);
+      expect(axios.get).toHaveBeenCalledTimes(1);
     });
 
     it('should check feature flag with fallback', async () => {
@@ -219,14 +236,14 @@ describe('featureFlagApi', () => {
           enabled: true
         }
       };
-      apiClient.get.mockResolvedValue(mockResponse);
+      axios.get.mockResolvedValue(mockResponse);
 
       const result = await featureFlagApi.checkFeatureFlagWithFallback('events.creation', false);
       expect(result).toBe(true);
     });
 
     it('should return fallback value on error', async () => {
-      apiClient.get.mockRejectedValue(new Error('API Error'));
+      axios.get.mockRejectedValue(new Error('API Error'));
 
       const result = await featureFlagApi.checkFeatureFlagWithFallback('events.creation', false);
       expect(result).toBe(false);
@@ -241,17 +258,25 @@ describe('featureFlagApi', () => {
           enabled: true
         }
       };
-      apiClient.get.mockResolvedValue(mockResponse);
+      axios.get.mockResolvedValue(mockResponse);
 
       const result = await featureFlagApi.isParentFeatureEnabled('events.creation');
       expect(result).toBe(true);
-      expect(apiClient.get).toHaveBeenCalledWith('/admin/feature-flags/events/enabled');
+      expect(axios.get).toHaveBeenCalledWith(
+        `${process.env.REACT_APP_API_BASE_URL}/admin/feature-flags/events/enabled`,
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            'Content-Type': 'application/json',
+            'accept': 'application/json'
+          })
+        })
+      );
     });
 
     it('should return true for features without parent', async () => {
       const result = await featureFlagApi.isParentFeatureEnabled('events');
       expect(result).toBe(true);
-      expect(apiClient.get).not.toHaveBeenCalled();
+      expect(axios.get).not.toHaveBeenCalled();
     });
 
     it('should check feature flag with hierarchical validation', async () => {
@@ -268,12 +293,12 @@ describe('featureFlagApi', () => {
         }
       };
       
-      apiClient.get
+      axios.get
         .mockResolvedValueOnce(parentResponse)
         .mockResolvedValueOnce(featureResponse);
 
       const result = await featureFlagApi.checkFeatureFlagHierarchical('events.creation');
-      expect(result).toEqual(featureResponse);
+      expect(result).toEqual(featureResponse.data);
     });
 
     it('should return disabled when parent is disabled', async () => {
@@ -284,7 +309,7 @@ describe('featureFlagApi', () => {
         }
       };
       
-      apiClient.get.mockResolvedValue(parentResponse);
+      axios.get.mockResolvedValue(parentResponse);
 
       const result = await featureFlagApi.checkFeatureFlagHierarchical('events.creation');
       expect(result.data).toEqual({
@@ -350,14 +375,14 @@ describe('featureFlagApi', () => {
           enabled: true
         }
       };
-      apiClient.get.mockResolvedValue(mockResponse);
+      axios.get.mockResolvedValue(mockResponse);
 
       const result = await featureFlagApi.validateFeatureFlag('events.creation');
       expect(result).toBe(true);
     });
 
     it('should return false for non-existent feature flag', async () => {
-      apiClient.get.mockRejectedValue(new Error('Not found'));
+      axios.get.mockRejectedValue(new Error('Not found'));
 
       const result = await featureFlagApi.validateFeatureFlag('non.existent');
       expect(result).toBe(false);
@@ -372,13 +397,13 @@ describe('featureFlagApi', () => {
     });
 
     it('should handle API errors in checkFeatureFlag', async () => {
-      apiClient.get.mockRejectedValue(new Error('API Error'));
+      axios.get.mockRejectedValue(new Error('API Error'));
 
       await expect(featureFlagApi.checkFeatureFlag('events.creation')).rejects.toThrow('API Error');
     });
 
     it('should handle API errors in hierarchical check', async () => {
-      apiClient.get.mockRejectedValue(new Error('API Error'));
+      axios.get.mockRejectedValue(new Error('API Error'));
 
       const result = await featureFlagApi.isParentFeatureEnabled('events.creation');
       expect(result).toBe(false);
@@ -406,11 +431,11 @@ describe('FEATURE_FLAGS constants', () => {
 
 describe('FEATURE_FLAG_DESCRIPTIONS', () => {
   it('should contain descriptions for hierarchical feature flags', () => {
-    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.USER_REGISTRATION]).toBe('User registration functionality');
-    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.EVENTS]).toBe('Event management system');
-    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.EVENTS_CREATION]).toBe('Event creation functionality');
-    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.FILE_UPLOAD]).toBe('File upload functionality');
-    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.ADMIN_FEATURES]).toBe('Admin panel functionality');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.USER_REGISTRATION]).toBe('Enable user registration functionality');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.EVENTS]).toBe('Enable event management functionality');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.EVENTS_CREATION]).toBe('Enable event creation functionality');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.FILE_UPLOAD]).toBe('Enable file upload functionality');
+    expect(FEATURE_FLAG_DESCRIPTIONS[FEATURE_FLAGS.ADMIN_FEATURES]).toBe('Enable admin functionality');
   });
 
   it('should contain descriptions for legacy feature flags', () => {

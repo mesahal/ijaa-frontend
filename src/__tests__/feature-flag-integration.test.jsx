@@ -17,7 +17,7 @@ jest.mock('../context/UnifiedAuthContext', () => ({
 }));
 
 import { useFeatureFlag } from '../hooks/useFeatureFlag';
-import { useUnifiedAuth } from '../context/UnifiedAuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const mockUseFeatureFlag = useFeatureFlag;
 const mockUseUnifiedAuth = useUnifiedAuth;

@@ -59,8 +59,7 @@ describe('Build System Integrity', () => {
   
   test('should have all required context providers', () => {
     const requiredContexts = [
-      'src/context/AuthContext.jsx',
-      'src/context/AdminAuthContext.jsx',
+      'src/context/UnifiedAuthContext.jsx',
       'src/context/ThemeContext.jsx'
     ];
     
@@ -134,8 +133,7 @@ describe('Build System Integrity', () => {
     
     // Check for required imports
     expect(content).toContain('import Navbar from "./components/Navbar"');
-    expect(content).toContain('import { AuthProvider, useAuth } from "./context/AuthContext"');
-    expect(content).toContain('import { AdminAuthProvider, useAdminAuth } from "./context/AdminAuthContext"');
+    expect(content).toContain('import { UnifiedAuthProvider, useUnifiedAuth } from "./context/UnifiedAuthContext"');
     
     // Check for navbar logic
     expect(content).toContain('{user && !admin && !location.pathname.startsWith(\'/admin\') && <Navbar />}');

@@ -1,4 +1,4 @@
-import { eventApi, PARTICIPATION_STATUS, EVENT_PRIVACY, EVENT_TYPES, formatDateForAPI, canUserJoinEvent } from '../../utils/eventApi';
+import { eventApi, PARTICIPATION_STATUS, EVENT_PRIVACY, EVENT_TYPES, formatDateForAPI, canUserJoinEvent  } from '../../../services/api/eventApi';
 import apiClient from '../../utils/apiClient';
 
 // Mock the apiClient

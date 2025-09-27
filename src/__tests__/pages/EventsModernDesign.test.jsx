@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import Events from '../../pages/Events';
-import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { useEvents } from '../../hooks/events/useEvents';
 import { useEventActions } from '../../hooks/events/useEventActions';
 import { useEventSearch } from '../../hooks/events/useEventSearch';

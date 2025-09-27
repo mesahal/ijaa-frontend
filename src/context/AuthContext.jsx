@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import sessionManager from "../utils/sessionManager";
+import AuthService from "../services/auth/AuthService";
+import TokenManager from "../services/auth/TokenManager";
+import SessionManager from "../services/auth/SessionManager";
+import { ADMIN_ROLE } from '../utils/constants/roleConstants';
 
 const AuthContext = createContext();
 
@@ -13,190 +16,425 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  // Simplified state management
   const [user, setUser] = useState(null);
+  const [admin, setAdmin] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accessToken, setAccessToken] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
-  // Get API base URL from environment or use default
-  const API_BASE =
-    process.env.REACT_APP_API_BASE_URL ||
-    "http://localhost:8000/ijaa/api/v1/user";
-
-  // Handle automatic logout from token expiry
-  const handleAutoLogout = (event) => {
-    const { reason } = event.detail;
-    
-    // Clear user state
-    setUser(null);
-    
-    // Show appropriate message
-    if (reason === 'token_expired') {
-      toast.info("Session expired. Please log in again.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
-  };
-
+  /**
+   * Simplified authentication initialization
+   */
   useEffect(() => {
-    const initializeSession = async () => {
+    const initializeAuth = async () => {
+      console.log('🚀 [AuthContext] Initializing authentication...');
+      setLoading(true);
+      
       try {
-        // Clean up old session variables
-        sessionManager.cleanupOldVariables();
+        // Check localStorage for user data
+        const userData = localStorage.getItem('alumni_user');
+        const adminData = localStorage.getItem('admin_user');
+        const sessionType = localStorage.getItem('session_type');
         
-        // Check for existing user session using session manager
-        const userSession = sessionManager.getUserSession();
-        if (userSession && userSession.data) {
-          const userData = userSession.data;
-          // Validate that the user data has required fields
-          if (userData && userData.token && userData.email) {
-            setUser(userData);
-          } else {
-            // Clear invalid user data
-            sessionManager.clearUser();
+        console.log('🔍 [AuthContext] localStorage check:', {
+          hasUserData: !!userData,
+          hasAdminData: !!adminData,
+          sessionType,
+          timestamp: new Date().toISOString()
+        });
+        
+        if (sessionType === 'user' && userData) {
+          try {
+            const parsedUserData = JSON.parse(userData);
+            if (parsedUserData && parsedUserData.email) {
+              console.log('✅ [AuthContext] User session found, checking for refresh token...');
+              
+              // Check if we have a refresh token cookie
+              const hasRefreshCookie = document.cookie.includes('refreshToken');
+              console.log('🍪 [AuthContext] Refresh token cookie check:', {
+                hasRefreshCookie,
+                allCookies: document.cookie,
+                timestamp: new Date().toISOString()
+              });
+              
+              if (hasRefreshCookie) {
+                console.log('🔄 [AuthContext] Refresh token found, checking if token refresh is needed...');
+                
+                // Check if we have a valid access token in memory first
+                const existingToken = TokenManager.getAccessToken();
+                let needsRefresh = true;
+                
+                if (existingToken) {
+                  try {
+                    // Check if token is still valid (not expired)
+                    const tokenParts = existingToken.split('.');
+                    if (tokenParts.length === 3) {
+                      const payload = JSON.parse(atob(tokenParts[1]));
+                      const now = Math.floor(Date.now() / 1000);
+                      const timeUntilExpiry = payload.exp - now;
+                      
+                      // Token is valid if it expires in more than 5 minutes
+                      if (timeUntilExpiry > 300) {
+                        console.log('✅ [AuthContext] Existing access token is still valid, using it');
+                        setAccessToken(existingToken);
+                        setUser(parsedUserData);
+                        needsRefresh = false;
+                      } else {
+                        console.log('⏰ [AuthContext] Access token expires soon, refreshing...');
+                      }
+                    }
+                  } catch (error) {
+                    console.warn('⚠️ [AuthContext] Could not parse existing token, will refresh:', error.message);
+                  }
+                }
+                
+                // Only refresh if needed
+                if (needsRefresh) {
+                  try {
+                    const refreshResponse = await AuthService.refreshToken();
+                    if (refreshResponse && refreshResponse.accessToken) {
+                      console.log('✅ [AuthContext] Token refresh successful, restoring user session');
+                      setAccessToken(refreshResponse.accessToken);
+                      TokenManager.setAccessToken(refreshResponse.accessToken);
+                      window.__accessToken = refreshResponse.accessToken;
+                      setUser(parsedUserData);
+                    } else {
+                      throw new Error('No access token in refresh response');
+                    }
+                  } catch (refreshError) {
+                    console.warn('⚠️ [AuthContext] Token refresh failed, clearing session:', refreshError.message);
+                    SessionManager.clearUser();
+                  }
+                }
+              } else {
+                console.warn('⚠️ [AuthContext] No refresh token cookie found, but user data exists. This might indicate a backend issue with cookie setting.');
+                console.log('🔍 [AuthContext] Available cookies:', document.cookie);
+                console.log('🔍 [AuthContext] User data:', parsedUserData);
+                
+                // Try to restore session anyway - the user will be prompted to login when they try to make API calls
+                console.log('🔄 [AuthContext] Attempting to restore session without access token...');
+                setUser(parsedUserData);
+                
+                // Set a flag to indicate this is a partial session restoration
+                console.log('⚠️ [AuthContext] Session restored without access token. User will need to login again for API access.');
+              }
+            } else {
+              console.log('❌ [AuthContext] Invalid user data, clearing session');
+              SessionManager.clearUser();
+            }
+          } catch (error) {
+            console.error('❌ [AuthContext] Error parsing user data:', error);
+            SessionManager.clearUser();
           }
+        } else if (sessionType === 'admin' && adminData) {
+          try {
+            const parsedAdminData = JSON.parse(adminData);
+            if (parsedAdminData && parsedAdminData.email) {
+              console.log('✅ [AuthContext] Admin session found, checking for refresh token...');
+              
+              // Check if we have a refresh token cookie
+              const hasRefreshCookie = document.cookie.includes('refreshToken');
+              console.log('🍪 [AuthContext] Admin refresh token cookie check:', {
+                hasRefreshCookie,
+                allCookies: document.cookie,
+                timestamp: new Date().toISOString()
+              });
+              
+              if (hasRefreshCookie) {
+                console.log('🔄 [AuthContext] Admin refresh token found, checking if token refresh is needed...');
+                
+                // Check if we have a valid access token in memory first
+                const existingToken = TokenManager.getAccessToken();
+                let needsRefresh = true;
+                
+                if (existingToken) {
+                  try {
+                    // Check if token is still valid (not expired)
+                    const tokenParts = existingToken.split('.');
+                    if (tokenParts.length === 3) {
+                      const payload = JSON.parse(atob(tokenParts[1]));
+                      const now = Math.floor(Date.now() / 1000);
+                      const timeUntilExpiry = payload.exp - now;
+                      
+                      // Token is valid if it expires in more than 5 minutes
+                      if (timeUntilExpiry > 300) {
+                        console.log('✅ [AuthContext] Existing admin access token is still valid, using it');
+                        setAccessToken(existingToken);
+                        setAdmin(parsedAdminData);
+                        needsRefresh = false;
+                      } else {
+                        console.log('⏰ [AuthContext] Admin access token expires soon, refreshing...');
+                      }
+                    }
+                  } catch (error) {
+                    console.warn('⚠️ [AuthContext] Could not parse existing admin token, will refresh:', error.message);
+                  }
+                }
+                
+                // Only refresh if needed
+                if (needsRefresh) {
+                  try {
+                    const refreshResponse = await AuthService.refreshToken();
+                    if (refreshResponse && refreshResponse.accessToken) {
+                      console.log('✅ [AuthContext] Admin token refresh successful, restoring admin session');
+                      setAccessToken(refreshResponse.accessToken);
+                      TokenManager.setAccessToken(refreshResponse.accessToken);
+                      window.__accessToken = refreshResponse.accessToken;
+                      setAdmin(parsedAdminData);
+                    } else {
+                      throw new Error('No access token in refresh response');
+                    }
+                  } catch (refreshError) {
+                    console.warn('⚠️ [AuthContext] Admin token refresh failed, clearing session:', refreshError.message);
+                    SessionManager.clearAdmin();
+                  }
+                }
+              } else {
+                console.warn('⚠️ [AuthContext] No refresh token cookie found for admin, but admin data exists. This might indicate a backend issue with cookie setting.');
+                console.log('🔍 [AuthContext] Available cookies:', document.cookie);
+                console.log('🔍 [AuthContext] Admin data:', parsedAdminData);
+                
+                // Try to restore session anyway - the admin will be prompted to login when they try to make API calls
+                console.log('🔄 [AuthContext] Attempting to restore admin session without access token...');
+                setAdmin(parsedAdminData);
+                
+                // Set a flag to indicate this is a partial session restoration
+                console.log('⚠️ [AuthContext] Admin session restored without access token. Admin will need to login again for API access.');
+              }
+            } else {
+              console.log('❌ [AuthContext] Invalid admin data, clearing session');
+              SessionManager.clearAdmin();
+            }
+          } catch (error) {
+            console.error('❌ [AuthContext] Error parsing admin data:', error);
+            SessionManager.clearAdmin();
+          }
+        } else {
+          console.log('ℹ️ [AuthContext] No valid session found');
         }
       } catch (error) {
-        console.error("Error loading user session:", error);
-        // Clear corrupted user data
-        sessionManager.clearUser();
+        console.error('❌ [AuthContext] Authentication initialization error:', error);
+        // Clear any corrupted data
+        SessionManager.clearAll();
       } finally {
+        console.log('🏁 [AuthContext] Authentication initialization completed');
         setLoading(false);
+        setIsInitialized(true);
       }
     };
 
-    initializeSession();
+    initializeAuth();
+  }, []);
 
-    // Listen for automatic logout events
+  /**
+   * User Authentication Methods
+   */
+  const signIn = async (email, password) => {
+    try {
+      console.log('🔐 [AuthContext] Starting user sign-in process:', { email });
+      
+      const loginResponse = await AuthService.login({
+        username: email,
+        password,
+      });
+
+      console.log('✅ [AuthContext] Login response received:', {
+        hasAccessToken: !!loginResponse.accessToken,
+        userId: loginResponse.userId,
+        username: loginResponse.username
+      });
+
+      const userData = {
+        email: email,
+        userId: loginResponse.userId,
+        username: loginResponse.username,
+      };
+
+      // Store access token and user data
+      setAccessToken(loginResponse.accessToken);
+      TokenManager.setAccessToken(loginResponse.accessToken);
+      window.__accessToken = loginResponse.accessToken;
+      
+      // Store user session
+      SessionManager.handleSessionConflict('user');
+      SessionManager.setUser(userData);
+      setUser(userData);
+      setAdmin(null);
+      
+      console.log('🎉 [AuthContext] Sign-in completed successfully');
+      return userData;
+    } catch (err) {
+      console.error('❌ [AuthContext] Sign-in failed:', err.message);
+      throw err;
+    }
+  };
+
+  const signOut = async () => {
+    console.log('🚪 [AuthContext] Signing out user');
+    
+    try {
+      // Call AuthService logout to clear refresh token on server
+      await AuthService.logout();
+    } catch (error) {
+      console.warn('⚠️ [AuthContext] Logout request failed, but continuing with local cleanup:', error);
+    }
+    
+    // Clear all authentication data
+    setUser(null);
+    setAdmin(null);
+    setAccessToken(null);
+    TokenManager.clearAccessToken();
+    window.__accessToken = null;
+    
+    // Clear session data
+    SessionManager.clearAll();
+    
+    console.log('✅ [AuthContext] Sign-out completed');
+  };
+
+  /**
+   * Admin Authentication Methods
+   */
+  const adminSignIn = async (email, password) => {
+    try {
+      console.log('👨‍💼 [AuthContext] Starting admin sign-in process:', { email });
+      
+      const loginResponse = await AuthService.adminLogin({
+        username: email,
+        password,
+      });
+
+      console.log('✅ [AuthContext] Admin login response received:', {
+        hasAccessToken: !!loginResponse.accessToken,
+        adminId: loginResponse.adminId,
+        username: loginResponse.username
+      });
+
+      const adminData = {
+        email: email,
+        adminId: loginResponse.adminId,
+        username: loginResponse.username,
+        role: loginResponse.role || ADMIN_ROLE.ADMIN,
+      };
+
+      // Store access token and admin data
+      setAccessToken(loginResponse.accessToken);
+      TokenManager.setAccessToken(loginResponse.accessToken);
+      window.__accessToken = loginResponse.accessToken;
+
+      // Store admin session
+      SessionManager.handleSessionConflict('admin');
+      SessionManager.setAdmin(adminData);
+      setAdmin(adminData);
+      setUser(null);
+      
+      console.log('🎉 [AuthContext] Admin sign-in completed successfully');
+      return adminData;
+    } catch (err) {
+      console.error('❌ [AuthContext] Admin sign-in failed:', err.message);
+      throw err;
+    }
+  };
+
+  const adminSignOut = async () => {
+    console.log('🚪 [AuthContext] Signing out admin');
+    
+    try {
+      // Call AuthService logout to clear refresh token on server
+      await AuthService.logout();
+    } catch (error) {
+      console.warn('⚠️ [AuthContext] Logout request failed, but continuing with local cleanup:', error);
+    }
+    
+    // Clear all authentication data
+    setUser(null);
+    setAdmin(null);
+    setAccessToken(null);
+    TokenManager.clearAccessToken();
+    window.__accessToken = null;
+    
+    // Clear session data
+    SessionManager.clearAll();
+    
+    console.log('✅ [AuthContext] Admin sign-out completed');
+  };
+
+  /**
+   * Authentication State Getters
+   */
+  const isAuthenticated = () => {
+    return !!(user || admin);
+  };
+
+  const isUser = () => {
+    return !!user;
+  };
+
+  const isAdmin = () => {
+    return !!admin;
+  };
+
+  const getCurrentUser = () => {
+    return user || admin;
+  };
+
+  const getCurrentUserType = () => {
+    if (user) return 'user';
+    if (admin) return 'admin';
+    return null;
+  };
+
+  const getAccessToken = () => {
+    return accessToken || TokenManager.getAccessToken();
+  };
+
+  /**
+   * Auto-logout handler
+   */
+  const handleAutoLogout = (event) => {
+    console.log('🔄 [AuthContext] Auto-logout triggered:', event.detail);
+    signOut();
+  };
+
+  // Listen for auto-logout events
+  useEffect(() => {
     window.addEventListener('auth:logout', handleAutoLogout);
-
-    // Listen for storage changes (cross-tab synchronization)
-    const unsubscribe = sessionManager.onStorageChange((session) => {
-      if (session.type === 'user') {
-        setUser(session.data);
-      } else {
-        setUser(null);
-      }
-    });
-
-    // Cleanup event listeners
     return () => {
       window.removeEventListener('auth:logout', handleAutoLogout);
-      unsubscribe();
     };
   }, []);
 
-  // Ensure loading is false when user state is set
-  useEffect(() => {
-    if (user && loading) {
-      setLoading(false);
-    }
-  }, [user, loading]);
-
-  const signIn = async (email, password) => {
-    try {
-      const response = await fetch(`${API_BASE}/signin`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: email,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || "Sign-in failed");
-      }
-
-      // Backend returns { message, code, data: { token, userId } }
-      const userData = {
-        email: email,
-        token: data.data.token,
-        userId: data.data.userId,
-      };
-
-      // Handle session conflict and set user session
-      sessionManager.handleSessionConflict('user');
-      sessionManager.setUser(userData);
-      setUser(userData);
-      
-      // Ensure loading is false after successful login
-      setLoading(false);
-      
-      return userData;
-    } catch (err) {
-      throw new Error(err.message || "Sign-in failed");
-    }
-  };
-
-  const signUp = async ({ email, password }) => {
-    try {
-      const response = await fetch(`${API_BASE}/signup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username: email,
-          password,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle specific error codes from backend
-        if (
-          response.status === 409 ||
-          data.message?.includes("already exists")
-        ) {
-          throw new Error("User already exists");
-        }
-        throw new Error(data.message || "Registration failed");
-      }
-
-      // Backend returns { message, code, data: { token, userId } }
-      const userData = {
-        email: email,
-        token: data.data.token,
-        userId: data.data.userId,
-      };
-
-      // Handle session conflict and set user session
-      sessionManager.handleSessionConflict('user');
-      sessionManager.setUser(userData);
-      setUser(userData);
-      
-      // Ensure loading is false after successful signup
-      setLoading(false);
-      
-      return userData;
-    } catch (err) {
-      throw new Error(err.message || "Registration failed");
-    }
-  };
-
-  const signOut = () => {
-    setUser(null);
-    sessionManager.clearUser();
-    
-    // Show logout message
-    toast.success("Logged out successfully", {
-      position: "top-right",
-      autoClose: 2000,
-    });
-  };
-
   const value = {
+    // State
     user,
-    signIn,
-    signUp,
-    signOut,
+    admin,
     loading,
+    accessToken,
+    isInitialized,
+    
+    // User methods
+    signIn,
+    signOut,
+    
+    // Admin methods
+    adminSignIn,
+    adminSignOut,
+    
+    // State getters
+    isAuthenticated,
+    isUser,
+    isAdmin,
+    getCurrentUser,
+    getCurrentUserType,
+    getAccessToken,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
+
+export default AuthContext;

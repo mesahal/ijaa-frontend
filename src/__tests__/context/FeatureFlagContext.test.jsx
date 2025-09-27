@@ -17,7 +17,7 @@ vi.mock('../../utils/featureFlagApi', () => ({
   }
 }));
 
-import { featureFlagApi } from '../../utils/featureFlagApi';
+import { featureFlagApi  } from '../../../utils/featureFlagApi';
 
 // Test component to use the context
 const TestComponent = () => {

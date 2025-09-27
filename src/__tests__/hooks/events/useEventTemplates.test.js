@@ -1,10 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useEventTemplates } from '../../../hooks/events/useEventTemplates';
-import { useAuth } from '../../../context/AuthContext';
+import { useUnifiedAuth } from '../../../context/UnifiedAuthContext';
 import { eventApi } from '../../../utils/eventApi';
 
 // Mock dependencies
-jest.mock('../../../context/AuthContext');
+jest.mock('../../../context/UnifiedAuthContext');
 jest.mock('../../../utils/eventApi');
 
 describe('useEventTemplates', () => {
@@ -43,7 +43,7 @@ describe('useEventTemplates', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useAuth.mockReturnValue({ user: mockUser });
+    useUnifiedAuth.mockReturnValue({ user: mockUser });
   });
 
   describe('initialization', () => {
@@ -216,7 +216,7 @@ describe('useEventTemplates', () => {
     });
 
     it('should require authentication', async () => {
-      useAuth.mockReturnValue({ user: null });
+      useUnifiedAuth.mockReturnValue({ user: null });
 
       const { result } = renderHook(() => useEventTemplates());
 

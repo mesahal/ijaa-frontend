@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ThemeSelector from '../../components/ThemeSelector';
-import { THEME_OPTIONS } from '../../utils/themeApi';
+import { THEME_OPTIONS  } from '../../../utils/themeApi';
 
 // Mock the useTheme hook
 jest.mock('../../context/ThemeContext', () => ({

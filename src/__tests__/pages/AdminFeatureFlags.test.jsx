@@ -1,9 +1,9 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import AdminFeatureFlags from "../../pages/AdminFeatureFlags";
-import { useUnifiedAuth } from "../../context/UnifiedAuthContext";
-import { adminApi } from "../../utils/adminApi";
-import { featureFlagApi } from "../../utils/featureFlagApi";
+import { useAuth } from '../../hooks/useAuth';
+import { adminApi  } from '../../../utils/adminApi';
+import { featureFlagApi  } from '../../../utils/featureFlagApi';
 
 // Mock the contexts and APIs
 jest.mock("../../context/UnifiedAuthContext");

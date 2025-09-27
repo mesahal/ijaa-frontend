@@ -11,7 +11,7 @@ vi.mock('../../utils/featureFlagApi', () => ({
   }
 }));
 
-import { featureFlagApi } from '../../utils/featureFlagApi';
+import { featureFlagApi  } from '../../../utils/featureFlagApi';
 
 describe('FeatureFlagDebugPanel', () => {
   const mockFeatureFlags = [

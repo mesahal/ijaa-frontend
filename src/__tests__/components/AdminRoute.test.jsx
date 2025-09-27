@@ -1,13 +1,13 @@
 import React from 'react';
-import { render, screen } from '../utils/test-utils';
-import { useAuth } from '../../context/AuthContext';
+import { render, screen  } from '../../../utils/test-utils';
+import { useAuth } from '../../hooks/useAuth';
 import AdminRoute from '../../components/AdminRoute';
 import { MemoryRouter } from 'react-router-dom';
 
-// Mock the AuthContext
-jest.mock('../../context/AuthContext');
+// Mock the UnifiedAuthContext
+jest.mock('../../context/UnifiedAuthContext');
 
-const mockUseAuth = useAuth;
+const mockUseUnifiedAuth = useUnifiedAuth;
 
 describe('AdminRoute', () => {
   const TestComponent = () => <div>Admin Content</div>;
@@ -17,13 +17,14 @@ describe('AdminRoute', () => {
   });
 
   test('renders children when user is admin', () => {
-    mockUseAuth.mockReturnValue({
-      user: { 
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: { 
         username: 'admin', 
-        token: 'mock-token',
-        role: 'ADMIN'
+        role: 'ADMIN',
+        active: true
       },
-      loading: false
+      loading: false,
+      isAdmin: () => true
     });
 
     render(
@@ -38,9 +39,10 @@ describe('AdminRoute', () => {
   });
 
   test('shows loading spinner when authentication is loading', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: true
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: null,
+      loading: true,
+      isAdmin: () => false
     });
 
     render(
@@ -56,9 +58,10 @@ describe('AdminRoute', () => {
   });
 
   test('redirects to signin when user is not authenticated', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: false
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: null,
+      loading: false,
+      isAdmin: () => false
     });
 
     render(
@@ -73,13 +76,14 @@ describe('AdminRoute', () => {
   });
 
   test('redirects to dashboard when user is not admin', () => {
-    mockUseAuth.mockReturnValue({
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: null,
       user: { 
         username: 'regularuser', 
-        token: 'mock-token',
         role: 'USER'
       },
-      loading: false
+      loading: false,
+      isAdmin: () => false
     });
 
     render(
@@ -94,13 +98,14 @@ describe('AdminRoute', () => {
   });
 
   test('handles user without role property', () => {
-    mockUseAuth.mockReturnValue({
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: null,
       user: { 
-        username: 'user', 
-        token: 'mock-token'
+        username: 'user'
         // No role property
       },
-      loading: false
+      loading: false,
+      isAdmin: () => false
     });
 
     render(
@@ -115,9 +120,11 @@ describe('AdminRoute', () => {
   });
 
   test('handles undefined user gracefully', () => {
-    mockUseAuth.mockReturnValue({
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: null,
       user: undefined,
-      loading: false
+      loading: false,
+      isAdmin: () => false
     });
 
     render(
@@ -132,9 +139,10 @@ describe('AdminRoute', () => {
   });
 
   test('renders with custom loading component', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: true
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: null,
+      loading: true,
+      isAdmin: () => false
     });
 
     const CustomLoading = () => <div>Admin Loading...</div>;
@@ -150,10 +158,11 @@ describe('AdminRoute', () => {
     expect(screen.getByText('Admin Loading...')).toBeInTheDocument();
   });
 
-  test('calls useAuth hook correctly', () => {
-    mockUseAuth.mockReturnValue({
-      user: { username: 'admin', role: 'ADMIN' },
-      loading: false
+  test('calls useUnifiedAuth hook correctly', () => {
+    mockUseUnifiedAuth.mockReturnValue({
+      admin: { username: 'admin', role: 'ADMIN', active: true },
+      loading: false,
+      isAdmin: () => true
     });
 
     render(
@@ -164,20 +173,21 @@ describe('AdminRoute', () => {
       </MemoryRouter>
     );
 
-    expect(mockUseAuth).toHaveBeenCalledTimes(1);
+    expect(mockUseUnifiedAuth).toHaveBeenCalledTimes(1);
   });
 
   test('handles different admin role variations', () => {
     const adminRoles = ['ADMIN', 'admin', 'Admin'];
     
     adminRoles.forEach(role => {
-      mockUseAuth.mockReturnValue({
-        user: { 
+      mockUseUnifiedAuth.mockReturnValue({
+        admin: { 
           username: 'admin', 
-          token: 'mock-token',
-          role: role
+          role: role,
+          active: true
         },
-        loading: false
+        loading: false,
+        isAdmin: () => true
       });
 
       const { unmount } = render(

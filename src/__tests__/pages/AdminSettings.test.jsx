@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import AdminSettings from '../../pages/AdminSettings';
 import { useAdminAuth } from '../../context/AdminAuthContext';
-import { adminApi } from '../../utils/adminApi';
+import { adminApi  } from '../../../utils/adminApi';
 
 // Mock dependencies
 jest.mock('react-toastify');

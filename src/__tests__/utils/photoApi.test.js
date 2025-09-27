@@ -61,8 +61,7 @@ jest.mock("axios", () => ({
   })),
 }));
 
-import {
-  getProfilePhotoUrl,
+import { getProfilePhotoUrl,
   getCoverPhotoUrl,
   uploadProfilePhoto,
   uploadCoverPhoto,
@@ -70,7 +69,7 @@ import {
   deleteCoverPhoto,
   validateImageFile,
   handlePhotoApiError,
-} from "../../utils/photoApi";
+ } from '../../../utils/photoApi';
 
 // Mock the convertToAbsoluteUrl function by testing the actual implementation
 const testUrlConversion = (relativeUrl, expectedAbsoluteUrl) => {
@@ -81,15 +80,13 @@ const testUrlConversion = (relativeUrl, expectedAbsoluteUrl) => {
     return relativeUrl;
   }
   
-  // Extract just the domain and port from the base URL
-  const baseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000";
+  // Extract just the domain and port from the file API base URL
+  const baseUrl = process.env.REACT_APP_API_FILE_URL || "http://localhost:8000/ijaa/api/v1/file";
   let domainBase = baseUrl;
   
   // Remove any path components, keeping only domain and port
   if (baseUrl.includes('/ijaa/')) {
     domainBase = baseUrl.split('/ijaa/')[0];
-  } else if (baseUrl.includes('/user')) {
-    domainBase = baseUrl.split('/user')[0];
   }
   
   // If it's a relative URL starting with /, prepend the domain base

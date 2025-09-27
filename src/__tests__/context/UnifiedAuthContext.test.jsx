@@ -33,7 +33,7 @@ const TestComponent = () => {
     isAdmin,
     getCurrentUser,
     getCurrentUserType
-  } = useUnifiedAuth();
+  } = useAuth();
   
   return (
     <div>

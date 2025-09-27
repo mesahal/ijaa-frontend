@@ -17,6 +17,60 @@ IJAA (International Journal of Applied Arts) is a comprehensive web application 
 - **Fonts**: @fontsource/noto-sans for typography
 - **Notifications**: React Toastify for user feedback
 - **Email Integration**: EmailJS for email functionality
+- **Environment Configuration**: Environment variables for API endpoints and configuration
+
+## Environment Configuration
+
+### Environment Variables
+The project uses environment variables for all API endpoints and configuration. This ensures flexibility across different environments (development, test, production).
+
+#### **Environment Files**
+- `.env` - Development environment configuration
+- `.env.production` - Production environment configuration  
+- `.env.test` - Test environment configuration
+- `.env.example` - Template file for environment setup
+
+#### **Required Environment Variables**
+```bash
+# API Gateway Base URL
+REACT_APP_API_BASE_URL=http://localhost:8000/ijaa/api/v1/user
+
+# Admin API Base URL
+REACT_APP_API_ADMIN_URL=http://localhost:8000/ijaa/api/v1/user/admin
+
+# File Service API Base URL
+REACT_APP_API_FILE_URL=http://localhost:8000/ijaa/api/v1/file
+
+# Event Service API Base URL
+REACT_APP_API_EVENT_URL=http://localhost:8000/ijaa/api/v1/event
+
+# Theme/Settings API Base URL
+REACT_APP_THEME_API_BASE_URL=http://localhost:8000/ijaa/api/v1/user/settings
+
+# Config Service API Base URL
+REACT_APP_CONFIG_API_URL=http://localhost:8000/ijaa/api/v1/config
+
+# Discovery Service API Base URL
+REACT_APP_DISCOVERY_API_URL=http://localhost:8000/ijaa/api/v1/discovery
+
+# Application Configuration
+REACT_APP_APP_NAME=IJAA Frontend
+REACT_APP_APP_VERSION=1.0.0
+REACT_APP_ENVIRONMENT=development
+
+# Feature Flags
+REACT_APP_ENABLE_DEBUG=true
+REACT_APP_ENABLE_ANALYTICS=false
+
+# CORS Configuration
+REACT_APP_CORS_ORIGIN=http://localhost:3000
+```
+
+#### **Environment Setup**
+1. Copy `.env.example` to `.env`
+2. Update the values according to your environment
+3. For production, use `.env.production` with HTTPS URLs
+4. For testing, use `.env.test` with test-specific configurations
 
 ## Build and Development Tools
 
@@ -85,11 +139,16 @@ The project includes an extensive set of npm scripts for development, testing, a
 ## Core Features
 
 ### 1. Authentication System
-- **UnifiedAuthContext**: Centralized authentication state management
+- **Modern JWT Authentication**: Complete JWT-based authentication system with refresh token flow
+- **UnifiedAuthContext**: Centralized authentication state management with memory-only access token storage
+- **AuthService**: Centralized authentication service with proper API endpoint integration
+- **Automatic Token Refresh**: Seamless token refresh using HttpOnly cookies without user intervention
+- **Memory-Only Access Tokens**: Access tokens stored only in React Context memory for enhanced security
 - **Multi-role Support**: Users, Authors, Reviewers, Admins, Super Admins
-- **Session Management**: JWT token-based authentication with automatic refresh
+- **Session Management**: Hybrid approach with memory tokens and localStorage for user data persistence
 - **Protected Routes**: Role-based access control for different sections
-- **Admin Authentication**: Separate admin authentication system
+- **Admin Authentication**: Separate admin authentication system with independent token management
+- **Axios Interceptors**: Automatic token attachment and refresh handling for all API requests
 
 ### 2. Feature Flag System (Modern Implementation)
 The feature flag system provides granular control over application functionality with a modern, hierarchical interface.
@@ -123,14 +182,14 @@ The feature flag system provides granular control over application functionality
 ```
 
 #### **API Endpoints**
-- `GET /api/v1/admin/feature-flags` - Get all feature flags
-- `GET /api/v1/admin/feature-flags/enabled` - Get enabled feature flags
-- `GET /api/v1/admin/feature-flags/disabled` - Get disabled feature flags
-- `POST /api/v1/admin/feature-flags` - Create feature flag
-- `PUT /api/v1/admin/feature-flags/{name}` - Update feature flag
-- `DELETE /api/v1/admin/feature-flags/{name}` - Delete feature flag
-- `GET /api/v1/admin/feature-flags/{name}/enabled` - Check feature flag status
-- `POST /api/v1/admin/feature-flags/refresh-cache` - Refresh feature flag cache
+- `GET /api/v1/user/admin/feature-flags` - Get all feature flags
+- `GET /api/v1/user/admin/feature-flags/enabled` - Get enabled feature flags
+- `GET /api/v1/user/admin/feature-flags/disabled` - Get disabled feature flags
+- `POST /api/v1/user/admin/feature-flags` - Create feature flag
+- `PUT /api/v1/user/admin/feature-flags/{name}` - Update feature flag
+- `DELETE /api/v1/user/admin/feature-flags/{name}` - Delete feature flag
+- `GET /api/v1/user/admin/feature-flags/{name}/enabled` - Check feature flag status
+- `POST /api/v1/user/admin/feature-flags/refresh-cache` - Refresh feature flag cache
 
 #### **React Components**
 - **FeatureFlagContext**: Global state management for feature flags
@@ -252,14 +311,16 @@ src/
 - **Event Hooks**: Comprehensive event management hooks
 
 ### API Utilities
-- **adminApi**: Admin-specific API endpoints
-- **featureFlagApi**: Feature flag management APIs
-- **eventService**: Event management service layer with comprehensive comment API integration
-- **photoApi**: Photo upload/management APIs
-- **apiClient**: Base HTTP client configuration
-- **authHelper**: Authentication utilities
-- **sessionManager**: Session management utilities
- - **themeApi**: Theme and Settings API client and helpers for cross-device theme persistence
+- **AuthService**: Centralized authentication service with JWT token management and refresh flow (uses `REACT_APP_API_BASE_URL`)
+- **axiosInstance**: Enhanced axios instance with automatic token refresh and request retry interceptors (uses `REACT_APP_API_BASE_URL`)
+- **adminApi**: Admin-specific API endpoints with proper error handling (uses `REACT_APP_API_ADMIN_URL`)
+- **featureFlagApi**: Feature flag management APIs with hierarchical structure support (uses `REACT_APP_API_ADMIN_URL`)
+- **eventService**: Event management service layer with comprehensive comment API integration (uses `REACT_APP_API_EVENT_URL`)
+- **photoApi**: Photo upload/management APIs with file validation and URL conversion (uses `REACT_APP_API_BASE_URL`)
+- **apiClient**: Base HTTP client configuration using enhanced axios instance (uses `REACT_APP_API_BASE_URL`)
+- **authHelper**: Authentication utilities and helper functions
+- **sessionManager**: Session management utilities with hybrid memory/localStorage approach
+- **themeApi**: Theme and Settings API client and helpers for cross-device theme persistence (uses `REACT_APP_THEME_API_BASE_URL`)
 
 ### UI Components
 - **Button**: Reusable button component
@@ -310,6 +371,35 @@ src/
 - **Code Quality**: ESLint and Prettier for consistent code style
 - **TypeScript**: Gradual TypeScript adoption with type definitions
 
+## Authentication Architecture
+
+### Security-First Design
+The authentication system implements a security-first approach with the following principles:
+
+#### **Token Storage Strategy**
+- **Access Tokens**: Stored only in React Context memory, never in localStorage or sessionStorage
+- **Refresh Tokens**: Stored in HttpOnly cookies by the backend, inaccessible to JavaScript
+- **User Data**: Stored in localStorage for persistence across browser sessions
+- **Global Access**: Access token available via `window.__accessToken` for axios interceptors
+
+#### **Automatic Token Refresh**
+- **Seamless Experience**: Users never see "session expired" messages during normal usage
+- **Request Queuing**: Failed requests are queued during token refresh to prevent race conditions
+- **Error Handling**: Graceful fallback to login page only when refresh fails
+- **Loading States**: Visual indicators during token refresh operations
+
+#### **API Integration**
+- **Request Interceptors**: Automatically attach access tokens to all API requests
+- **Response Interceptors**: Handle 401 errors with automatic token refresh and request retry
+- **Error Propagation**: Proper error handling and user feedback for authentication failures
+- **CORS Support**: Configured for cross-origin requests with credentials
+
+#### **Backend Compatibility**
+- **Gateway Integration**: All requests go through the API gateway at port 8000
+- **Endpoint Structure**: Follows RESTful conventions with proper HTTP methods
+- **Response Format**: Consistent JSON response structure across all endpoints
+- **Feature Flags**: Integration with backend feature flag system for access control
+
 ## Design System
 
 ### Tailwind Configuration
@@ -353,6 +443,38 @@ linkedin: {
 - **Static Assets**: Optimized asset delivery with caching
 
 ## Recent Improvements
+- **Modern Authentication System Implementation**: Complete overhaul of authentication system with JWT tokens, refresh token flow, and memory-only access token storage
+  - **New AuthService**: Created centralized authentication service (`src/services/AuthService.js`) with proper API endpoints matching backend structure
+    - **Login Endpoint**: `POST /ijaa/api/v1/user/signin` with access token in response body
+    - **Refresh Endpoint**: `POST /ijaa/api/v1/user/refresh` using HttpOnly cookies for refresh tokens
+    - **Logout Endpoint**: `POST /ijaa/api/v1/user/logout` to clear refresh token cookies
+    - **Registration Endpoint**: `POST /ijaa/api/v1/user/signup` with firstName, lastName, email, password
+  - **Enhanced Axios Interceptors**: Implemented automatic token refresh and request retry mechanism
+    - **Request Interceptor**: Automatically attaches access token from memory to all API requests
+    - **Response Interceptor**: Handles 401 errors by automatically refreshing tokens and retrying failed requests
+    - **Token Refresh Flow**: Seamless token refresh using HttpOnly cookies without user intervention
+    - **Request Queuing**: Queues failed requests during token refresh to prevent race conditions
+  - **Memory-Only Access Token Storage**: Access tokens stored only in React Context memory, never in localStorage
+    - **Security Enhancement**: Eliminates XSS vulnerability risks from localStorage token storage
+    - **Automatic Cleanup**: Tokens are automatically cleared on page refresh or logout
+    - **Global Access**: Access token available globally via `window.__accessToken` for axios interceptors
+  - **Updated API Base URLs**: All API endpoints updated to use new gateway structure
+    - **Gateway Base URL**: `http://localhost:8000/ijaa/api/v1/user` (updated from port 8000)
+    - **Admin API URL**: `http://localhost:8000/ijaa/api/v1/user/admin` (corrected path structure)
+    - **File Service URL**: `http://localhost:8000/ijaa/api/v1/file`
+    - **Theme API URL**: `http://localhost:8000/ijaa/api/v1/user/settings`
+  - **Enhanced SignUp Form**: Added firstName and lastName fields to match new API requirements
+    - **Form Validation**: Comprehensive validation for all required fields
+    - **User Experience**: Redirects to sign-in page after successful registration
+    - **API Integration**: Uses new AuthService registration endpoint
+  - **Improved Error Handling**: Better error messages and user feedback for authentication failures
+    - **Token Expiry**: Automatic logout with user-friendly messages when refresh fails
+    - **Network Errors**: Graceful handling of network connectivity issues
+    - **Validation Errors**: Clear validation messages for form inputs
+  - **Backward Compatibility**: Maintained compatibility with existing features and admin authentication
+    - **Session Manager**: Updated to work with new authentication flow while maintaining localStorage for user data
+    - **Admin Routes**: Admin authentication system remains unchanged and functional
+    - **Feature Flags**: All feature flag functionality preserved and working
 - **User Theme Preference Integration**: Integrated Theme and Settings APIs for persistent theme across devices with profile-embedded theme settings
   - **Context Refactor**: Updated `src/context/ThemeContext.jsx` to default to LIGHT theme for unauthenticated users, fetch/update theme via `themeApi`, manage `DARK | LIGHT | DEVICE`, apply `dark`/`light` classes, and listen to system changes
   - **API Utility**: Added `src/utils/themeApi.js` with axios client, interceptors, endpoints, and helpers (`THEME_OPTIONS`, `isValidTheme`, conversions)
@@ -660,7 +782,7 @@ NOTIFICATIONS: 'notifications'
 - **Issue**: Feature flag API endpoint mismatch with backend implementation
 - **Root Cause**: Using incorrect endpoint path that doesn't match the backend API structure
 - **Solution**:
-  1. **Correct Endpoint**: Updated to use the exact admin endpoint from backend: `http://localhost:8000/ijaa/api/v1/admin/feature-flags/{name}/enabled`
+  1. **Correct Endpoint**: Updated to use the exact admin endpoint from backend: `http://localhost:8000/ijaa/api/v1/user/admin/feature-flags/{name}/enabled`
   2. **User Token Support**: Modified to use user tokens (not admin tokens) with the admin endpoint
   3. **Direct Axios Call**: Implemented direct axios call to bypass API client base URL conflicts
   4. **Proper Headers**: Added correct headers including `Authorization: Bearer {user_token}` and `accept: application/json`

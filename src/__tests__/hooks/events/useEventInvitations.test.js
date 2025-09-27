@@ -1,10 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useEventInvitations } from '../../../hooks/events/useEventInvitations';
-import { useAuth } from '../../../context/AuthContext';
+import { useUnifiedAuth } from '../../../context/UnifiedAuthContext';
 import eventService from '../../../services/eventService';
 
 // Mock dependencies
-jest.mock('../../../context/AuthContext');
+jest.mock('../../../context/UnifiedAuthContext');
 jest.mock('../../../services/eventService');
 
 describe('useEventInvitations', () => {
@@ -86,7 +86,7 @@ describe('useEventInvitations', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    useAuth.mockReturnValue({ user: mockUser });
+    useUnifiedAuth.mockReturnValue({ user: mockUser });
   });
 
   describe('initialization', () => {
@@ -204,7 +204,7 @@ describe('useEventInvitations', () => {
     });
 
     it('should not load data without user token', async () => {
-      useAuth.mockReturnValue({ user: null });
+      useUnifiedAuth.mockReturnValue({ user: null });
 
       const { result } = renderHook(() => useEventInvitations());
 

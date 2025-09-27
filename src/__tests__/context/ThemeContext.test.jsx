@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ThemeProvider, useTheme } from '../../context/ThemeContext';
 import { UnifiedAuthProvider } from '../../context/UnifiedAuthContext';
-import { themeApi, THEME_OPTIONS } from '../../utils/themeApi';
+import { themeApi, THEME_OPTIONS  } from '../../../utils/themeApi';
 
 // Mock only API methods; keep helpers/constants intact
 jest.mock('../../utils/themeApi', () => {

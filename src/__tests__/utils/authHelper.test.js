@@ -1,10 +1,9 @@
-import { 
-  saveUserToStorage, 
+import { saveUserToStorage, 
   getUserFromStorage, 
   removeUserFromStorage, 
   isTokenValid, 
   decodeToken 
-} from '../../utils/authHelper';
+ } from '../../../utils/authHelper';
 
 // Mock localStorage
 const localStorageMock = {

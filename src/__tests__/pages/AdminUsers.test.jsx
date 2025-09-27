@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
+import { render, screen, fireEvent, waitFor  } from '../../../utils/test-utils';
 import AdminUsers from '../../pages/AdminUsers';
 
 // Mock fetch globally

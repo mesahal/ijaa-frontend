@@ -278,7 +278,7 @@ describe('AdminAuthContext', () => {
         name: 'Admin User',
         adminId: 1,
         role: 'ADMIN',
-        permissions: ['canManageUsers', 'canManageAnnouncements', 'canManageReports', 'canManageFeatureFlags']
+        permissions: ['canManageUsers', 'canManageFeatureFlags']
       };
       
       sessionManager.getAdminSession.mockReturnValue({ data: mockAdmin });
@@ -298,7 +298,7 @@ describe('AdminAuthContext', () => {
         name: 'Moderator User',
         adminId: 2,
         role: 'MODERATOR',
-        permissions: ['canManageAnnouncements']
+        permissions: []
       };
       
       sessionManager.getAdminSession.mockReturnValue({ data: mockAdmin });

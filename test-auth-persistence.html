@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auth Persistence Test</title>
+</head>
+<body>
+    <h1>Auth Persistence Test</h1>
+    <div id="status"></div>
+    <button onclick="testAuthPersistence()">Test Auth Persistence</button>
+    <button onclick="clearStorage()">Clear Storage</button>
+    <button onclick="checkStorage()">Check Storage</button>
+
+    <script>
+        function testAuthPersistence() {
+            const status = document.getElementById('status');
+            
+            // Simulate login
+            const userData = {
+                email: 'test@example.com',
+                userId: 'user123',
+                username: 'testuser'
+            };
+            
+            const refreshToken = 'refresh_token_12345';
+            const accessToken = 'access_token_67890';
+            
+            // Store data as the app would
+            localStorage.setItem('alumni_user', JSON.stringify(userData));
+            localStorage.setItem('refresh_token', refreshToken);
+            localStorage.setItem('session_type', 'user');
+            
+            status.innerHTML = `
+                <h3>✅ Login Simulation Complete</h3>
+                <p>User data stored: ${JSON.stringify(userData)}</p>
+                <p>Refresh token stored: ${refreshToken}</p>
+                <p>Session type: user</p>
+                <p><strong>Now refresh the page to test persistence!</strong></p>
+            `;
+        }
+        
+        function clearStorage() {
+            localStorage.clear();
+            document.getElementById('status').innerHTML = '<h3>🗑️ Storage Cleared</h3>';
+        }
+        
+        function checkStorage() {
+            const userData = localStorage.getItem('alumni_user');
+            const refreshToken = localStorage.getItem('refresh_token');
+            const sessionType = localStorage.getItem('session_type');
+            
+            document.getElementById('status').innerHTML = `
+                <h3>📊 Current Storage State</h3>
+                <p>User data: ${userData || 'None'}</p>
+                <p>Refresh token: ${refreshToken || 'None'}</p>
+                <p>Session type: ${sessionType || 'None'}</p>
+                <p>Has valid session: ${!!(userData && refreshToken)}</p>
+            `;
+        }
+        
+        // Check storage on page load
+        window.onload = function() {
+            checkStorage();
+        };
+    </script>
+</body>
+</html>
+

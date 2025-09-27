@@ -1,6 +1,6 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { useUserPhoto } from '../../hooks/useUserPhoto';
-import { getProfilePhotoUrl } from '../../utils/photoApi';
+import { getProfilePhotoUrl  } from '../../../utils/photoApi';
 
 // Mock the dependencies
 jest.mock('../../utils/photoApi');

@@ -10,7 +10,7 @@ jest.mock('../../utils/featureFlagApi', () => ({
   }
 }));
 
-import { featureFlagApi } from '../../utils/featureFlagApi';
+import { featureFlagApi  } from '../../../utils/featureFlagApi';
 
 describe('MultiFeatureFlag', () => {
   const mockCheckFeatureFlag = featureFlagApi.checkFeatureFlag;

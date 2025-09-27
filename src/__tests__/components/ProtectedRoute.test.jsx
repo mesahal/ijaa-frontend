@@ -1,13 +1,13 @@
 import React from 'react';
-import { render, screen } from '../utils/test-utils';
-import { useAuth } from '../../context/AuthContext';
+import { render, screen  } from '../../../utils/test-utils';
+import { useAuth } from '../../hooks/useAuth';
 import ProtectedRoute from '../../components/ProtectedRoute';
-import { MemoryRouter } from 'react-router-dom';
 
-// Mock the AuthContext
-jest.mock('../../context/AuthContext');
-
-const mockUseAuth = useAuth;
+// Mock the UnifiedAuthContext
+const mockUseUnifiedAuth = jest.fn();
+jest.mock('../../context/UnifiedAuthContext', () => ({
+  useUnifiedAuth: mockUseUnifiedAuth
+}));
 
 describe('ProtectedRoute', () => {
   const TestComponent = () => <div>Protected Content</div>;
@@ -18,34 +18,30 @@ describe('ProtectedRoute', () => {
   });
 
   test('renders children when user is authenticated', () => {
-    mockUseAuth.mockReturnValue({
-      user: { username: 'testuser', token: 'mock-token' },
-      loading: false
+    mockUseUnifiedAuth.mockReturnValue({
+      loading: false,
+      isUser: () => true
     });
 
     render(
-      <MemoryRouter>
-        <ProtectedRoute>
-          <TestComponent />
-        </ProtectedRoute>
-      </MemoryRouter>
+      <ProtectedRoute>
+        <TestComponent />
+      </ProtectedRoute>
     );
 
     expect(screen.getByText('Protected Content')).toBeInTheDocument();
   });
 
   test('shows loading spinner when authentication is loading', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: true
+    mockUseUnifiedAuth.mockReturnValue({
+      loading: true,
+      isUser: () => false
     });
 
     render(
-      <MemoryRouter>
-        <ProtectedRoute>
-          <TestComponent />
-        </ProtectedRoute>
-      </MemoryRouter>
+      <ProtectedRoute>
+        <TestComponent />
+      </ProtectedRoute>
     );
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
@@ -53,17 +49,15 @@ describe('ProtectedRoute', () => {
   });
 
   test('redirects to signin when user is not authenticated', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: false
+    mockUseUnifiedAuth.mockReturnValue({
+      loading: false,
+      isUser: () => false
     });
 
     const { container } = render(
-      <MemoryRouter>
-        <ProtectedRoute>
-          <TestComponent />
-        </ProtectedRoute>
-      </MemoryRouter>
+      <ProtectedRoute>
+        <TestComponent />
+      </ProtectedRoute>
     );
 
     // Should redirect to signin page
@@ -71,72 +65,64 @@ describe('ProtectedRoute', () => {
   });
 
   test('handles undefined user gracefully', () => {
-    mockUseAuth.mockReturnValue({
-      user: undefined,
-      loading: false
+    mockUseUnifiedAuth.mockReturnValue({
+      loading: false,
+      isUser: () => false
     });
 
     render(
-      <MemoryRouter>
-        <ProtectedRoute>
-          <TestComponent />
-        </ProtectedRoute>
-      </MemoryRouter>
+      <ProtectedRoute>
+        <TestComponent />
+      </ProtectedRoute>
     );
 
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
   });
 
   test('handles null user gracefully', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: false
+    mockUseUnifiedAuth.mockReturnValue({
+      loading: false,
+      isUser: () => false
     });
 
     render(
-      <MemoryRouter>
-        <ProtectedRoute>
-          <TestComponent />
-        </ProtectedRoute>
-      </MemoryRouter>
+      <ProtectedRoute>
+        <TestComponent />
+      </ProtectedRoute>
     );
 
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument();
   });
 
   test('renders with custom loading component', () => {
-    mockUseAuth.mockReturnValue({
-      user: null,
-      loading: true
+    mockUseUnifiedAuth.mockReturnValue({
+      loading: true,
+      isUser: () => false
     });
 
     const CustomLoading = () => <div>Custom Loading...</div>;
 
     render(
-      <MemoryRouter>
-        <ProtectedRoute loadingComponent={<CustomLoading />}>
-          <TestComponent />
-        </ProtectedRoute>
-      </MemoryRouter>
+      <ProtectedRoute loadingComponent={<CustomLoading />}>
+        <TestComponent />
+      </ProtectedRoute>
     );
 
     expect(screen.getByText('Custom Loading...')).toBeInTheDocument();
   });
 
-  test('calls useAuth hook correctly', () => {
-    mockUseAuth.mockReturnValue({
-      user: { username: 'testuser' },
-      loading: false
+  test('calls useUnifiedAuth hook correctly', () => {
+    mockUseUnifiedAuth.mockReturnValue({
+      loading: false,
+      isUser: () => true
     });
 
     render(
-      <MemoryRouter>
-        <ProtectedRoute>
-          <TestComponent />
-        </ProtectedRoute>
-      </MemoryRouter>
+      <ProtectedRoute>
+        <TestComponent />
+      </ProtectedRoute>
     );
 
-    expect(mockUseAuth).toHaveBeenCalledTimes(1);
+    expect(mockUseUnifiedAuth).toHaveBeenCalledTimes(1);
   });
 }); 

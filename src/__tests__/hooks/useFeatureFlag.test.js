@@ -11,7 +11,7 @@ jest.mock('../../utils/featureFlagApi', () => ({
 }));
 
 import { useFeatureFlag, useFeatureFlags, useUserFeatureFlags, useFeatureEnabled } from '../../hooks/useFeatureFlag';
-import { featureFlagApi } from '../../utils/featureFlagApi';
+import { featureFlagApi  } from '../../../utils/featureFlagApi';
 
 describe('Feature Flag Hooks - Group 3 Implementation', () => {
   beforeEach(() => {

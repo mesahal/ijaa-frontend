@@ -1,8 +1,7 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import { AuthProvider } from '../context/AuthContext';
-import { AdminAuthProvider } from '../context/AdminAuthContext';
+import { UnifiedAuthProvider } from '../context/UnifiedAuthContext';
 import { ThemeProvider } from '../context/ThemeContext';
 import App from '../App';
 
@@ -47,11 +46,9 @@ const renderApp = (initialEntries = ['/']) => {
   return render(
     <BrowserRouter initialEntries={initialEntries}>
       <ThemeProvider>
-        <AuthProvider>
-          <AdminAuthProvider>
-            <App />
-          </AdminAuthProvider>
-        </AuthProvider>
+        <UnifiedAuthProvider>
+          <App />
+        </UnifiedAuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   );

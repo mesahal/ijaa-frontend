@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
+import { render, screen, fireEvent, waitFor  } from '../../../utils/test-utils';
 import { 
   PhotoDisplay, 
   ProfilePhotoUploadButton, 
@@ -19,12 +19,11 @@ jest.mock('../../utils/photoApi', () => ({
   handlePhotoApiError: jest.fn()
 }));
 
-import {
-  getProfilePhotoUrl,
+import { getProfilePhotoUrl,
   getCoverPhotoUrl,
   uploadProfilePhoto,
   uploadCoverPhoto
-} from '../../utils/photoApi';
+ } from '../../../utils/photoApi';
 
 // Mock localStorage
 const localStorageMock = {

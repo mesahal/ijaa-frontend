@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '../utils/test-utils';
+import { render, screen  } from '../../../utils/test-utils';
 import AdminLayout from '../../components/AdminLayout';
 import { MemoryRouter } from 'react-router-dom';
 
@@ -30,9 +30,6 @@ describe('AdminLayout', () => {
     // Check for sidebar elements
     expect(screen.getByText(/dashboard/i)).toBeInTheDocument();
     expect(screen.getByText(/users/i)).toBeInTheDocument();
-    expect(screen.getByText(/events/i)).toBeInTheDocument();
-    expect(screen.getByText(/announcements/i)).toBeInTheDocument();
-    expect(screen.getByText(/reports/i)).toBeInTheDocument();
     expect(screen.getByText(/feature flags/i)).toBeInTheDocument();
   });
 

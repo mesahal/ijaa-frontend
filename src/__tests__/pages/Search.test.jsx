@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
+import { render, screen, fireEvent, waitFor  } from '../../../utils/test-utils';
 import { useAuth } from '../../context/AuthContext';
 import Search from '../../pages/Search';
 import { MemoryRouter } from 'react-router-dom';

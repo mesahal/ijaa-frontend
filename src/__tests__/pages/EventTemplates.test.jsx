@@ -6,7 +6,7 @@ import { useEventActions } from '../../hooks/events/useEventActions';
 import EventTemplateCard from '../../components/events/EventTemplateCard';
 import EventTemplateForm from '../../components/events/EventTemplateForm';
 import EventForm from '../../components/events/EventForm';
-import { EVENT_TYPES, EVENT_PRIVACY } from '../../utils/eventApi';
+import { EVENT_TYPES, EVENT_PRIVACY  } from '../../../services/api/eventApi';
 
 // Mock dependencies
 jest.mock('../../hooks/events/useEventTemplates');

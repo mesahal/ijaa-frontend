@@ -1,4 +1,4 @@
-import { changeUserPassword } from '../../utils/apiClient';
+import { changeUserPassword  } from '../../../utils/apiClient';
 
 // Mock the apiClient module
 jest.mock('../../utils/apiClient', () => {

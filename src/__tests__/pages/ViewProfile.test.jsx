@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
+import { render, screen, fireEvent, waitFor  } from '../../../utils/test-utils';
 import ViewProfile from '../../pages/ViewProfile';
 
 // Mock react-router-dom
@@ -71,7 +71,7 @@ jest.mock('../../utils/photoApi', () => ({
 }));
 
 import apiClient from '../../utils/apiClient';
-import { getProfilePhotoUrl, getCoverPhotoUrl } from '../../utils/photoApi';
+import { getProfilePhotoUrl, getCoverPhotoUrl  } from '../../../utils/photoApi';
 
 describe('ViewProfile', () => {
   const mockProfileData = {

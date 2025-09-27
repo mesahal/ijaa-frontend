@@ -1,20 +1,20 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '../utils/test-utils';
-import { useAuth } from '../../context/AuthContext';
+import { render, screen, fireEvent, waitFor  } from '../../../utils/test-utils';
+import { useAuth } from '../../hooks/useAuth';
 import SignIn from '../../pages/SignIn';
 import { MemoryRouter } from 'react-router-dom';
 
-// Mock the AuthContext
-jest.mock('../../context/AuthContext');
+// Mock the UnifiedAuthContext
+jest.mock('../../context/UnifiedAuthContext');
 
-const mockUseAuth = useAuth;
+const mockUseUnifiedAuth = useUnifiedAuth;
 
 describe('SignIn', () => {
   const mockSignIn = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockUseAuth.mockReturnValue({
+    mockUseUnifiedAuth.mockReturnValue({
       signIn: mockSignIn,
       loading: false,
       user: null

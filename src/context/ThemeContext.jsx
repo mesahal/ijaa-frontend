@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
-import { useUnifiedAuth } from "./UnifiedAuthContext";
-import { themeApi, THEME_OPTIONS, convertThemeToCSSClass, convertThemeToLocalStorage } from "../utils/themeApi";
+import { useAuth } from "../hooks/useAuth";
+import { themeApi, THEME_OPTIONS, convertThemeToCSSClass, convertThemeToLocalStorage } from "../services/api/themeApi";
 
 const ThemeContext = createContext();
 
@@ -13,7 +13,7 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const { isAuthenticated, isUser } = useUnifiedAuth();
+  const { isAuthenticated, isUser } = useAuth();
   const [theme, setThemeState] = useState(THEME_OPTIONS.LIGHT);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -33,13 +33,37 @@ export const ThemeProvider = ({ children }) => {
       const localStorageTheme = convertThemeToLocalStorage(selectedTheme);
       localStorage.setItem("theme", localStorageTheme);
     } catch (storageError) {
-      console.warn("localStorage not available, skipping theme save");
     }
   }, []);
 
-  // Fetch user theme from API
+  // Get theme from local storage or system preference (for admin users or fallback)
+  const getLocalTheme = useCallback(() => {
+    let savedTheme = null;
+    let prefersDark = false;
+    
+    try {
+      savedTheme = localStorage.getItem("theme");
+    } catch (storageError) {
+    }
+    
+    try {
+      if (window.matchMedia) {
+        prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      }
+    } catch (matchError) {
+    }
+
+    // Determine the actual theme to use
+    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+      return THEME_OPTIONS.DARK;
+    } else {
+      return THEME_OPTIONS.LIGHT;
+    }
+  }, []);
+
+  // Fetch user theme from API (only for regular users)
   const fetchUserTheme = useCallback(async () => {
-    if (!isAuthenticated || !isUser) {
+    if (!isAuthenticated()) {
       // Not authenticated: default to LIGHT site-wide
       setThemeState(THEME_OPTIONS.LIGHT);
       applyTheme(THEME_OPTIONS.LIGHT);
@@ -47,6 +71,16 @@ export const ThemeProvider = ({ children }) => {
       return;
     }
 
+    // For admin users, use local storage or system preference only
+    if (!isUser()) {
+      const localTheme = getLocalTheme();
+      setThemeState(localTheme);
+      applyTheme(localTheme);
+      setIsLoading(false);
+      return;
+    }
+
+    // Only regular users get their theme from API
     try {
       setError(null);
       const response = await themeApi.getUserTheme();
@@ -57,76 +91,32 @@ export const ThemeProvider = ({ children }) => {
           setThemeState(userTheme);
           applyTheme(userTheme);
         } else {
-          // Invalid theme from API, fallback to system preference
-          let prefersDark = false;
-          try {
-            if (window.matchMedia) {
-              prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-            }
-          } catch (matchError) {
-            console.warn("matchMedia not available, defaulting to light mode");
-          }
-          
-          const fallbackTheme = prefersDark ? THEME_OPTIONS.DARK : THEME_OPTIONS.LIGHT;
+          // Invalid theme from API, fallback to local theme
+          const fallbackTheme = getLocalTheme();
           setThemeState(fallbackTheme);
           applyTheme(fallbackTheme);
         }
       } else {
-        // API error or invalid response, fallback to system preference
-        let prefersDark = false;
-        try {
-          if (window.matchMedia) {
-            prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-          }
-        } catch (matchError) {
-          console.warn("matchMedia not available, defaulting to light mode");
-        }
-        
-        const fallbackTheme = prefersDark ? THEME_OPTIONS.DARK : THEME_OPTIONS.LIGHT;
+        // API error or invalid response, fallback to local theme
+        const fallbackTheme = getLocalTheme();
         setThemeState(fallbackTheme);
         applyTheme(fallbackTheme);
       }
     } catch (error) {
-      console.error('Failed to fetch user theme:', error);
       setError(error.message || 'Failed to load theme preference');
       
-      // Fallback to local storage or system preference
-      let savedTheme = null;
-      let prefersDark = false;
-      
-      try {
-        savedTheme = localStorage.getItem("theme");
-      } catch (storageError) {
-        console.warn("localStorage not available, skipping saved theme");
-      }
-      
-      try {
-        if (window.matchMedia) {
-          prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        }
-      } catch (matchError) {
-        console.warn("matchMedia not available, defaulting to light mode");
-      }
-
-      // Determine the actual theme to use
-      let actualTheme;
-      if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
-        actualTheme = THEME_OPTIONS.DARK;
-      } else {
-        actualTheme = THEME_OPTIONS.LIGHT;
-      }
-      
-      setThemeState(actualTheme);
-      applyTheme(actualTheme);
+      // Fallback to local theme
+      const fallbackTheme = getLocalTheme();
+      setThemeState(fallbackTheme);
+      applyTheme(fallbackTheme);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, isUser, applyTheme]);
+  }, [isAuthenticated, isUser, applyTheme, getLocalTheme]);
 
   // Update theme (both local state and API)
   const setTheme = useCallback(async (newTheme) => {
     if (!Object.values(THEME_OPTIONS).includes(newTheme)) {
-      console.error('Invalid theme value:', newTheme);
       return;
     }
 
@@ -137,12 +127,12 @@ export const ThemeProvider = ({ children }) => {
       setThemeState(newTheme);
       applyTheme(newTheme);
 
-      // Update API if authenticated
-      if (isAuthenticated && isUser) {
+      // Update API only for regular users, not for admin users
+      if (isAuthenticated() && isUser()) {
         await themeApi.updateUserTheme(newTheme);
       }
+      // For admin users, the theme is only stored locally and doesn't need API calls
     } catch (error) {
-      console.error('Failed to update theme:', error);
       setError(error.message || 'Failed to update theme preference');
       
       // Revert to previous theme on error
@@ -177,7 +167,6 @@ export const ThemeProvider = ({ children }) => {
           return () => mediaQuery.removeListener(handleChange);
         }
       } catch (matchError) {
-        console.warn("matchMedia not available for system theme detection");
       }
     }
   }, [theme, applyTheme]);

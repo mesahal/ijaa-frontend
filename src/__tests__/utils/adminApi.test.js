@@ -1,4 +1,4 @@
-import { adminApi, adminApiCall } from '../../utils/adminApi';
+import { adminApi, adminApiCall  } from '../../../utils/adminApi';
 
 // Mock localStorage
 const localStorageMock = {
@@ -404,7 +404,7 @@ describe('adminApi', () => {
       adminApi.getAdminProfile();
 
       expect(global.fetch).toHaveBeenCalledWith(
-        expect.stringContaining('http://localhost:8000/ijaa/api/v1/admin/profile'),
+        expect.stringContaining(`${process.env.REACT_APP_API_ADMIN_URL}/profile`),
         expect.any(Object)
       );
     });

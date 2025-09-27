@@ -24,7 +24,7 @@ jest.mock('../../hooks/useFeatureFlag', () => ({
   useFeatureFlag: jest.fn()
 }));
 
-import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import { useTheme } from '../../context/ThemeContext';
 import { useCurrentUserPhoto } from '../../hooks/useCurrentUserPhoto';
 import { useCurrentUserProfile } from '../../hooks/useCurrentUserProfile';

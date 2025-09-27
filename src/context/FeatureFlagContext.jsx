@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { featureFlagApi, FEATURE_FLAGS } from '../utils/featureFlagApi';
+import { featureFlagApi, FEATURE_FLAGS } from '../services/featureFlags/featureFlagApi';
 
 // Create the feature flag context
 const FeatureFlagContext = createContext();
@@ -37,7 +37,6 @@ export const FeatureFlagProvider = ({ children }) => {
       setFeatureFlags(flagsMap);
       setLastUpdated(new Date());
     } catch (err) {
-      console.error('Failed to load feature flags:', err);
       setError(err.message);
       
       // Set default values if loading fails
@@ -81,7 +80,6 @@ export const FeatureFlagProvider = ({ children }) => {
       
       return response;
     } catch (error) {
-      console.error(`Error checking feature flag ${featureName}:`, error);
       throw error;
     }
   }, []);
@@ -102,7 +100,6 @@ export const FeatureFlagProvider = ({ children }) => {
       
       return status;
     } catch (error) {
-      console.error('Error checking multiple feature flags:', error);
       throw error;
     }
   }, []);

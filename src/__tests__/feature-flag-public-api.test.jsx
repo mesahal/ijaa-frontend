@@ -34,7 +34,7 @@ jest.mock('axios', () => {
 });
 
 // Now import featureFlagApi
-import { featureFlagApi } from '../utils/featureFlagApi';
+import { featureFlagApi  } from '../../services/featureFlags/featureFlagApi';
 import axios from 'axios';
 
 describe('Feature Flag Public API Tests', () => {
@@ -68,7 +68,7 @@ describe('Feature Flag Public API Tests', () => {
 
       // Verify the API was called with correct headers (no Authorization)
       expect(axios.get).toHaveBeenCalledWith(
-        'http://localhost:8000/ijaa/api/v1/admin/feature-flags/user.login/enabled',
+        `${process.env.REACT_APP_API_BASE_URL}/admin/feature-flags/user.login/enabled`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ describe('Feature Flag Public API Tests', () => {
 
       // Verify the API was called without Authorization header (due to invalid JSON)
       expect(axios.get).toHaveBeenCalledWith(
-        'http://localhost:8000/ijaa/api/v1/admin/feature-flags/user.login/enabled',
+        `${process.env.REACT_APP_API_BASE_URL}/admin/feature-flags/user.login/enabled`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -180,7 +180,7 @@ describe('Feature Flag Public API Tests', () => {
 
       // Verify the API was called without Authorization header
       expect(axios.get).toHaveBeenCalledWith(
-        'http://localhost:8000/ijaa/api/v1/admin/feature-flags/user.login/enabled',
+        `${process.env.REACT_APP_API_BASE_URL}/admin/feature-flags/user.login/enabled`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -236,7 +236,7 @@ describe('Feature Flag Public API Tests', () => {
 
       // Verify the API was called
       expect(axios.get).toHaveBeenCalledWith(
-        'http://localhost:8000/ijaa/api/v1/admin/feature-flags/user.login/enabled',
+        `${process.env.REACT_APP_API_BASE_URL}/admin/feature-flags/user.login/enabled`,
         {
           headers: {
             'Content-Type': 'application/json',
@@ -253,22 +253,14 @@ describe('Feature Flag Public API Tests', () => {
       const mockResponses = [
         {
           data: {
-            message: "Feature flag status retrieved successfully",
-            code: "200",
-            data: {
-              name: "user.login",
-              enabled: true
-            }
+            name: "user.login",
+            enabled: true
           }
         },
         {
           data: {
-            message: "Feature flag status retrieved successfully",
-            code: "200",
-            data: {
-              name: "user.registration",
-              enabled: false
-            }
+            name: "user.registration",
+            enabled: false
           }
         }
       ];
@@ -294,12 +286,8 @@ describe('Feature Flag Public API Tests', () => {
       // Mock one success and one failure
       const mockSuccessResponse = {
         data: {
-          message: "Feature flag status retrieved successfully",
-          code: "200",
-          data: {
-            name: "user.login",
-            enabled: true
-          }
+          name: "user.login",
+          enabled: true
         }
       };
       

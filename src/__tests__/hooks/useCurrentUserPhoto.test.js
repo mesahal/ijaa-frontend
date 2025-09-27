@@ -1,7 +1,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { useCurrentUserPhoto } from '../../hooks/useCurrentUserPhoto';
-import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
-import { getProfilePhotoUrl } from '../../utils/photoApi';
+import { useAuth } from '../../hooks/useAuth';
+import { getProfilePhotoUrl  } from '../../../utils/photoApi';
 
 // Mock the dependencies
 jest.mock('../../context/UnifiedAuthContext');

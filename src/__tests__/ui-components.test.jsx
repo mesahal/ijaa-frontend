@@ -1,7 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
-import { Button, Input, Card, Avatar, Badge } from '../components/ui';
+import { Button, Input, Card, Avatar, Badge   } from '../../components/ui';
 
 // Mock Lucide React icons
 jest.mock('lucide-react', () => ({

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { themeApi, THEME_OPTIONS, isValidTheme, convertThemeToCSSClass, convertThemeToLocalStorage } from '../../utils/themeApi';
+import { themeApi, THEME_OPTIONS, isValidTheme, convertThemeToCSSClass, convertThemeToLocalStorage  } from '../../../utils/themeApi';
 import sessionManager from '../../utils/sessionManager';
 
 // Mock axios
@@ -52,7 +52,7 @@ describe('themeApi', () => {
       require('../../utils/themeApi');
       
       expect(axios.create).toHaveBeenCalledWith({
-        baseURL: "http://localhost:8080/ijaa/api/v1/user/settings",
+        baseURL: "http://localhost:8000/ijaa/api/v1/user/settings",
         timeout: 10000,
         headers: {
           'Content-Type': 'application/json',

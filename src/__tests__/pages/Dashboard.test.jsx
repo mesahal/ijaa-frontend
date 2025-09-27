@@ -1,13 +1,13 @@
 import React from 'react';
-import { render, screen, fireEvent } from '../utils/test-utils';
-import { useAuth } from '../../context/AuthContext';
+import { render, screen, fireEvent  } from '../../../utils/test-utils';
+import { useAuth } from '../../hooks/useAuth';
 import Dashboard from '../../pages/Dashboard';
 import { MemoryRouter } from 'react-router-dom';
 
-// Mock the AuthContext
-jest.mock('../../context/AuthContext');
+// Mock the UnifiedAuthContext
+jest.mock('../../context/UnifiedAuthContext');
 
-const mockUseAuth = useAuth;
+const mockUseUnifiedAuth = useUnifiedAuth;
 
 describe('Dashboard', () => {
   const mockUser = {

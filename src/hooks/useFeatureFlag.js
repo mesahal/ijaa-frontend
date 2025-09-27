@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { featureFlagApi } from '../utils/featureFlagApi';
+import { featureFlagApi } from '../services/featureFlags/featureFlagApi';
 
 /**
  * Hook for checking if a single feature flag is enabled
@@ -24,7 +24,6 @@ export const useFeatureFlag = (featureName, defaultValue = false) => {
         // The response has a nested data property: { data: { name: "alumni.search", enabled: true } }
         setIsEnabled(response?.data?.enabled || false);
       } catch (err) {
-        console.error(`Error checking feature flag ${featureName}:`, err);
         setError(err.message);
         setIsEnabled(defaultValue);
       } finally {
@@ -61,7 +60,6 @@ export const useFeatureFlags = (featureNames) => {
         const status = await featureFlagApi.checkMultipleFeatureFlags(featureNames);
         setFlagsStatus(status);
       } catch (err) {
-        console.error('Error checking feature flags:', err);
         setError(err.message);
         setFlagsStatus({});
       } finally {
@@ -97,7 +95,6 @@ export const useUserFeatureFlags = () => {
         const response = await featureFlagApi.getUserFeatureFlags();
         setUserFlags(response.data || []);
       } catch (err) {
-        console.error('Error loading user feature flags:', err);
         setError(err.message);
         setUserFlags([]);
       } finally {
