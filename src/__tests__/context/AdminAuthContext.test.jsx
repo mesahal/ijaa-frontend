@@ -408,7 +408,7 @@ describe('AdminAuthContext', () => {
       fireEvent.click(screen.getByTestId('signin'));
       
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('http://localhost:8000/ijaa/api/v1/user/admin/signin'),
+        expect.stringContaining('http://localhost:8000/ijaa/api/v1/admin/login'),
         expect.any(Object)
       );
       

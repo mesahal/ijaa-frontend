@@ -375,7 +375,7 @@ describe('AuthContext', () => {
       fireEvent.click(screen.getByTestId('signin'));
       
       expect(fetch).toHaveBeenCalledWith(
-        expect.stringContaining('http://localhost:8000/ijaa/api/v1/user/signin'),
+        expect.stringContaining('http://localhost:8000/ijaa/api/v1/auth/login'),
         expect.any(Object)
       );
       

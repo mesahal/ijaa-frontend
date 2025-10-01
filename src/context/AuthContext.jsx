@@ -230,6 +230,24 @@ export const AuthProvider = ({ children }) => {
   /**
    * User Authentication Methods
    */
+  const signUp = async (userData) => {
+    try {
+      console.log('📝 [AuthContext] Starting user registration process:', { email: userData.email });
+      
+      const registerResponse = await AuthService.register(userData);
+      
+      console.log('✅ [AuthContext] Registration successful:', {
+        message: registerResponse.message,
+        email: userData.email
+      });
+      
+      return registerResponse;
+    } catch (err) {
+      console.error('❌ [AuthContext] Registration failed:', err.message);
+      throw err;
+    }
+  };
+
   const signIn = async (email, password) => {
     try {
       console.log('🔐 [AuthContext] Starting user sign-in process:', { email });
@@ -312,10 +330,12 @@ export const AuthProvider = ({ children }) => {
       });
 
       const adminData = {
-        email: email,
+        email: loginResponse.email || email,
         adminId: loginResponse.adminId,
         username: loginResponse.username,
+        name: loginResponse.name,
         role: loginResponse.role || ADMIN_ROLE.ADMIN,
+        active: loginResponse.active,
       };
 
       // Store access token and admin data
@@ -405,6 +425,85 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
+  // Listen for cross-tab storage changes
+  useEffect(() => {
+    const handleStorageChange = (event) => {
+      // Only respond to changes in our authentication keys
+      if (event.key === 'alumni_user' || event.key === 'admin_user' || event.key === 'session_type') {
+        console.log('🔄 [AuthContext] Cross-tab storage change detected:', {
+          key: event.key,
+          newValue: event.newValue,
+          oldValue: event.oldValue,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Re-initialize authentication state based on current localStorage
+        const userData = localStorage.getItem('alumni_user');
+        const adminData = localStorage.getItem('admin_user');
+        const sessionType = localStorage.getItem('session_type');
+        
+        console.log('🔍 [AuthContext] Cross-tab localStorage state:', {
+          hasUserData: !!userData,
+          hasAdminData: !!adminData,
+          sessionType,
+          timestamp: new Date().toISOString()
+        });
+        
+        // Update state based on current localStorage
+        if (sessionType === 'user' && userData) {
+          try {
+            const parsedUserData = JSON.parse(userData);
+            if (parsedUserData && parsedUserData.email) {
+              console.log('✅ [AuthContext] Cross-tab user session restored:', {
+                email: parsedUserData.email,
+                userId: parsedUserData.userId
+              });
+              setUser(parsedUserData);
+              setAdmin(null);
+            } else {
+              console.log('❌ [AuthContext] Cross-tab invalid user data, clearing session');
+              setUser(null);
+              setAdmin(null);
+            }
+          } catch (error) {
+            console.error('❌ [AuthContext] Cross-tab error parsing user data:', error);
+            setUser(null);
+            setAdmin(null);
+          }
+        } else if (sessionType === 'admin' && adminData) {
+          try {
+            const parsedAdminData = JSON.parse(adminData);
+            if (parsedAdminData && parsedAdminData.email) {
+              console.log('✅ [AuthContext] Cross-tab admin session restored:', {
+                email: parsedAdminData.email,
+                adminId: parsedAdminData.adminId
+              });
+              setAdmin(parsedAdminData);
+              setUser(null);
+            } else {
+              console.log('❌ [AuthContext] Cross-tab invalid admin data, clearing session');
+              setUser(null);
+              setAdmin(null);
+            }
+          } catch (error) {
+            console.error('❌ [AuthContext] Cross-tab error parsing admin data:', error);
+            setUser(null);
+            setAdmin(null);
+          }
+        } else {
+          console.log('ℹ️ [AuthContext] Cross-tab no valid session found, clearing state');
+          setUser(null);
+          setAdmin(null);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
   const value = {
     // State
     user,
@@ -414,6 +513,7 @@ export const AuthProvider = ({ children }) => {
     isInitialized,
     
     // User methods
+    signUp,
     signIn,
     signOut,
     

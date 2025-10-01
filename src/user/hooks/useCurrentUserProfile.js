@@ -21,7 +21,7 @@ export const useCurrentUserProfile = () => {
         return;
       }
 
-      const response = await apiClient.get(`/profile/${user?.userId}`);
+      const response = await apiClient.get(`/users/${user?.userId}`);
       console.log('📥 [useCurrentUserProfile] Profile response received:', response?.data);
 
       if (!response.data || !response.data.data) {

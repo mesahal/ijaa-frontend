@@ -121,10 +121,16 @@ const useEventBanner = (eventId) => {
       return bannerUrl;
     }
     
-    // If it's a relative URL, make it absolute using the file service base URL
+    // If it's a relative URL, make it absolute using the base domain
     if (bannerUrl.startsWith('/')) {
-      const fileApiBase = process.env.REACT_APP_API_FILE_URL;
-      const domainBase = fileApiBase.split('/ijaa/')[0];
+      const baseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/ijaa/api/v1";
+      let domainBase = baseUrl;
+      
+      // Extract just the domain and port (remove /ijaa/api/v1 part)
+      if (baseUrl.includes('/ijaa/')) {
+        domainBase = baseUrl.split('/ijaa/')[0];
+      }
+      
       return `${domainBase}${bannerUrl}`;
     }
     

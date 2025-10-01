@@ -135,7 +135,7 @@ const Profile = () => {
         return;
       }
 
-      const response = await apiClient.get(`/profile/${user?.userId}`);
+      const response = await apiClient.get(`/users/${user?.userId}`);
 
       if (!response.data || !response.data.data) {
         throw new Error("Invalid profile response structure");
@@ -216,7 +216,7 @@ const Profile = () => {
 
   const fetchExperiences = async () => {
     try {
-      const response = await apiClient.get(`/experiences/${user?.userId}`);
+      const response = await apiClient.get(`/users/${user?.userId}/experiences`);
 
       if (!response.data || !response.data.data) {
         setExperiences([]);
@@ -241,7 +241,7 @@ const Profile = () => {
 
   const fetchInterests = async () => {
     try {
-      const response = await apiClient.get(`/interests/${user?.userId}`);
+      const response = await apiClient.get(`/users/${user?.userId}/interests`);
 
       if (!response.data || !response.data.data) {
         setInterests([]);
@@ -270,18 +270,18 @@ const Profile = () => {
       let requestPayload;
 
       if (sectionName === "profile") {
-        // For profile update, use PUT /profile endpoint
-        endpoint = "/profile";
+        // For profile update, use PUT /users/{userId} endpoint
+        endpoint = `/users/${user?.userId}`;
         requestPayload = {
           ...payload,
           userId: user?.userId,
         };
       } else if (sectionName === "visibility") {
-        // For visibility update, use PUT /visibility endpoint
-        endpoint = "/visibility";
+        // For visibility update, use PUT /users/{userId}/profile endpoint
+        endpoint = `/users/${user?.userId}/profile`;
         requestPayload = payload; // Don't include userId for visibility
       } else {
-        endpoint = `/${sectionName}`;
+        endpoint = `/users/${user?.userId}/${sectionName}`;
         requestPayload = payload;
       }
 
@@ -317,7 +317,7 @@ const Profile = () => {
         description: newExperience.description,
       };
 
-      await apiClient.post(`/experiences`, experienceData);
+      await apiClient.post(`/users/${user?.userId}/experiences`, experienceData);
 
       setNewExperience({ title: "", company: "", period: "", description: "" });
       setShowAddExperience(false);
@@ -330,7 +330,7 @@ const Profile = () => {
   const deleteExperience = async (experienceId) => {
     try {
       // According to API docs: DELETE /experiences/{experienceId}
-      await apiClient.delete(`/experiences/${experienceId}`);
+      await apiClient.delete(`/users/${user?.userId}/experiences/${experienceId}`);
       fetchExperiences();
     } catch (err) {
       alert("Failed to delete experience. Please try again.");
@@ -345,7 +345,7 @@ const Profile = () => {
 
     try {
       // According to API docs: POST /interests with { interest: "value" }
-      await apiClient.post(`/interests`, { interest: newInterest.trim() });
+      await apiClient.post(`/users/${user?.userId}/interests`, { interest: newInterest.trim() });
 
       // Refresh the interests list
       fetchInterests();
@@ -363,7 +363,7 @@ const Profile = () => {
   const deleteInterest = async (interestId) => {
     try {
       // According to API docs: DELETE /interests/{interestId}
-      await apiClient.delete(`/interests/${interestId}`);
+      await apiClient.delete(`/users/${user?.userId}/interests/${interestId}`);
 
       fetchInterests();
     } catch (err) {

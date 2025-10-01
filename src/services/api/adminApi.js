@@ -2,7 +2,7 @@
 import { roleErrorMessages } from '../../utils/constants/roleConstants';
 import axiosInstance from '../../utils/api/axiosInstance';
 
-const API_BASE = process.env.REACT_APP_API_ADMIN_URL;
+const API_BASE = process.env.REACT_APP_API_ADMIN_URL || 'http://localhost:8000/ijaa/api/v1/admin';
 
 // Create a separate axios instance for admin API calls
 const adminAxiosInstance = axiosInstance.create({
@@ -202,7 +202,7 @@ export const adminApi = {
   // ===== GROUP 1: BASIC FEATURE FLAG MANAGEMENT =====
   
   // 1.1 Get all feature flags
-  getFeatureFlags: () => adminApiCall('/feature-flags'),
+  getFeatureFlags: () => adminApiCall('/feature-flags/'),
   
   // 1.2 Get specific feature flag
   getFeatureFlag: (featureName) => adminApiCall(`/feature-flags/${encodeURIComponent(featureName)}`),
@@ -211,7 +211,7 @@ export const adminApi = {
   checkFeatureFlagEnabled: (featureName) => adminApiCall(`/feature-flags/${encodeURIComponent(featureName)}/enabled`),
   
   // 1.3 Create feature flag
-  createFeatureFlag: (featureFlagData) => adminApiCall('/feature-flags', {
+  createFeatureFlag: (featureFlagData) => adminApiCall('/feature-flags/', {
     method: 'POST',
     body: JSON.stringify(featureFlagData)
   }),
@@ -284,7 +284,7 @@ export const adminApi = {
   getAllAdmins: () => adminApiCall('/admins'),
   
   // Create new admin
-  createAdmin: (adminData) => adminApiCall('/signup', {
+  createAdmin: (adminData) => adminApiCall('/admins', {
     method: 'POST',
     body: JSON.stringify(adminData)
   }),

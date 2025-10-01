@@ -28,7 +28,7 @@ import {
   RefreshCw,
   Activity,
 } from "lucide-react";
-import { adminApi  } from '../../services/api/adminApi';
+import { adminApi  } from '../../utils/adminApi';
 import { Card, Button, Badge   } from '../../components/ui';
 
 const AdminFeatureFlags = () => {

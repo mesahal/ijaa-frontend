@@ -70,7 +70,7 @@ const Search = () => {
         size: size,
       };
 
-      const response = await apiClient.post(`/alumni/search`, requestBody);
+      const response = await apiClient.post(`/users/search`, requestBody);
 
       const result = response.data;
 
@@ -152,19 +152,29 @@ const Search = () => {
 
   const handleConnect = async (alumniId) => {
     try {
-      const response = await apiClient.post(`/connections/request`, {
-        recipientUsername: alumniId,
-      });
+      // TODO: Implement connection request API when backend is ready
+      // const response = await apiClient.post(`/connections/request`, {
+      //   recipientUsername: alumniId,
+      // });
 
-      if (response.data.code === "200" || response.data.code === 200) {
-        setAlumni((prev) =>
-          prev.map((person) =>
-            person.userId === alumniId
-              ? { ...person, isConnected: true }
-              : person
-          )
-        );
-      }
+      // if (response.data.code === "200" || response.data.code === 200) {
+      //   setAlumni((prev) =>
+      //     prev.map((person) =>
+      //       person.userId === alumniId
+      //         ? { ...person, isConnected: true }
+      //         : person
+      //     )
+      //   );
+      // }
+      
+      // Temporary: Just update UI for now
+      setAlumni((prev) =>
+        prev.map((person) =>
+          person.userId === alumniId
+            ? { ...person, isConnected: true }
+            : person
+        )
+      );
     } catch (err) {
       alert("Failed to send connection request. Please try again.");
     }

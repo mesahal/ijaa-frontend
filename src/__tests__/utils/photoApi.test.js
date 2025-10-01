@@ -11,8 +11,8 @@ const localStorageMock = {
 global.localStorage = localStorageMock;
 
 // Mock the photoApi module
-jest.mock('../../utils/photoApi', () => {
-  const originalModule = jest.requireActual('../../utils/photoApi');
+jest.mock('../../services/api/photoApi', () => {
+  const originalModule = jest.requireActual('../../services/api/photoApi');
   return {
     ...originalModule,
     uploadProfilePhoto: jest.fn(),
@@ -25,7 +25,7 @@ jest.mock('../../utils/photoApi', () => {
 });
 
 // Mock apiClient before importing photoApi
-jest.mock("../../utils/apiClient", () => ({
+jest.mock("../../services/api/apiClient", () => ({
   __esModule: true,
   default: {
     interceptors: {
@@ -69,7 +69,7 @@ import { getProfilePhotoUrl,
   deleteCoverPhoto,
   validateImageFile,
   handlePhotoApiError,
- } from '../../../utils/photoApi';
+ } from '../../../services/api/photoApi';
 
 // Mock the convertToAbsoluteUrl function by testing the actual implementation
 const testUrlConversion = (relativeUrl, expectedAbsoluteUrl) => {

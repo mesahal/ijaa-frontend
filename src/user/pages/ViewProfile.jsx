@@ -59,7 +59,7 @@ const ViewProfile = () => {
 
   const fetchProfile = async () => {
     try {
-      const response = await apiClient.get(`/profile/${userId}`);
+      const response = await apiClient.get(`/users/${userId}`);
 
       const profile = response.data.data;
       setProfileData(profile);
@@ -75,7 +75,7 @@ const ViewProfile = () => {
 
   const fetchExperiences = async () => {
     try {
-      const response = await apiClient.get(`/experiences/${userId}`);
+      const response = await apiClient.get(`/users/${userId}/experiences`);
 
       // Handle both array and object response
       const experiencesData = response.data.data || [];
@@ -96,7 +96,7 @@ const ViewProfile = () => {
 
   const fetchInterests = async () => {
     try {
-      const response = await apiClient.get(`/interests/${userId}`);
+      const response = await apiClient.get(`/users/${userId}/interests`);
 
       // Handle both array and object response
       const interestsData = response.data.data || [];
@@ -136,18 +136,26 @@ const ViewProfile = () => {
 
     setConnectionLoading(true);
     try {
-      const response = await apiClient.post(`/connections/request`, {
-        recipientUsername: userId,
-      });
+      // TODO: Implement connection request API when backend is ready
+      // const response = await apiClient.post(`/connections/request`, {
+      //   recipientUsername: userId,
+      // });
 
-      if (response.data.code === "200" || response.data.code === 200) {
-        setIsConnected(true);
-        // Update profile data to reflect the connection
-        setProfileData((prev) => ({
-          ...prev,
-          connections: (prev.connections || 0) + 1,
-        }));
-      }
+      // if (response.data.code === "200" || response.data.code === 200) {
+      //   setIsConnected(true);
+      //   // Update profile data to reflect the connection
+      //   setProfileData((prev) => ({
+      //     ...prev,
+      //     connections: (prev.connections || 0) + 1,
+      //   }));
+      // }
+      
+      // Temporary: Just update UI for now
+      setIsConnected(true);
+      setProfileData((prev) => ({
+        ...prev,
+        connections: (prev.connections || 0) + 1,
+      }));
     } catch (err) {
       alert("Failed to send connection request. Please try again.");
     } finally {

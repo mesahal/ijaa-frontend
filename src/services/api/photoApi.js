@@ -1,7 +1,7 @@
 import axiosInstance from "../../utils/api/axiosInstance";
 
 // Use the dedicated file service API base URL
-const API_BASE = process.env.REACT_APP_API_FILE_URL;
+const API_BASE = process.env.REACT_APP_API_FILE_URL || 'http://localhost:8000/ijaa/api/v1/files';
 
 // Create a separate axios instance for photo operations that extends the main instance
 const photoApiClient = axiosInstance.create({
@@ -10,7 +10,10 @@ const photoApiClient = axiosInstance.create({
   // Don't set default Content-Type - it will be set per request
 });
 
-// The main axiosInstance already has the auth interceptor, so we don't need to add it again
+// Ensure the photoApiClient inherits the same interceptors as the main axiosInstance
+// Copy the request and response interceptors from the main axiosInstance
+photoApiClient.interceptors.request = axiosInstance.interceptors.request;
+photoApiClient.interceptors.response = axiosInstance.interceptors.response;
 
 // File validation helper
 export const validateImageFile = (file) => {
@@ -44,27 +47,39 @@ export const validateImageFile = (file) => {
 const convertToAbsoluteUrl = (relativeUrl) => {
   if (!relativeUrl) return null;
   
+  console.log('🔄 [convertToAbsoluteUrl] Converting URL:', relativeUrl);
+  
   // If it's already an absolute URL, return as is
   if (relativeUrl.startsWith('http://') || relativeUrl.startsWith('https://')) {
+    console.log('✅ [convertToAbsoluteUrl] Already absolute URL:', relativeUrl);
     return relativeUrl;
   }
   
-  // Extract just the domain and port from the file API base URL
-  const baseUrl = process.env.REACT_APP_API_FILE_URL || "http://localhost:8000/ijaa/api/v1/file";
+  // Get the base domain from environment variables
+  const baseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/ijaa/api/v1";
   let domainBase = baseUrl;
   
-  // Remove any path components, keeping only domain and port
+  console.log('🔧 [convertToAbsoluteUrl] Base URL from env:', baseUrl);
+  
+  // Extract just the domain and port (remove /ijaa/api/v1 part)
   if (baseUrl.includes('/ijaa/')) {
     domainBase = baseUrl.split('/ijaa/')[0];
   }
   
-  // If it's a relative URL starting with /, prepend the domain base
+  console.log('🌐 [convertToAbsoluteUrl] Domain base:', domainBase);
+  
+  // The photoUrl from API is already in the correct format: /ijaa/api/v1/files/users/...
+  // We just need to prepend the domain base
   if (relativeUrl.startsWith('/')) {
-    return `${domainBase}${relativeUrl}`;
+    const absoluteUrl = `${domainBase}${relativeUrl}`;
+    console.log('✅ [convertToAbsoluteUrl] Converted to absolute URL:', absoluteUrl);
+    return absoluteUrl;
   }
   
   // If it's a relative URL without leading /, prepend the domain base with /
-  return `${domainBase}/${relativeUrl}`;
+  const absoluteUrl = `${domainBase}/${relativeUrl}`;
+  console.log('✅ [convertToAbsoluteUrl] Converted to absolute URL:', absoluteUrl);
+  return absoluteUrl;
 };
 
 // Upload Profile Photo
@@ -139,8 +154,10 @@ export const getProfilePhotoUrl = async (userId) => {
 
       // Handle the new response format
       if (data.exists && data.photoUrl) {
+        console.log('📸 [getProfilePhotoUrl] Raw photoUrl from API:', data.photoUrl);
         // Convert relative URL to absolute URL if needed
         const absolutePhotoUrl = convertToAbsoluteUrl(data.photoUrl);
+        console.log('📸 [getProfilePhotoUrl] Final absolute photoUrl:', absolutePhotoUrl);
         return {
           photoUrl: absolutePhotoUrl,
           hasPhoto: true,
@@ -177,8 +194,10 @@ export const getCoverPhotoUrl = async (userId) => {
 
       // Handle the new response format
       if (data.exists && data.photoUrl) {
+        console.log('🖼️ [getCoverPhotoUrl] Raw photoUrl from API:', data.photoUrl);
         // Convert relative URL to absolute URL if needed
         const absolutePhotoUrl = convertToAbsoluteUrl(data.photoUrl);
+        console.log('🖼️ [getCoverPhotoUrl] Final absolute photoUrl:', absolutePhotoUrl);
         return {
           photoUrl: absolutePhotoUrl,
           hasPhoto: true,

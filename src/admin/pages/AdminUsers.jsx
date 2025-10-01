@@ -46,11 +46,15 @@ const AdminUsers = () => {
   const [sortBy, setSortBy] = useState("name"); // name, email, status, joined
 
   useEffect(() => {
+    console.log('AdminUsers useEffect triggered:', { admin, role: admin?.role, fullAdmin: JSON.stringify(admin) });
     // Only fetch users if admin is authenticated and has admin role
-    if (admin && admin.token && admin.role === 'ADMIN') {
+    if (admin && admin.role === 'ADMIN') {
+      console.log('Fetching users...');
       fetchUsers();
+    } else {
+      console.log('Not fetching users:', { admin, role: admin?.role });
     }
-  }, [admin?.token, admin?.role]); // Only depend on specific admin properties that matter
+  }, [admin?.role]); // Only depend on specific admin properties that matter
 
   // Check if admin has permission to manage users
   if (!permissions.canManageUsers(admin)) {
@@ -78,7 +82,7 @@ const AdminUsers = () => {
   const fetchUsers = async () => {
     try {
       // Check if admin is available
-      if (!admin || !admin.token) {
+      if (!admin) {
         toast.error("Please login to access users");
         return;
       }

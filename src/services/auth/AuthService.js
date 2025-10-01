@@ -1,11 +1,23 @@
 import axios from 'axios';
+import TokenManager from './TokenManager';
 
 // Get API base URL from environment or use default
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/ijaa/api/v1/user';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/ijaa/api/v1';
+const ADMIN_API_BASE = process.env.REACT_APP_API_ADMIN_URL || 'http://localhost:8000/ijaa/api/v1/admin';
 
 // Create axios instance for authentication
 const authClient = axios.create({
   baseURL: API_BASE,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  withCredentials: true, // Important for HttpOnly cookies
+});
+
+// Create axios instance for admin authentication
+const adminAuthClient = axios.create({
+  baseURL: ADMIN_API_BASE,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -41,7 +53,7 @@ class AuthService {
       });
       
       // Use authClient for login (no token needed)
-      const response = await authClient.post('/signin', {
+      const response = await authClient.post('/auth/login', {
         username: credentials.username,
         password: credentials.password,
       });
@@ -108,7 +120,7 @@ class AuthService {
       });
       
       // Use authClient for refresh (no token needed, uses HttpOnly cookie)
-      const response = await authClient.post('/refresh');
+      const response = await authClient.post('/auth/refresh');
       
       const responseData = response.data;
       
@@ -187,9 +199,20 @@ class AuthService {
         timestamp: new Date().toISOString()
       });
       
-      await authClient.post('/logout');
+      // Get the current access token for authentication
+      const accessToken = TokenManager.getAccessToken();
       
-      console.log('✅ [AuthService] Logout successful - refresh token cleared on server');
+      if (accessToken) {
+        // Include access token in the logout request
+        await authClient.post('/auth/logout', {}, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        console.log('✅ [AuthService] Logout successful - refresh token cleared on server');
+      } else {
+        console.warn('⚠️ [AuthService] No access token found, skipping server logout');
+      }
     } catch (error) {
       console.warn('⚠️ [AuthService] Logout request failed, but continuing with local cleanup:', {
         error: error.message,
@@ -207,7 +230,7 @@ class AuthService {
    */
   static async register(userData) {
     try {
-      const response = await authClient.post('/signup', {
+      const response = await authClient.post('/auth/register', {
         username: userData.email,
         password: userData.password,
         firstName: userData.firstName,
@@ -243,9 +266,9 @@ class AuthService {
         timestamp: new Date().toISOString()
       });
       
-      // Use authClient for admin login (no token needed)
-      const response = await authClient.post('/admin/signin', {
-        username: credentials.username,
+      // Use adminAuthClient for admin login (no token needed)
+      const response = await adminAuthClient.post('/login', {
+        email: credentials.username,
         password: credentials.password,
       });
 
@@ -280,6 +303,10 @@ class AuthService {
         tokenType: responseData.data.tokenType || 'Bearer',
         adminId: responseData.data.adminId,
         username: credentials.username,
+        name: responseData.data.name,
+        email: responseData.data.email,
+        role: responseData.data.role,
+        active: responseData.data.active,
       };
     } catch (error) {
       console.error('❌ [AuthService] Admin login failed:', {
@@ -306,7 +333,7 @@ class AuthService {
    */
   static async changePassword(passwordData, accessToken) {
     try {
-      const response = await authClient.post('/change-password', passwordData, {
+      const response = await authClient.post('/auth/change-password', passwordData, {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
         },

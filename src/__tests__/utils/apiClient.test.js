@@ -41,7 +41,7 @@ Object.defineProperty(window, 'location', {
 window.dispatchEvent = jest.fn();
 
 // Now import apiClient
-import apiClient from '../../utils/apiClient';
+import apiClient from '../../services/api/apiClient';
 import axios from 'axios';
 
 describe('apiClient', () => {

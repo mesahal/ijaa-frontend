@@ -1,5 +1,5 @@
 // Mock the API client and admin API
-jest.mock('../../utils/apiClient', () => ({
+jest.mock('../../services/api/apiClient', () => ({
   default: {
     get: jest.fn(),
     post: jest.fn(),
@@ -8,7 +8,7 @@ jest.mock('../../utils/apiClient', () => ({
   }
 }));
 
-jest.mock('../../utils/adminApi', () => ({
+jest.mock('../../services/api/adminApi', () => ({
   adminApi: {
     getFeatureFlags: jest.fn(),
     getFeatureFlag: jest.fn(),
@@ -28,12 +28,12 @@ jest.mock('axios', () => ({
   put: jest.fn(),
   delete: jest.fn()
 }));
-import { featureFlagApi, FEATURE_FLAGS, FEATURE_FLAG_DESCRIPTIONS  } from '../../../utils/featureFlagApi';
+import { featureFlagApi, FEATURE_FLAGS, FEATURE_FLAG_DESCRIPTIONS  } from '../../../services/featureFlags/featureFlagApi';
 
 
 
-import apiClient from '../../utils/apiClient';
-import { adminApi  } from '../../../utils/adminApi';
+import apiClient from '../../services/api/apiClient';
+import { adminApi  } from '../../../services/api/adminApi';
 import axios from 'axios';
 
 describe('featureFlagApi', () => {

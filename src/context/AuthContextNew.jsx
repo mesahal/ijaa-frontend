@@ -167,10 +167,12 @@ export const AuthProvider = ({ children }) => {
       });
 
       const adminData = {
-        email: email,
+        email: loginResponse.email || email,
         adminId: loginResponse.adminId,
         username: loginResponse.username,
+        name: loginResponse.name,
         role: loginResponse.role || ADMIN_ROLE.ADMIN,
+        active: loginResponse.active,
       };
 
       // Store admin session

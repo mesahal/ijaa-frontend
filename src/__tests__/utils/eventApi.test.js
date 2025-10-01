@@ -1,8 +1,8 @@
 import { eventApi, PARTICIPATION_STATUS, EVENT_PRIVACY, EVENT_TYPES, formatDateForAPI, canUserJoinEvent  } from '../../../services/api/eventApi';
-import apiClient from '../../utils/apiClient';
+import apiClient from '../../services/api/apiClient';
 
 // Mock the apiClient
-jest.mock('../../utils/apiClient');
+jest.mock('../../services/api/apiClient');
 
 describe('eventApi', () => {
   beforeEach(() => {

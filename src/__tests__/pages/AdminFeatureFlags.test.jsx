@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import AdminFeatureFlags from "../../pages/AdminFeatureFlags";
 import { useAuth } from '../../hooks/useAuth';
+import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
 import { adminApi  } from '../../../utils/adminApi';
 import { featureFlagApi  } from '../../../utils/featureFlagApi';
 

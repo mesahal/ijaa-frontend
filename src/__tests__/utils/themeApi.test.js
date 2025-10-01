@@ -1,12 +1,12 @@
 import axios from 'axios';
-import { themeApi, THEME_OPTIONS, isValidTheme, convertThemeToCSSClass, convertThemeToLocalStorage  } from '../../../utils/themeApi';
-import sessionManager from '../../utils/sessionManager';
+import { themeApi, THEME_OPTIONS, isValidTheme, convertThemeToCSSClass, convertThemeToLocalStorage  } from '../../../services/api/themeApi';
+import sessionManager from '../../services/auth/SessionManager';
 
 // Mock axios
 jest.mock('axios');
 
 // Mock sessionManager
-jest.mock('../../utils/sessionManager');
+jest.mock('../../services/auth/SessionManager');
 
 // Mock localStorage
 const localStorageMock = {

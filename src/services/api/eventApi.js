@@ -7,7 +7,10 @@ export const eventApi = {
   // Create event with privacy settings
   createEvent: async (eventData) => {
     try {
-      const response = await apiClient.post('/events/create', eventData);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.post('/create', eventData, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -17,7 +20,10 @@ export const eventApi = {
   // Get all events with pagination
   getAllEvents: async (page = 0, size = 10, sort = 'eventDate,desc') => {
     try {
-      const response = await apiClient.get(`/events?page=${page}&size=${size}&sort=${sort}`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get(`/all-events?page=${page}&size=${size}&sort=${sort}`, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -27,7 +33,10 @@ export const eventApi = {
   // Get event by ID with full details
   getEventById: async (eventId) => {
     try {
-      const response = await apiClient.get(`/events/${eventId}`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get(`/all-events/${eventId}`, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -37,7 +46,10 @@ export const eventApi = {
   // Update event
   updateEvent: async (eventId, eventData) => {
     try {
-      const response = await apiClient.put(`/events/${eventId}`, eventData);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.put(`/my-events/${eventId}`, eventData, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -47,7 +59,10 @@ export const eventApi = {
   // Delete event
   deleteEvent: async (eventId) => {
     try {
-      const response = await apiClient.delete(`/events/${eventId}`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.delete(`/my-events/${eventId}`, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -56,22 +71,13 @@ export const eventApi = {
 
   // ===== EVENT SEARCH APIs =====
 
-  // Search events with GET parameters (Group 3.1)
+  // Search events with POST body (Group 3.2)
   searchEventsGet: async (params = {}) => {
     try {
-      const queryParams = new URLSearchParams();
-      
-      // Add search parameters as specified in Group 3.1
-      if (params.location) queryParams.append('location', params.location);
-      if (params.eventType) queryParams.append('eventType', params.eventType);
-      if (params.startDate) queryParams.append('startDate', params.startDate);
-      if (params.endDate) queryParams.append('endDate', params.endDate);
-      if (params.isOnline !== undefined) queryParams.append('isOnline', params.isOnline);
-      if (params.organizerName) queryParams.append('organizerName', params.organizerName);
-      if (params.title) queryParams.append('title', params.title);
-      if (params.description) queryParams.append('description', params.description);
-
-      const response = await apiClient.get(`/events/search?${queryParams.toString()}`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.post('/search', params, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -81,7 +87,10 @@ export const eventApi = {
   // Advanced event search with POST body (Group 3.2)
   searchEventsPost: async (searchCriteria = {}) => {
     try {
-      const response = await apiClient.post('/events/search', searchCriteria);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.post('/search', searchCriteria, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -106,10 +115,13 @@ export const eventApi = {
   // RSVP to an event
   rsvpToEvent: async (eventId, status, message = '') => {
     try {
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
       const response = await apiClient.post('/events/participation/rsvp', {
         eventId,
         status,
         message
+      }, {
+        baseURL: eventApiBase
       });
       return response.data;
     } catch (error) {
@@ -120,7 +132,10 @@ export const eventApi = {
   // Cancel RSVP
   cancelRsvp: async (eventId) => {
     try {
-      const response = await apiClient.delete(`/events/participation/${eventId}/rsvp`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.delete(`/events/participation/${eventId}/rsvp`, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -130,7 +145,10 @@ export const eventApi = {
   // Get user's participation for a specific event
   getMyParticipation: async (eventId) => {
     try {
-      const response = await apiClient.get(`/events/participation/${eventId}/my-participation`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get(`/events/participation/${eventId}/my-participation`, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -140,7 +158,10 @@ export const eventApi = {
   // Get all participants for an event
   getEventParticipants: async (eventId) => {
     try {
-      const response = await apiClient.get(`/events/${eventId}/participants`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get(`/events/participation/${eventId}/participants`, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -150,7 +171,10 @@ export const eventApi = {
   // Get all user's participations
   getMyParticipations: async () => {
     try {
-      const response = await apiClient.get('/events/participation/my-participations');
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get('/events/participation/my-participations', {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -162,10 +186,13 @@ export const eventApi = {
   // Send invitations to users
   sendInvitations: async (eventId, usernames, personalMessage = '') => {
     try {
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
       const response = await apiClient.post('/events/invitations/send', {
         eventId,
         usernames,
         personalMessage
+      }, {
+        baseURL: eventApiBase
       });
       return response.data;
     } catch (error) {
@@ -176,7 +203,10 @@ export const eventApi = {
   // Accept invitation
   acceptInvitation: async (eventId) => {
     try {
-      const response = await apiClient.post(`/events/invitations/${eventId}/accept`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.post(`/events/invitations/${eventId}/accept`, {}, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -186,7 +216,10 @@ export const eventApi = {
   // Decline invitation
   declineInvitation: async (eventId) => {
     try {
-      const response = await apiClient.post(`/events/invitations/${eventId}/decline`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.post(`/events/invitations/${eventId}/decline`, {}, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -196,7 +229,10 @@ export const eventApi = {
   // Get user's invitations
   getMyInvitations: async () => {
     try {
-      const response = await apiClient.get('/events/invitations/my-invitations');
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get('/events/invitations/my-invitations', {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -206,7 +242,10 @@ export const eventApi = {
   // Get unread invitations
   getUnreadInvitations: async () => {
     try {
-      const response = await apiClient.get('/events/invitations/my-invitations/unread');
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get('/events/invitations/my-invitations/unread', {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -216,7 +255,10 @@ export const eventApi = {
   // Get unresponded invitations
   getUnrespondedInvitations: async () => {
     try {
-      const response = await apiClient.get('/events/invitations/my-invitations/unresponded');
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get('/events/invitations/my-invitations/unresponded', {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -226,7 +268,10 @@ export const eventApi = {
   // Mark invitation as read
   markInvitationAsRead: async (eventId) => {
     try {
-      const response = await apiClient.post(`/events/invitations/${eventId}/mark-read`);
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.post(`/events/invitations/${eventId}/mark-read`, {}, {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -236,7 +281,10 @@ export const eventApi = {
   // Get invitation counts
   getInvitationCounts: async () => {
     try {
-      const response = await apiClient.get('/events/invitations/counts');
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get('/events/invitations/counts', {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;
@@ -337,7 +385,7 @@ export const eventApi = {
   // Add event comment
   addEventComment: async (eventId, content) => {
     try {
-      const response = await apiClient.post('/events/comments', {
+      const response = await apiClient.post('/events/comments/', {
         eventId,
         content
       });
@@ -350,7 +398,7 @@ export const eventApi = {
   // Get event comments
   getEventComments: async (eventId) => {
     try {
-      const response = await apiClient.get(`/events/${eventId}/comments`);
+      const response = await apiClient.get(`/events/comments/event/${eventId}`);
       return response.data;
     } catch (error) {
       throw error;
@@ -394,7 +442,10 @@ export const eventApi = {
   // Legacy methods for backward compatibility
   getMyEvents: async () => {
     try {
-      const response = await apiClient.get('/events/my-events');
+      const eventApiBase = process.env.REACT_APP_API_EVENT_URL || 'http://localhost:8000/ijaa/api/v1/events';
+      const response = await apiClient.get('/my-events', {
+        baseURL: eventApiBase
+      });
       return response.data;
     } catch (error) {
       throw error;

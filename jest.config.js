@@ -16,6 +16,10 @@ module.exports = {
     
     // Handle axios
     '^axios$': '<rootDir>/src/__tests__/__mocks__/axiosMock.js',
+
+    // Map test-relative util imports to manual mocks
+    '^\.\./\.\./utils/adminApi$': '<rootDir>/src/utils/__mocks__/adminApi.js',
+    '^\.\./\.\./utils/featureFlagApi$': '<rootDir>/src/utils/__mocks__/featureFlagApi.js',
   },
   transform: {
     '^.+\\.(js|jsx|ts|tsx)$': ['babel-jest', { presets: ['@babel/preset-env', '@babel/preset-react'] }],

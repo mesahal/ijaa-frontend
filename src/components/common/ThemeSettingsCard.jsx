@@ -12,7 +12,11 @@ const ThemeSettingsCard = () => {
     let mounted = true;
     const loadThemes = async () => {
       try {
-        const res = await themeApi.getAvailableThemes();
+        // Get userId from localStorage to pass explicitly
+        const userData = localStorage.getItem('alumni_user');
+        const userId = userData ? JSON.parse(userData)?.userId : null;
+        
+        const res = await themeApi.getAvailableThemes(userId);
         const list = Array.isArray(res?.data) ? res.data : [];
         if (mounted) setOptions(list.filter(isValidTheme));
       } catch (e) {
@@ -35,8 +39,7 @@ const ThemeSettingsCard = () => {
     setSaving(true);
     setError(null);
     try {
-      await themeApi.updateUserTheme(newTheme);
-      // Update local context/UI
+      // Let the theme context handle the API call and local update
       await setTheme(newTheme);
     } catch (e) {
       setError(e?.message || "Failed to update theme");

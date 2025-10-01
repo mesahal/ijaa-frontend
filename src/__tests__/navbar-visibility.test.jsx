@@ -55,7 +55,7 @@ const signInUser = async () => {
   global.fetch.mockResolvedValue(mockResponse);
   
   // Simulate the signIn call
-  const response = await fetch('http://localhost:8000/ijaa/api/v1/user/signin', {
+  const response = await fetch('http://localhost:8000/ijaa/api/v1/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ username: 'user@test.com', password: 'password123' })

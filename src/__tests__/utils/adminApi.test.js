@@ -1,4 +1,4 @@
-import { adminApi, adminApiCall  } from '../../../utils/adminApi';
+import { adminApi, adminApiCall  } from '../../../services/api/adminApi';
 
 // Mock localStorage
 const localStorageMock = {

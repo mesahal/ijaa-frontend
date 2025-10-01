@@ -34,7 +34,7 @@ const AdminDashboard = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (admin && admin.token) {
+    if (admin) {
       fetchDashboardData();
     }
   }, [admin]);
@@ -42,7 +42,7 @@ const AdminDashboard = () => {
   const fetchDashboardData = async () => {
     try {
       // Check if admin is available
-      if (!admin || !admin.token) {
+      if (!admin) {
         toast.error("Please login to access dashboard");
         return;
       }

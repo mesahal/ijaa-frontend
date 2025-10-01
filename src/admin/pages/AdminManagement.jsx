@@ -63,7 +63,7 @@ const AdminManagement = () => {
   }, []);
 
   useEffect(() => {
-    if (currentAdmin && currentAdmin.token) {
+    if (currentAdmin) {
       fetchAdmins();
     }
   }, [currentAdmin, fetchAdmins]);

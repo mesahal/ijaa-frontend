@@ -182,7 +182,7 @@ class EventService {
       if (params.title) queryParams.append('title', params.title);
       if (params.description) queryParams.append('description', params.description);
 
-      const response = await apiClient.get(`/events/search?${queryParams.toString()}`);
+      const response = await apiClient.post('/events/search', params);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -546,7 +546,7 @@ class EventService {
    */
   async addEventComment(eventId, content, parentCommentId = null) {
     try {
-      const response = await apiClient.post('/events/comments', {
+      const response = await apiClient.post('/events/comments/', {
         eventId,
         content,
         parentCommentId
@@ -1081,7 +1081,7 @@ class EventService {
       formData.append('file', file);
 
       // Use the File Service API directly
-      const fileApiBase = process.env.REACT_APP_API_FILE_URL;
+      const fileApiBase = process.env.REACT_APP_API_FILE_URL || 'http://localhost:8000/ijaa/api/v1/files';
       const response = await apiClient.post(`/events/${eventId}/banner`, formData, {
         baseURL: fileApiBase,
         headers: {
@@ -1103,7 +1103,7 @@ class EventService {
   async getEventBannerUrl(eventId) {
     try {
       // Use the File Service API directly
-      const fileApiBase = process.env.REACT_APP_API_FILE_URL;
+      const fileApiBase = process.env.REACT_APP_API_FILE_URL || 'http://localhost:8000/ijaa/api/v1/files';
       const response = await apiClient.get(`/events/${eventId}/banner`, {
         baseURL: fileApiBase,
       });
@@ -1122,7 +1122,7 @@ class EventService {
   async deleteEventBanner(eventId) {
     try {
       // Use the File Service API directly
-      const fileApiBase = process.env.REACT_APP_API_FILE_URL;
+      const fileApiBase = process.env.REACT_APP_API_FILE_URL || 'http://localhost:8000/ijaa/api/v1/files';
       const response = await apiClient.delete(`/events/${eventId}/banner`, {
         baseURL: fileApiBase,
       });
@@ -1139,7 +1139,7 @@ class EventService {
    * @returns {string} Public banner file URL
    */
   getEventBannerFileUrl(eventId, fileName) {
-    const fileApiBase = process.env.REACT_APP_API_FILE_URL;
+    const fileApiBase = process.env.REACT_APP_API_FILE_URL || 'http://localhost:8000/ijaa/api/v1/files';
     return `${fileApiBase}/events/${eventId}/banner/file/${fileName}`;
   }
 }

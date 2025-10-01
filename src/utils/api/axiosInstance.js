@@ -2,7 +2,7 @@ import axios from 'axios';
 import TokenManager from '../../services/auth/TokenManager';
 
 // Get API base URL from environment or use default
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/ijaa/api/v1/user';
+const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/ijaa/api/v1';
 
 // Create axios instance
 const axiosInstance = axios.create({

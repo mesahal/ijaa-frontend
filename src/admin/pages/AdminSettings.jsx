@@ -67,7 +67,7 @@ const AdminSettings = () => {
   }, []);
 
   useEffect(() => {
-    if (admin && admin.token) {
+    if (admin) {
       fetchAdminProfile();
     }
   }, [admin, fetchAdminProfile]);

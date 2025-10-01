@@ -246,48 +246,45 @@ export const featureFlagApi = {
   }
 };
 
-// Predefined feature flag names (Updated to match exact database structure)
+// Predefined feature flag names (Updated to match backend's 44 hierarchical flags)
 export const FEATURE_FLAGS = {
-  // Admin Features
-  ADMIN_FEATURES: 'admin.features',
-  ADMIN_USER_MANAGEMENT: 'admin.user-management',
-  ADMIN_AUTH: 'admin.auth',
-  
-  // Alumni Search
-  ALUMNI_SEARCH: 'alumni.search',
-  
-  
-  // Events System
-  EVENTS: 'events',
-  EVENTS_CREATION: 'events.creation',
-  EVENTS_UPDATE: 'events.update',
-  EVENTS_DELETE: 'events.delete',
-  EVENTS_PARTICIPATION: 'events.participation',
-  EVENTS_INVITATIONS: 'events.invitations',
-  EVENTS_COMMENTS: 'events.comments',
-  EVENTS_MEDIA: 'events.media',
-  EVENTS_TEMPLATES: 'events.templates',
-  EVENTS_RECURRING: 'events.recurring',
-  EVENTS_ANALYTICS: 'events.analytics',
-  EVENTS_REMINDERS: 'events.reminders',
-  CALENDAR_INTEGRATION: 'calendar.integration',
-  
-  // File Management
-  FILE: 'file',
-  FILE_DOWNLOAD: 'file-download',
-  FILE_DELETE: 'file-delete',
-  FILE_UPLOAD: 'file-upload',
-  FILE_UPLOAD_COVER_PHOTO: 'file-upload.cover-photo',
-  FILE_UPLOAD_PROFILE_PHOTO: 'file-upload.profile-photo',
-  
-  
-  // User Profile Features
-  USER_PROFILE: 'user.profile',
+  // User Service Feature Flags
   USER_REGISTRATION: 'user.registration',
   USER_LOGIN: 'user.login',
+  USER_PASSWORD_CHANGE: 'user.password-change',
+  USER_PROFILE: 'user.profile',
   USER_EXPERIENCES: 'user.experiences',
   USER_INTERESTS: 'user.interests',
-  USER_PASSWORD_CHANGE: 'user.password-change',
+  USER_SETTINGS: 'user.settings',
+  USER_LOCATION: 'user.location',
+  USER_REFRESH: 'user.refresh',
+  
+  // Admin Service Feature Flags
+  ADMIN_AUTH: 'admin.auth',
+  ADMIN_FEATURES: 'admin.features',
+  ADMIN_USER_MANAGEMENT: 'admin.user-management',
+  
+  // File Service Feature Flags
+  FILE_UPLOAD_PROFILE_PHOTO: 'file-upload.profile-photo',
+  FILE_UPLOAD_COVER_PHOTO: 'file-upload.cover-photo',
+  FILE_DOWNLOAD: 'file-download',
+  FILE_DELETE: 'file-delete',
+  
+  // Event Service Feature Flags
+  SEARCH: 'search',
+  SEARCH_ADVANCED_FILTERS: 'search.advanced-filters',
+  EVENTS: 'events',
+  EVENTS_PARTICIPATION: 'events.participation',
+  EVENTS_COMMENTS: 'events.comments',
+  EVENTS_INVITATIONS: 'events.invitations',
+  EVENTS_MEDIA: 'events.media',
+  EVENTS_BANNER: 'events.banner',
+  
+  // System Feature Flags
+  ALUMNI_SEARCH: 'alumni.search',
+  ANNOUNCEMENTS: 'announcements',
+  REPORTS: 'reports',
+  SYSTEM_HEALTH: 'system.health',
   
   // Legacy flags for backward compatibility
   NEW_UI: 'NEW_UI',
@@ -307,52 +304,45 @@ export const FEATURE_FLAGS = {
   EVENT_COMMENTS: 'EVENT_COMMENTS'
 };
 
-// Feature flag descriptions (Updated to match exact database structure)
+// Feature flag descriptions (Updated to match backend's 44 hierarchical flags)
 export const FEATURE_FLAG_DESCRIPTIONS = {
-  // Admin Features
-  [FEATURE_FLAGS.ADMIN_FEATURES]: 'Enable admin functionality',
-  [FEATURE_FLAGS.ADMIN_USER_MANAGEMENT]: 'Enable admin user management features',
-  [FEATURE_FLAGS.ADMIN_ANNOUNCEMENTS]: 'Enable admin announcement management',
-  [FEATURE_FLAGS.ADMIN_REPORTS]: 'Enable admin report management',
-  [FEATURE_FLAGS.ADMIN_AUTH]: 'Enable admin authentication features',
-  
-  // Alumni Search
-  [FEATURE_FLAGS.ALUMNI_SEARCH]: 'Enable alumni search functionality',
-  
-  
-  // Events System
-  [FEATURE_FLAGS.EVENTS]: 'Enable event management functionality',
-  [FEATURE_FLAGS.EVENTS_CREATION]: 'Enable event creation functionality',
-  [FEATURE_FLAGS.EVENTS_UPDATE]: 'Enable event update functionality',
-  [FEATURE_FLAGS.EVENTS_DELETE]: 'Enable event deletion functionality',
-  [FEATURE_FLAGS.EVENTS_PARTICIPATION]: 'Enable event participation and RSVP functionality',
-  [FEATURE_FLAGS.EVENTS_INVITATIONS]: 'Enable event invitation functionality',
-  [FEATURE_FLAGS.EVENTS_COMMENTS]: 'Enable event commenting system',
-  [FEATURE_FLAGS.EVENTS_MEDIA]: 'Enable media attachments for events',
-  [FEATURE_FLAGS.EVENTS_TEMPLATES]: 'Enable reusable event templates',
-  [FEATURE_FLAGS.EVENTS_RECURRING]: 'Enable recurring event patterns',
-  [FEATURE_FLAGS.EVENTS_ANALYTICS]: 'Enable event analytics and reporting',
-  [FEATURE_FLAGS.EVENTS_REMINDERS]: 'Enable event reminder notifications',
-  [FEATURE_FLAGS.CALENDAR_INTEGRATION]: 'Enable external calendar synchronization',
-  
-  // File Management
-  [FEATURE_FLAGS.FILE]: 'Enable file management functionality',
-  [FEATURE_FLAGS.FILE_DOWNLOAD]: 'Enable file download functionality',
-  [FEATURE_FLAGS.FILE_DELETE]: 'Enable file deletion functionality',
-  [FEATURE_FLAGS.FILE_UPLOAD]: 'Enable file upload functionality',
-  [FEATURE_FLAGS.FILE_UPLOAD_COVER_PHOTO]: 'Enable cover photo upload',
-  [FEATURE_FLAGS.FILE_UPLOAD_PROFILE_PHOTO]: 'Enable profile photo upload',
-  
-  // Reports
-  [FEATURE_FLAGS.REPORTS]: 'Enable user reporting system',
-  
-  // User Profile Features
-  [FEATURE_FLAGS.USER_PROFILE]: 'Enable user profile management features',
+  // User Service Feature Flags
   [FEATURE_FLAGS.USER_REGISTRATION]: 'Enable user registration functionality',
   [FEATURE_FLAGS.USER_LOGIN]: 'Enable user login functionality',
+  [FEATURE_FLAGS.USER_PASSWORD_CHANGE]: 'Enable user password change functionality',
+  [FEATURE_FLAGS.USER_PROFILE]: 'Enable user profile management features',
   [FEATURE_FLAGS.USER_EXPERIENCES]: 'Enable user experience management features',
   [FEATURE_FLAGS.USER_INTERESTS]: 'Enable user interest management features',
-  [FEATURE_FLAGS.USER_PASSWORD_CHANGE]: 'Enable user password change functionality',
+  [FEATURE_FLAGS.USER_SETTINGS]: 'Enable user settings and preferences',
+  [FEATURE_FLAGS.USER_LOCATION]: 'Enable location-based features',
+  [FEATURE_FLAGS.USER_REFRESH]: 'Enable user token refresh functionality',
+  
+  // Admin Service Feature Flags
+  [FEATURE_FLAGS.ADMIN_AUTH]: 'Enable admin authentication features',
+  [FEATURE_FLAGS.ADMIN_FEATURES]: 'Enable admin management features',
+  [FEATURE_FLAGS.ADMIN_USER_MANAGEMENT]: 'Enable admin user management features',
+  
+  // File Service Feature Flags
+  [FEATURE_FLAGS.FILE_UPLOAD_PROFILE_PHOTO]: 'Enable profile photo upload',
+  [FEATURE_FLAGS.FILE_UPLOAD_COVER_PHOTO]: 'Enable cover photo upload',
+  [FEATURE_FLAGS.FILE_DOWNLOAD]: 'Enable file download functionality',
+  [FEATURE_FLAGS.FILE_DELETE]: 'Enable file deletion functionality',
+  
+  // Event Service Feature Flags
+  [FEATURE_FLAGS.SEARCH]: 'Enable basic search functionality',
+  [FEATURE_FLAGS.SEARCH_ADVANCED_FILTERS]: 'Enable advanced search filters',
+  [FEATURE_FLAGS.EVENTS]: 'Enable core event management functionality',
+  [FEATURE_FLAGS.EVENTS_PARTICIPATION]: 'Enable event participation and RSVP',
+  [FEATURE_FLAGS.EVENTS_COMMENTS]: 'Enable event commenting system',
+  [FEATURE_FLAGS.EVENTS_INVITATIONS]: 'Enable event invitation system',
+  [FEATURE_FLAGS.EVENTS_MEDIA]: 'Enable event media attachments',
+  [FEATURE_FLAGS.EVENTS_BANNER]: 'Enable event banner upload and management',
+  
+  // System Feature Flags
+  [FEATURE_FLAGS.ALUMNI_SEARCH]: 'Enable alumni search functionality',
+  [FEATURE_FLAGS.ANNOUNCEMENTS]: 'Enable system-wide announcements',
+  [FEATURE_FLAGS.REPORTS]: 'Enable user reporting system',
+  [FEATURE_FLAGS.SYSTEM_HEALTH]: 'Enable system health check endpoints',
   
   // Legacy descriptions for backward compatibility
   [FEATURE_FLAGS.NEW_UI]: 'Modern user interface with enhanced design',

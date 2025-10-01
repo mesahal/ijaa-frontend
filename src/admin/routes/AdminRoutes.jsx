@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react';
-import { Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import AdminRoute from '../../components/layout/AdminRoute';
 import FeatureFlagWrapper from '../../components/layout/FeatureFlagWrapper';
@@ -22,7 +22,7 @@ const AdminRoutes = () => {
 
   return (
     <Suspense fallback={<LoadingSpinner />}>
-      <>
+      <Routes>
         {/* Admin Login */}
         <Route
           path="/login"
@@ -201,7 +201,7 @@ const AdminRoutes = () => {
             isAdmin() ? <Navigate to="/admin/dashboard" replace /> : <Navigate to="/admin/login" replace />
           } 
         />
-      </>
+      </Routes>
     </Suspense>
   );
 };
