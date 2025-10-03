@@ -20,6 +20,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-icons": "^4.7.1",
+    "react-image-crop": "^11.0.10",
     "react-router-dom": "^6.28.0",
     "react-scripts": "5.0.1",
     "react-toastify": "^11.0.5",
@@ -30,7 +31,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "test:coverage": "react-scripts test --coverage --watchAll=false",
-    "test:ci": "react-scripts test --coverage --watchAll=false --ci",
+    "test:ci": "npm run test:ci && npm run test:e2e:all && npm run lint",
     "test:watch": "react-scripts test --watch",
     "test:unit": "npm run test -- --testPathPattern=src/__tests__ --testPathIgnorePatterns=src/__tests__/integration",
     "test:integration": "npm run test -- --testPathPattern=src/__tests__/integration",
@@ -70,7 +71,6 @@
     "test:quick": "npm run test:unit && npm run test:e2e:auth",
     "test:full": "npm run test:ci && npm run test:e2e:all && npm run lint && npm run format:check",
     "test:pre-commit": "npm run test:unit && npm run lint:fix && npm run format",
-    "test:ci": "npm run test:ci && npm run test:e2e:all && npm run lint",
     "test:coverage:full": "npm run test:coverage && npm run test:e2e:all",
     "test:regression:full": "npm run test:regression && npm run test:e2e:all",
     "test:accessibility:full": "npm run test:accessibility && npm run cypress:run:accessibility",
@@ -154,13 +154,13 @@
     ]
   },
   "devDependencies": {
+    "concurrently": "^8.2.2",
     "cypress": "^13.6.0",
     "cypress-axe": "^1.5.0",
     "cypress-file-upload": "^5.0.8",
     "eslint-config-prettier": "^8.6.0",
     "prettier": "2.8.4",
-    "tailwindcss": "^3.4.17",
-    "concurrently": "^8.2.2"
+    "tailwindcss": "^3.4.17"
   },
   "jest": {
     "collectCoverageFrom": [

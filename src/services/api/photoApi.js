@@ -15,6 +15,20 @@ const photoApiClient = axiosInstance.create({
 photoApiClient.interceptors.request = axiosInstance.interceptors.request;
 photoApiClient.interceptors.response = axiosInstance.interceptors.response;
 
+// Add a request interceptor to remove Content-Type for FormData uploads
+photoApiClient.interceptors.request.use(
+  (config) => {
+    // If the data is FormData, remove Content-Type to let browser set it automatically
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
 // File validation helper
 export const validateImageFile = (file) => {
   const maxSize = 5 * 1024 * 1024; // 5MB

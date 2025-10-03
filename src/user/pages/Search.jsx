@@ -186,7 +186,7 @@ const Search = () => {
   };
 
   const handleViewProfile = (userId) => {
-    navigate(`/profile/${userId}`);
+    navigate(`/user/profile/${userId}`);
   };
 
   const clearFilters = () => {

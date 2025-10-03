@@ -1,15 +1,26 @@
 import React from "react";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
 import AdminFeatureFlags from "../../pages/AdminFeatureFlags";
 import { useAuth } from '../../hooks/useAuth';
 import { useUnifiedAuth } from '../../context/UnifiedAuthContext';
-import { adminApi  } from '../../../utils/adminApi';
-import { featureFlagApi  } from '../../../utils/featureFlagApi';
+import { AuthProvider } from '../../context/AuthContext';
 
 // Mock the contexts and APIs
 jest.mock("../../context/UnifiedAuthContext");
-jest.mock("../../utils/adminApi");
-jest.mock("../../utils/featureFlagApi");
+jest.mock("../../utils/adminApi", () => ({
+  adminApi: {
+    getFeatureFlags: jest.fn(),
+    createFeatureFlag: jest.fn(),
+    updateFeatureFlag: jest.fn(),
+    deleteFeatureFlag: jest.fn(),
+  }
+}));
+jest.mock("../../utils/featureFlagApi", () => ({
+  featureFlagApi: {
+    refreshFeatureFlagCache: jest.fn(),
+  }
+}));
 jest.mock("../../components/AdminLayout", () => {
   return function MockAdminLayout({ children }) {
     return <div data-testid="admin-layout">{children}</div>;
@@ -17,8 +28,6 @@ jest.mock("../../components/AdminLayout", () => {
 });
 
 const mockUseUnifiedAuth = useUnifiedAuth;
-const mockAdminApi = adminApi;
-const mockFeatureFlagApi = featureFlagApi;
 
 // Updated mock data to match the new API structure
 const mockFeatureFlags = [
@@ -96,13 +105,6 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
       admin: { id: 1, name: "Admin User" }
     });
 
-    // Mock API responses
-    mockAdminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
-    mockAdminApi.createFeatureFlag.mockResolvedValue({ data: {} });
-    mockAdminApi.updateFeatureFlag.mockResolvedValue({ data: {} });
-    mockAdminApi.deleteFeatureFlag.mockResolvedValue({ data: {} });
-    mockFeatureFlagApi.refreshFeatureFlagCache.mockResolvedValue({ data: {} });
-
     // Mock window.confirm
     window.confirm = jest.fn(() => true);
   });
@@ -112,7 +114,17 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("renders the feature flags page with header", async () => {
-    render(<AdminFeatureFlags />);
+    // Mock API response
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Feature Flags")).toBeInTheDocument();
@@ -123,7 +135,16 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("displays parent features individually with proper indicators", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -137,7 +158,16 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("shows child count for parent features", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -148,7 +178,16 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("shows dropdown buttons for parent features", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -160,7 +199,17 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("creates a new feature flag", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+    adminApi.createFeatureFlag.mockResolvedValue({ data: {} });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Create Flag")).toBeInTheDocument();
@@ -190,7 +239,7 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
     fireEvent.click(modalSubmitButton);
 
     await waitFor(() => {
-      expect(mockAdminApi.createFeatureFlag).toHaveBeenCalledWith({
+      expect(adminApi.createFeatureFlag).toHaveBeenCalledWith({
         name: "test.feature",
         displayName: "Test Feature",
         description: "Test description",
@@ -201,7 +250,17 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("edits a parent feature flag", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+    adminApi.updateFeatureFlag.mockResolvedValue({ data: {} });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -231,41 +290,22 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalled();
-    });
-  });
-
-  test("edits a parent feature flag successfully", async () => {
-    render(<AdminFeatureFlags />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Event Management")).toBeInTheDocument();
-    });
-
-    // Click edit button for Event Management
-    const editButtons = screen.getAllByTitle("Edit Feature Flag");
-    fireEvent.click(editButtons[0]);
-
-    await waitFor(() => {
-      expect(screen.getByText("Edit Feature Flag")).toBeInTheDocument();
-    });
-
-    // Wait for the form to be populated
-    await waitFor(() => {
-      expect(screen.getByDisplayValue("events")).toBeInTheDocument();
-    });
-
-    // Submit form
-    const submitButton = screen.getByText("Update Flag");
-    fireEvent.click(submitButton);
-
-    await waitFor(() => {
-      expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalled();
+      expect(adminApi.updateFeatureFlag).toHaveBeenCalled();
     });
   });
 
   test("deletes a parent feature flag", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+    adminApi.deleteFeatureFlag.mockResolvedValue({ data: {} });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -276,28 +316,22 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
     fireEvent.click(deleteButtons[0]);
 
     await waitFor(() => {
-      expect(mockAdminApi.deleteFeatureFlag).toHaveBeenCalledWith("events");
-    });
-  });
-
-  test("deletes a parent feature flag", async () => {
-    render(<AdminFeatureFlags />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Event Management")).toBeInTheDocument();
-    });
-
-    // Click delete button for Event Management
-    const deleteButtons = screen.getAllByTitle("Delete Feature Flag");
-    fireEvent.click(deleteButtons[0]);
-
-    await waitFor(() => {
-      expect(mockAdminApi.deleteFeatureFlag).toHaveBeenCalledWith("events");
+      expect(adminApi.deleteFeatureFlag).toHaveBeenCalledWith("events");
     });
   });
 
   test("toggles parent feature flag status", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+    adminApi.updateFeatureFlag.mockResolvedValue({ data: {} });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -312,36 +346,22 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
       fireEvent.click(toggleButtons[0]);
       
       await waitFor(() => {
-        expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalledWith("events", { enabled: false });
-      });
-    }
-  });
-
-  test("toggles parent feature flag status", async () => {
-    render(<AdminFeatureFlags />);
-
-    await waitFor(() => {
-      expect(screen.getByText("Event Management")).toBeInTheDocument();
-    });
-
-    // Find and click the toggle button for Event Management
-    const toggleButtons = screen.getAllByRole("button").filter(button => 
-      button.className.includes("inline-flex h-6 w-11")
-    );
-    
-    if (toggleButtons.length > 0) {
-      fireEvent.click(toggleButtons[0]);
-      
-      await waitFor(() => {
-        expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalledWith("events", { enabled: false });
+        expect(adminApi.updateFeatureFlag).toHaveBeenCalledWith("events", { enabled: false });
       });
     }
   });
 
   test("shows empty state when no feature flags exist", async () => {
-    mockAdminApi.getFeatureFlags.mockResolvedValue({ data: [] });
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: [] });
 
-    render(<AdminFeatureFlags />);
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("No feature flags configured")).toBeInTheDocument();
@@ -350,7 +370,16 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("displays feature flag summary in header", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("3 Enabled")).toBeInTheDocument();
@@ -360,7 +389,16 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("shows proper parent-child relationship indicators", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -372,9 +410,16 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("handles API errors gracefully", async () => {
-    mockAdminApi.getFeatureFlags.mockRejectedValue(new Error("API Error"));
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockRejectedValue(new Error("API Error"));
 
-    render(<AdminFeatureFlags />);
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Feature Flags")).toBeInTheDocument();
@@ -385,9 +430,17 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("handles toggle feature flag errors", async () => {
-    mockAdminApi.updateFeatureFlag.mockRejectedValue(new Error("Update failed"));
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+    adminApi.updateFeatureFlag.mockRejectedValue(new Error("Update failed"));
 
-    render(<AdminFeatureFlags />);
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -402,13 +455,22 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
       fireEvent.click(toggleButtons[0]);
       
       await waitFor(() => {
-        expect(mockAdminApi.updateFeatureFlag).toHaveBeenCalled();
+        expect(adminApi.updateFeatureFlag).toHaveBeenCalled();
       });
     }
   });
 
   test("dropdowns start closed by default", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();
@@ -420,7 +482,16 @@ describe("AdminFeatureFlags - Updated Implementation", () => {
   });
 
   test("no duplicate features are shown", async () => {
-    render(<AdminFeatureFlags />);
+    const { adminApi } = require("../../utils/adminApi");
+    adminApi.getFeatureFlags.mockResolvedValue({ data: mockFeatureFlags });
+
+    render(
+      <BrowserRouter>
+        <AuthProvider>
+          <AdminFeatureFlags />
+        </AuthProvider>
+      </BrowserRouter>
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Event Management")).toBeInTheDocument();

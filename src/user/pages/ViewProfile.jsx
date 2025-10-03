@@ -173,11 +173,33 @@ const ViewProfile = () => {
   };
 
   useEffect(() => {
-    if (userId && user?.token) {
-      fetchProfile();
-      fetchExperiences();
-      fetchInterests();
-      fetchPhotos();
+    if (userId) {
+      // If we have a token, fetch immediately
+      if (user?.token) {
+        fetchProfile();
+        fetchExperiences();
+        fetchInterests();
+        fetchPhotos();
+      } else {
+        // If no token yet, wait a bit for token refresh to complete
+        const timer = setTimeout(() => {
+          if (user?.token) {
+            fetchProfile();
+            fetchExperiences();
+            fetchInterests();
+            fetchPhotos();
+          } else {
+            // If still no token after waiting, try to fetch anyway
+            // The API client will handle authentication
+            fetchProfile();
+            fetchExperiences();
+            fetchInterests();
+            fetchPhotos();
+          }
+        }, 1000); // Wait 1 second for token refresh
+
+        return () => clearTimeout(timer);
+      }
     }
   }, [userId, user?.token]);
 
@@ -285,10 +307,15 @@ const ViewProfile = () => {
 
                 {/* Location and Batch */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
-                  {profileData.location && (
+                  {(profileData.cityName || profileData.countryName) && (
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      <span>{profileData.location}</span>
+                      <span>
+                        {profileData.cityName && profileData.countryName 
+                          ? `${profileData.cityName}, ${profileData.countryName}`
+                          : profileData.cityName || profileData.countryName
+                        }
+                      </span>
                     </div>
                   )}
 

@@ -45,11 +45,22 @@ import {
 import FeatureFlagWrapper from '../../components/layout/FeatureFlagWrapper';
 import { toast } from "react-toastify";
 import ThemeSettingsCard from "../../components/common/ThemeSettingsCard";
+import { useLocationData } from '../hooks/useLocationData';
 
 const Profile = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Location data hook
+  const { 
+    countries, 
+    cities, 
+    loading: locationLoading, 
+    fetchCities, 
+    getCountryName, 
+    getCityName 
+  } = useLocationData();
 
   // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
   const getOrdinalSuffix = (num) => {
@@ -103,10 +114,15 @@ const Profile = () => {
     loading: photoLoading,
     error: photoError,
     handleFileUpload,
+    handleFileSelect,
+    uploadPendingPhotos,
+    cancelPreview,
+    hasPendingChanges,
     reloadPhotos,
   } = usePhotoManager({
     userId: user?.userId,
     onPhotoUpdate: handlePhotoUpdate,
+    previewMode: isEditing,
   });
   // Set loading to false if photo loading fails
   useEffect(() => {
@@ -116,13 +132,22 @@ const Profile = () => {
   }, [photoError, loading]);
 
   const validateFields = () => {
-    const requiredFields = ["name", "profession", "location", "bio", "batch"];
+    const requiredFields = ["name", "profession", "bio", "batch"];
     const newErrors = {};
     requiredFields.forEach((field) => {
       if (!profileData[field] || profileData[field].trim() === "") {
         newErrors[field] = "This field is required";
       }
     });
+    
+    // Validate location fields
+    if (!profileData.countryId) {
+      newErrors.countryId = "Country is required";
+    }
+    if (!profileData.cityId) {
+      newErrors.cityId = "City is required";
+    }
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -152,7 +177,10 @@ const Profile = () => {
         userId: profile.userId || user?.userId,
         name: profile.name || user?.name || "",
         profession: profile.profession || user?.profession || "",
-        location: profile.location || user?.location || "",
+        countryId: profile.countryId || user?.countryId || null,
+        cityId: profile.cityId || user?.cityId || null,
+        countryName: profile.countryName || user?.countryName || "",
+        cityName: profile.cityName || user?.cityName || "",
         bio: profile.bio || user?.bio || "",
         phone: profile.phone || user?.phone || "",
         linkedIn: profile.linkedIn || user?.linkedIn || "",
@@ -186,7 +214,10 @@ const Profile = () => {
         userId: user?.userId,
         name: user?.name || "",
         profession: user?.profession || "",
-        location: user?.location || "",
+        countryId: user?.countryId || null,
+        cityId: user?.cityId || null,
+        countryName: user?.countryName || "",
+        cityName: user?.cityName || "",
         bio: user?.bio || "",
         phone: user?.phone || "",
         linkedIn: user?.linkedIn || "",
@@ -380,6 +411,48 @@ const Profile = () => {
     }
   };
 
+  const handleCountryChange = (e) => {
+    const countryId = parseInt(e.target.value);
+    const countryName = getCountryName(countryId);
+    
+    setProfileData({ 
+      ...profileData, 
+      countryId: countryId || null,
+      countryName: countryName,
+      cityId: null, // Reset city when country changes
+      cityName: ""
+    });
+    
+    // Clear errors
+    if (errors.countryId) {
+      setErrors({ ...errors, countryId: "" });
+    }
+    if (errors.cityId) {
+      setErrors({ ...errors, cityId: "" });
+    }
+    
+    // Fetch cities for the selected country
+    if (countryId) {
+      fetchCities(countryId);
+    }
+  };
+
+  const handleCityChange = (e) => {
+    const cityId = parseInt(e.target.value);
+    const cityName = getCityName(cityId);
+    
+    setProfileData({ 
+      ...profileData, 
+      cityId: cityId || null,
+      cityName: cityName
+    });
+    
+    // Clear error
+    if (errors.cityId) {
+      setErrors({ ...errors, cityId: "" });
+    }
+  };
+
   const toggleVisibility = (field) => {
     setVisibility((prev) => ({
       ...prev,
@@ -392,13 +465,30 @@ const Profile = () => {
       return;
     }
 
-    // Update both profile data and visibility settings
-    const updatedProfileData = {
-      ...profileData,
-      ...visibility,
-    };
+    try {
+      setLoading(true);
 
-    await updateSection("profile", updatedProfileData);
+      // Upload pending photos first if any
+      if (hasPendingChanges) {
+        await uploadPendingPhotos();
+      }
+
+      // Update both profile data and visibility settings
+      const updatedProfileData = {
+        ...profileData,
+        ...visibility,
+      };
+
+      await updateSection("profile", updatedProfileData);
+      
+      // Refresh the page to show updated profile
+      window.location.reload();
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      toast.error('Failed to save profile changes');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Password change functions
@@ -556,6 +646,13 @@ const Profile = () => {
     }
   }, [user?.userId]); // Removed loading from dependency array to prevent infinite loop
 
+  // Load cities when countryId is available
+  useEffect(() => {
+    if (profileData.countryId && !cities.length) {
+      fetchCities(profileData.countryId);
+    }
+  }, [profileData.countryId, cities.length, fetchCities]);
+
   if (loading) {
     return (
       <div className="max-w-4xl mx-auto px-4 py-8">
@@ -586,6 +683,7 @@ const Profile = () => {
             userId={user?.userId}
             onPhotoUpdate={handlePhotoUpdate}
             onFileUpload={handleFileUpload}
+            onFileSelect={handleFileSelect}
             isEditing={isEditing}
           />
         </div>
@@ -604,6 +702,7 @@ const Profile = () => {
                 userId={user?.userId}
                 onPhotoUpdate={handlePhotoUpdate}
                 onFileUpload={handleFileUpload}
+                onFileSelect={handleFileSelect}
                 isEditing={isEditing}
               />
             </div>
@@ -625,10 +724,15 @@ const Profile = () => {
 
                 {/* Location and Batch */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 mt-2 text-sm text-gray-500 dark:text-gray-400 space-y-1 sm:space-y-0">
-                  {profileData.location && (
+                  {(profileData.cityName || profileData.countryName) && (
                     <div className="flex items-center gap-1">
                       <MapPin className="h-4 w-4" />
-                      <span>{profileData.location}</span>
+                      <span>
+                        {profileData.cityName && profileData.countryName 
+                          ? `${profileData.cityName}, ${profileData.countryName}`
+                          : profileData.cityName || profileData.countryName
+                        }
+                      </span>
                     </div>
                   )}
 
@@ -660,12 +764,16 @@ const Profile = () => {
                     <Button
                       onClick={handleSave}
                       icon={<Save className="h-4 w-4" />}
+                      disabled={loading}
                     >
                       Save Changes
                     </Button>
                     <Button
                       variant="secondary"
-                      onClick={() => setIsEditing(false)}
+                      onClick={() => {
+                        cancelPreview();
+                        setIsEditing(false);
+                      }}
                       icon={<X className="h-4 w-4" />}
                     >
                       Cancel
@@ -711,15 +819,72 @@ const Profile = () => {
                     error={errors.profession}
                     required
                   />
-                  <Input
-                    label="Location"
-                    name="location"
-                    value={profileData.location || ""}
-                    onChange={handleInputChange}
-                    error={errors.location}
-                    leftIcon={<MapPin className="h-4 w-4" />}
-                    required
-                  />
+                  {/* Country Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Country <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <select
+                        name="countryId"
+                        value={profileData.countryId || ""}
+                        onChange={handleCountryChange}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                        disabled={locationLoading}
+                      >
+                        <option value="">Select your country</option>
+                        {countries.map((country) => (
+                          <option key={country.id} value={country.id}>
+                            {country.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {errors.countryId && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.countryId}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* City Selection */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                      </div>
+                      <select
+                        name="cityId"
+                        value={profileData.cityId || ""}
+                        onChange={handleCityChange}
+                        className="w-full pl-10 pr-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200"
+                        disabled={!profileData.countryId || locationLoading}
+                      >
+                        <option value="">
+                          {!profileData.countryId 
+                            ? "Select a country first" 
+                            : "Select your city"
+                          }
+                        </option>
+                        {cities.map((city) => (
+                          <option key={city.id} value={city.id}>
+                            {city.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {errors.cityId && (
+                      <p className="mt-1 text-sm text-red-600">
+                        {errors.cityId}
+                      </p>
+                    )}
+                  </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Batch <span className="text-red-500">*</span>

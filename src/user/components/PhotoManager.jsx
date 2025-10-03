@@ -13,11 +13,17 @@ import { uploadProfilePhoto,
  } from '../../services/api/photoApi';
 
 // Custom hook for photo management
-export const usePhotoManager = ({ userId, onPhotoUpdate = null }) => {
+export const usePhotoManager = ({ userId, onPhotoUpdate = null, previewMode = false }) => {
   const [profilePhoto, setProfilePhoto] = useState(null);
   const [coverPhoto, setCoverPhoto] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  
+  // Preview state for selected photos before upload
+  const [previewProfilePhoto, setPreviewProfilePhoto] = useState(null);
+  const [previewCoverPhoto, setPreviewCoverPhoto] = useState(null);
+  const [pendingProfileFile, setPendingProfileFile] = useState(null);
+  const [pendingCoverFile, setPendingCoverFile] = useState(null);
 
   // Load existing photos
   useEffect(() => {
@@ -91,6 +97,66 @@ export const usePhotoManager = ({ userId, onPhotoUpdate = null }) => {
     }
   };
 
+  // Handle file selection for preview mode
+  const handleFileSelect = (file, type) => {
+    try {
+      validateImageFile(file);
+      
+      const previewUrl = URL.createObjectURL(file);
+      
+      if (type === "profile") {
+        setPreviewProfilePhoto(previewUrl);
+        setPendingProfileFile(file);
+      } else {
+        setPreviewCoverPhoto(previewUrl);
+        setPendingCoverFile(file);
+      }
+    } catch (error) {
+      const errorMessage = handlePhotoApiError(error);
+      setError(errorMessage);
+    }
+  };
+
+  // Upload pending photos
+  const uploadPendingPhotos = async () => {
+    const uploads = [];
+    
+    if (pendingProfileFile) {
+      uploads.push(handleFileUpload(pendingProfileFile, "profile"));
+    }
+    
+    if (pendingCoverFile) {
+      uploads.push(handleFileUpload(pendingCoverFile, "cover"));
+    }
+    
+    if (uploads.length > 0) {
+      await Promise.all(uploads);
+    }
+    
+    // Clear preview state
+    clearPreview();
+  };
+
+  // Clear preview state
+  const clearPreview = () => {
+    if (previewProfilePhoto) {
+      URL.revokeObjectURL(previewProfilePhoto);
+    }
+    if (previewCoverPhoto) {
+      URL.revokeObjectURL(previewCoverPhoto);
+    }
+    
+    setPreviewProfilePhoto(null);
+    setPreviewCoverPhoto(null);
+    setPendingProfileFile(null);
+    setPendingCoverFile(null);
+  };
+
+  // Cancel preview and revert to original photos
+  const cancelPreview = () => {
+    clearPreview();
+  };
+
   const handleDeletePhoto = async (type) => {
     try {
       setLoading(true);
@@ -128,18 +194,23 @@ export const usePhotoManager = ({ userId, onPhotoUpdate = null }) => {
 
   const getPhotoUrl = (type) => {
     if (type === "profile") {
-      return profilePhoto?.hasPhoto ? profilePhoto.photoUrl : null;
+      // Show preview if available, otherwise show current photo
+      return previewProfilePhoto || (profilePhoto?.hasPhoto ? profilePhoto.photoUrl : null);
     } else {
-      return coverPhoto?.hasPhoto ? coverPhoto.photoUrl : null;
+      return previewCoverPhoto || (coverPhoto?.hasPhoto ? coverPhoto.photoUrl : null);
     }
   };
 
   const hasPhoto = (type) => {
     if (type === "profile") {
-      return profilePhoto?.hasPhoto || false;
+      return previewProfilePhoto || profilePhoto?.hasPhoto || false;
     } else {
-      return coverPhoto?.hasPhoto || false;
+      return previewCoverPhoto || coverPhoto?.hasPhoto || false;
     }
+  };
+
+  const hasPendingChanges = () => {
+    return pendingProfileFile || pendingCoverFile;
   };
 
   return {
@@ -150,8 +221,13 @@ export const usePhotoManager = ({ userId, onPhotoUpdate = null }) => {
     loading,
     error,
     handleFileUpload,
+    handleFileSelect,
     handleDeletePhoto,
     handleFileInputChange,
+    uploadPendingPhotos,
+    cancelPreview,
+    clearPreview,
+    hasPendingChanges: hasPendingChanges(),
     reloadPhotos: loadPhotos,
   };
 };
@@ -162,13 +238,16 @@ export const ProfilePhotoUploadButton = ({
   onPhotoUpdate,
   isEditing = false,
   onFileUpload,
+  onFileSelect,
 }) => {
   const [showFileInput, setShowFileInput] = useState(false);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      if (onFileUpload) {
+      if (onFileSelect) {
+        onFileSelect(file, "profile");
+      } else if (onFileUpload) {
         onFileUpload(file, "profile");
       } else if (onPhotoUpdate) {
         onPhotoUpdate("profile", file);
@@ -220,13 +299,16 @@ export const CoverPhotoUploadButton = ({
   onPhotoUpdate,
   isEditing = false,
   onFileUpload,
+  onFileSelect,
 }) => {
   const [showFileInput, setShowFileInput] = useState(false);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      if (onFileUpload) {
+      if (onFileSelect) {
+        onFileSelect(file, "cover");
+      } else if (onFileUpload) {
         onFileUpload(file, "cover");
       } else if (onPhotoUpdate) {
         onPhotoUpdate("cover", file);

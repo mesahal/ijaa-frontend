@@ -81,10 +81,15 @@ const UserCard = ({
                 : "Batch not specified"}
             </span>
           </div>
-          {user.location && (
+          {(user.cityName || user.countryName) && (
             <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
               <MapPin className="h-4 w-4 flex-shrink-0" />
-              <span className="truncate">{user.location}</span>
+              <span className="truncate">
+                {user.cityName && user.countryName 
+                  ? `${user.cityName}, ${user.countryName}`
+                  : user.cityName || user.countryName
+                }
+              </span>
             </div>
           )}
           <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">

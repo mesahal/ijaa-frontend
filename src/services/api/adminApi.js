@@ -202,7 +202,7 @@ export const adminApi = {
   // ===== GROUP 1: BASIC FEATURE FLAG MANAGEMENT =====
   
   // 1.1 Get all feature flags
-  getFeatureFlags: () => adminApiCall('/feature-flags/'),
+  getFeatureFlags: () => adminApiCall('/feature-flags'),
   
   // 1.2 Get specific feature flag
   getFeatureFlag: (featureName) => adminApiCall(`/feature-flags/${encodeURIComponent(featureName)}`),

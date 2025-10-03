@@ -19,6 +19,7 @@ import {
   List,
   Bell,
   Bookmark,
+  X,
 } from 'lucide-react';
 
 // Import authentication context
@@ -39,7 +40,6 @@ import EventForm from '../components/events/EventForm';
 import EventDetailsModal from '../components/events/EventDetailsModal';
 import InviteModal from '../components/events/InviteModal';
 import ParticipantsModal from '../components/events/ParticipantsModal';
-import SearchModal from '../components/events/SearchModal';
 import UpcomingEvents from '../components/events/UpcomingEvents';
 import TrendingEvents from '../components/events/TrendingEvents';
 import AdvancedSearch from '../components/events/AdvancedSearch';
@@ -108,6 +108,19 @@ const Events = () => {
   
   // View mode state (grid/list)
   const [viewMode, setViewMode] = useState('grid');
+  
+  // Advanced filters state
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
+  const [advancedFilters, setAdvancedFilters] = useState({
+    location: "",
+    eventType: "",
+    startDate: "",
+    endDate: "",
+    isOnline: "",
+    organizerName: "",
+    title: "",
+    description: ""
+  });
   
   // Custom hooks
   const {
@@ -216,22 +229,11 @@ const Events = () => {
   const [showEventModal, setShowEventModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [showParticipantsModal, setShowParticipantsModal] = useState(false);
-  const [showSearchModal, setShowSearchModal] = useState(false);
   
   // Selected items
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventForm, setEventForm] = useState(INITIAL_EVENT_FORM);
   const [inviteForm, setInviteForm] = useState({ usernames: "", personalMessage: "" });
-  const [searchForm, setSearchForm] = useState({
-    location: "",
-    eventType: "",
-    startDate: "",
-    endDate: "",
-    isOnline: "",
-    organizerName: "",
-    title: "",
-    description: ""
-  });
 
   // Combined loading and error states
   const isLoading = eventsLoading || actionsLoading || searchLoading || invitationsLoading;
@@ -299,14 +301,6 @@ const Events = () => {
   /**
    * Handle search events
    */
-  const handleSearchEventsSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    const result = await searchEvents(searchForm);
-    
-    if (result.success) {
-      setShowSearchModal(false);
-    }
-  }, [searchForm, searchEvents]);
 
   /**
    * Handle view participants
@@ -392,22 +386,45 @@ const Events = () => {
 
   // Load Phase 2 data when component mounts
   React.useEffect(() => {
-    if (user?.token) {
+    if (user) {
       loadUpcomingEvents();
       loadTrendingEvents();
     }
-  }, [user?.token, loadUpcomingEvents, loadTrendingEvents]);
+  }, [user, loadUpcomingEvents, loadTrendingEvents]);
 
   // Load Phase 3 data when component mounts
   React.useEffect(() => {
-    if (user?.token) {
+    if (user) {
       loadMyParticipations();
     }
-  }, [user?.token, loadMyParticipations]);
+  }, [user, loadMyParticipations]);
 
   // Get filtered events
   const currentEvents = getCurrentEvents();
   const displayEvents = getFilteredEvents(currentEvents) || [];
+
+  // Advanced filter handlers
+  const handleAdvancedFilterChange = (field, value) => {
+    setAdvancedFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const clearAdvancedFilters = () => {
+    setAdvancedFilters({
+      location: "",
+      eventType: "",
+      startDate: "",
+      endDate: "",
+      isOnline: "",
+      organizerName: "",
+      title: "",
+      description: ""
+    });
+  };
+
+  const hasAdvancedFilters = Object.values(advancedFilters).some(value => value !== "");
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
@@ -426,11 +443,11 @@ const Events = () => {
           {/* Create Event Button */}
           <Button
             onClick={() => navigate('/events/create')}
-            disabled={!user?.token}
+            disabled={!user}
             className="flex items-center space-x-2 self-start"
           >
             <Plus className="h-4 w-4" />
-            <span>{user?.token ? "Create Event" : "Sign in to Create"}</span>
+            <span>{user ? "Create Event" : "Sign in to Create"}</span>
           </Button>
         </div>
 
@@ -447,7 +464,7 @@ const Events = () => {
         )}
 
         {/* Authentication Required Message */}
-        {!error && !isLoading && !authLoading && !user?.token && (
+        {!error && !isLoading && !authLoading && !user && (
           <Card className="mb-6 border-warning-200 dark:border-warning-700">
             <div className="p-6">
               <div className="flex items-center space-x-4">
@@ -470,14 +487,246 @@ const Events = () => {
         {/* Search and Filter Form */}
         <Card className="mb-6">
           <div className="p-6">
-            <EventFilters
-              searchQuery={searchQuery}
-              onSearchChange={handleSearchQueryChange}
-              filterType={filterType}
-              onFilterChange={handleFilterTypeChange}
-              onAdvancedSearch={() => setShowSearchModal(true)}
-              eventTypeOptions={EVENT_TYPE_OPTIONS}
-            />
+            <div>
+              <div className="flex flex-col lg:flex-row gap-4">
+                {/* Search */}
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" aria-hidden="true" />
+                    <input
+                      type="text"
+                      placeholder="Search events by title, description, or location..."
+                      value={searchQuery}
+                      onChange={(e) => handleSearchQueryChange(e.target.value)}
+                      className="w-full pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-colors hover:border-gray-400 dark:hover:border-gray-500"
+                      aria-label="Search events"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => handleSearchQueryChange('')}
+                        className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                        aria-label="Clear search"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Basic Filter */}
+                <div className="lg:w-48">
+                  <div className="relative">
+                    <select
+                      value={filterType}
+                      onChange={(e) => handleFilterTypeChange(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm appearance-none bg-white dark:bg-gray-700 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
+                      aria-label="Filter events by type"
+                    >
+                      <option value="all">All Categories</option>
+                      {EVENT_TYPE_OPTIONS.map((type) => (
+                        <option key={type.value} value={type.value}>
+                          {type.label}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Advanced Filter Toggle Button */}
+                <button
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium"
+                  aria-label="Toggle advanced filters"
+                >
+                  <Filter className="h-4 w-4" />
+                  <span>Filters</span>
+                </button>
+              </div>
+
+              {/* Advanced Filters */}
+              {showAdvancedFilters && (
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {/* Location Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Location
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Search by location"
+                        value={advancedFilters.location}
+                        onChange={(e) => handleAdvancedFilterChange('location', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Event Type Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Event Type
+                      </label>
+                      <select
+                        value={advancedFilters.eventType}
+                        onChange={(e) => handleAdvancedFilterChange('eventType', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">All Types</option>
+                        {EVENT_TYPE_OPTIONS.map((type) => (
+                          <option key={type.value} value={type.value}>
+                            {type.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Start Date Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Start Date
+                      </label>
+                      <input
+                        type="date"
+                        value={advancedFilters.startDate}
+                        onChange={(e) => handleAdvancedFilterChange('startDate', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    {/* End Date Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        End Date
+                      </label>
+                      <input
+                        type="date"
+                        value={advancedFilters.endDate}
+                        onChange={(e) => handleAdvancedFilterChange('endDate', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Online Status Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Online Status
+                      </label>
+                      <select
+                        value={advancedFilters.isOnline}
+                        onChange={(e) => handleAdvancedFilterChange('isOnline', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      >
+                        <option value="">All Events</option>
+                        <option value="true">Online Only</option>
+                        <option value="false">In-Person Only</option>
+                      </select>
+                    </div>
+
+                    {/* Organizer Name Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Organizer Name
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Search by organizer"
+                        value={advancedFilters.organizerName}
+                        onChange={(e) => handleAdvancedFilterChange('organizerName', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Title Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Search in title"
+                        value={advancedFilters.title}
+                        onChange={(e) => handleAdvancedFilterChange('title', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+
+                    {/* Description Filter */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        Description
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Search in description"
+                        value={advancedFilters.description}
+                        onChange={(e) => handleAdvancedFilterChange('description', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Clear Filters */}
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={clearAdvancedFilters}
+                      className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                    >
+                      <X className="h-4 w-4" />
+                      <span>Clear Filters</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Active Filters Display */}
+              {(searchQuery || (filterType && filterType !== 'all') || hasAdvancedFilters) && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active filters:</span>
+                    <div className="flex flex-wrap gap-2">
+                      {searchQuery && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                          Search: "{searchQuery}"
+                          <button
+                            onClick={() => handleSearchQueryChange('')}
+                            className="ml-1 p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      )}
+                      {filterType && filterType !== 'all' && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300">
+                          Category: {EVENT_TYPE_OPTIONS.find(t => t.value === filterType)?.label || filterType}
+                          <button
+                            onClick={() => handleFilterTypeChange('all')}
+                            className="ml-1 p-0.5 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      )}
+                      {hasAdvancedFilters && (
+                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                          Advanced filters active
+                          <button
+                            onClick={clearAdvancedFilters}
+                            className="ml-1 p-0.5 hover:bg-green-200 dark:hover:bg-green-800 rounded-full transition-colors"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </Card>
 
@@ -612,16 +861,16 @@ const Events = () => {
                   <div className="text-center py-12">
                     <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                      {!user?.token ? "Sign in to view events" : "No events found"}
+                      {!user ? "Sign in to view events" : "No events found"}
                     </h3>
                     <p className="text-gray-500 dark:text-gray-400 mb-4">
-                      {!user?.token 
+                      {!user 
                         ? "Please sign in to your account to view and manage events."
                         : activeTab === "my-events" 
                           ? "You haven't created any events yet. Start by creating your first event!" 
                           : "Try adjusting your search criteria or filters"}
                     </p>
-                    {!user?.token ? (
+                    {!user ? (
                       <Button onClick={() => window.location.href = '/signin'} variant="outline">
                         Sign In
                       </Button>
@@ -808,7 +1057,7 @@ const Events = () => {
       </div>
 
       {/* Modals */}
-      {showCreateModal && user?.token && (
+      {showCreateModal && user && (
         <EventForm
           isOpen={showCreateModal}
           onClose={() => {
@@ -870,29 +1119,6 @@ const Events = () => {
         />
       )}
 
-      {showSearchModal && user?.token && (
-        <SearchModal
-          isOpen={showSearchModal}
-          onClose={() => {
-            setShowSearchModal(false);
-            setSearchForm({
-              location: "",
-              eventType: "",
-              startDate: "",
-              endDate: "",
-              isOnline: "",
-              organizerName: "",
-              title: "",
-              description: ""
-            });
-          }}
-          onSubmit={handleSearchEventsSubmit}
-          formData={searchForm}
-          setFormData={setSearchForm}
-          loading={isLoading}
-          eventTypeOptions={EVENT_TYPE_OPTIONS}
-        />
-      )}
     </div>
   );
 };

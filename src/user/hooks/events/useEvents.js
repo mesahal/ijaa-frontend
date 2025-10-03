@@ -46,7 +46,7 @@ export const useEvents = () => {
    * Load events based on active tab
    */
   const loadEvents = useCallback(async (page = 0, size = 10) => {
-    if (!user?.token) {
+    if (!user) {
       // Don't set error for missing authentication - this is expected for unauthenticated users
       setEvents([]);
       setMyEvents([]);
@@ -181,7 +181,7 @@ export const useEvents = () => {
     } finally {
       setLoading(false);
     }
-  }, [activeTab, user?.token, mapApiEventTypeToCategory]);
+  }, [activeTab, user, mapApiEventTypeToCategory]);
 
   /**
    * Refresh events data
@@ -237,7 +237,7 @@ export const useEvents = () => {
    * Get event by ID
    */
   const getEventById = useCallback(async (eventId) => {
-    if (!user?.token) {
+    if (!user) {
       throw new Error('Authentication required');
     }
 
@@ -251,7 +251,7 @@ export const useEvents = () => {
     } catch (err) {
       throw err;
     }
-  }, [user?.token]);
+  }, [user]);
 
   // Load events on component mount and tab change
   useEffect(() => {
