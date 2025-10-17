@@ -138,8 +138,17 @@ const EventComments = ({
     const isEditing = editingComment?.id === comment.id;
 
     return (
-      <div key={comment.id} className={`${isReply ? 'ml-8 mt-3' : 'mb-4'}`}>
-        <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+      <div key={comment.id} className={`${isReply ? 'ml-8 mt-3' : 'mb-4'} relative`}>
+        {/* Visual hierarchy lines */}
+        {isReply ? (
+          <div className="absolute left-0 top-0 bottom-0 w-8 flex items-start justify-center">
+            <div className="w-px bg-gray-300 dark:bg-gray-600 h-full"></div>
+            <div className="absolute top-6 left-0 w-8 h-px bg-gray-300 dark:bg-gray-600 rounded-full"></div>
+          </div>
+        ) : (
+          <div className="absolute left-4 top-6 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
+        )}
+        <div className="bg-transparent relative">
           {/* Comment Header */}
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
@@ -226,7 +235,7 @@ const EventComments = ({
               </div>
             </div>
           ) : (
-            <p className="text-gray-700 dark:text-gray-300 mb-3">
+            <p className="text-gray-900 dark:text-white mb-2 text-sm">
               {comment.content}
             </p>
           )}
@@ -235,13 +244,13 @@ const EventComments = ({
           <div className="flex items-center space-x-4">
             <button
               onClick={() => handleToggleLike(comment.id)}
-              className={`flex items-center space-x-1 text-sm transition-colors ${
+              className={`flex items-center space-x-1 text-xs font-medium transition-colors ${
                 comment.isLiked 
                   ? 'text-red-500 hover:text-red-600' 
                   : 'text-gray-500 hover:text-gray-600 dark:hover:text-gray-400'
               }`}
             >
-              <Heart className={`w-4 h-4 ${comment.isLiked ? 'fill-current' : ''}`} />
+              <Heart className={`w-3 h-3 ${comment.isLiked ? 'fill-current' : ''}`} />
               <span>{comment.likeCount || 0}</span>
             </button>
           </div>

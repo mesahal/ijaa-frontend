@@ -64,7 +64,9 @@ const INITIAL_EVENT_FORM = {
   meetingLink: '',
   privacy: 'PUBLIC',
   inviteMessage: '',
-  bannerImage: null
+  bannerImage: null,
+  organizerName: '',
+  organizerEmail: ''
 };
 
 /**
@@ -135,7 +137,9 @@ const CreateEvent = () => {
         isOnline: false,
         meetingLink: '',
         privacy: 'PUBLIC',
-        inviteMessage: ''
+        inviteMessage: '',
+        organizerName: user?.name || '',
+        organizerEmail: user?.email || ''
       };
       setFormData(eventData);
     } catch (error) {
@@ -143,6 +147,17 @@ const CreateEvent = () => {
       setEventLoading(false);
     }
   };
+
+  // Initialize organizer fields with user data
+  useEffect(() => {
+    if (user && !isEditMode) {
+      setFormData(prev => ({
+        ...prev,
+        organizerName: user.name || '',
+        organizerEmail: user.email || ''
+      }));
+    }
+  }, [user, isEditMode]);
 
   // Form validation
   const validateForm = () => {
@@ -168,8 +183,8 @@ const CreateEvent = () => {
       }
     }
 
-    if (!formData.location.trim()) {
-      newErrors.location = 'Location is required';
+    if (!formData.isOnline && !formData.location.trim()) {
+      newErrors.location = 'Location is required for in-person events';
     }
 
     if (formData.isOnline && !formData.meetingLink.trim()) {
@@ -180,6 +195,16 @@ const CreateEvent = () => {
       newErrors.maxParticipants = 'Maximum participants must be greater than 0';
     }
 
+    if (!formData.organizerName.trim()) {
+      newErrors.organizerName = 'Organizer name is required';
+    }
+
+    if (!formData.organizerEmail.trim()) {
+      newErrors.organizerEmail = 'Organizer email is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.organizerEmail)) {
+      newErrors.organizerEmail = 'Please enter a valid email address';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -188,32 +213,46 @@ const CreateEvent = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    console.log('Form submission started with data:', formData);
+    
     if (!validateForm()) {
+      console.log('Form validation failed:', errors);
       return;
     }
 
     setLoading(true);
     try {
       if (isEditMode) {
+        console.log('Updating event...');
         await handleUpdateEvent(eventId, formData);
       } else {
+        console.log('Creating new event...');
         const result = await handleCreateEvent(formData);
+        console.log('Event creation result:', result);
         
-        // If we have a banner image and event was created successfully, upload it
-        if (formData.bannerImage && result?.data?.id) {
-          try {
-            // Create a new event banner hook instance for the newly created event
-            const newEventId = result.data.id;
-            await eventService.uploadEventBanner(newEventId, formData.bannerImage);
-          } catch (bannerError) {
-            // Don't fail the entire form submission if banner upload fails
+        if (result && result.success) {
+          // If we have a banner image and event was created successfully, upload it
+          if (formData.bannerImage && result?.data?.id) {
+            try {
+              console.log('Uploading banner image...');
+              const newEventId = result.data.id;
+              await eventService.uploadEventBanner(newEventId, formData.bannerImage);
+            } catch (bannerError) {
+              console.error('Banner upload failed:', bannerError);
+              // Don't fail the entire form submission if banner upload fails
+            }
           }
+          
+          // Navigate back to events page on success
+          navigate('/user/events');
+        } else {
+          console.error('Event creation failed:', result);
+          throw new Error(result?.error || 'Failed to create event');
         }
       }
-      
-      // Navigate back to events page on success
-      navigate('/events');
     } catch (error) {
+      console.error('Form submission error:', error);
+      setErrors({ submit: error.message || 'Failed to save event' });
     } finally {
       setLoading(false);
     }
@@ -318,16 +357,19 @@ const CreateEvent = () => {
         </div>
 
         {/* Error Display */}
-        {actionsError && (
+        {(actionsError || errors.submit) && (
           <Card className="mb-6 border-error-200 dark:border-error-700">
             <div className="p-4">
               <div className="flex items-center space-x-3">
                 <AlertCircle className="h-5 w-5 text-error-500 flex-shrink-0" />
-                <p className="text-error-700 dark:text-error-300">{actionsError}</p>
+                <p className="text-error-700 dark:text-error-300">{actionsError || errors.submit}</p>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={clearActionsError}
+                  onClick={() => {
+                    clearActionsError();
+                    setErrors(prev => ({ ...prev, submit: null }));
+                  }}
                   className="ml-auto"
                 >
                   <X className="h-4 w-4" />
@@ -404,6 +446,38 @@ const CreateEvent = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              {/* Organizer Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label htmlFor="organizer-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Organizer Name *
+                  </label>
+                  <Input
+                    id="organizer-name"
+                    type="text"
+                    required
+                    value={formData.organizerName}
+                    onChange={(e) => handleFieldChange('organizerName', e.target.value)}
+                    placeholder="Enter organizer name"
+                    error={errors.organizerName}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="organizer-email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Organizer Email *
+                  </label>
+                  <Input
+                    id="organizer-email"
+                    type="email"
+                    required
+                    value={formData.organizerEmail}
+                    onChange={(e) => handleFieldChange('organizerEmail', e.target.value)}
+                    placeholder="Enter organizer email"
+                    error={errors.organizerEmail}
+                  />
+                </div>
               </div>
             </div>
           </Card>

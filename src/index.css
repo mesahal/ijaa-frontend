@@ -13,6 +13,137 @@
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
   
+  /* Modern Video Player Styles */
+  video {
+    @apply rounded-lg;
+  }
+  
+  /* Hide all native video controls */
+  video::-webkit-media-controls {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-panel {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-play-button {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-timeline {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-current-time-display {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-time-remaining-display {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-volume-slider {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-mute-button {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-fullscreen-button {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-enclosure {
+    display: none !important;
+  }
+  
+  /* Hide picture-in-picture button specifically */
+  video::-webkit-media-controls-picture-in-picture-button {
+    display: none !important;
+  }
+  
+  /* Additional CSS to hide all video controls in all modes */
+  video {
+    -webkit-media-controls: none !important;
+    -webkit-media-controls-panel: none !important;
+    -webkit-media-controls-play-button: none !important;
+    -webkit-media-controls-timeline: none !important;
+    -webkit-media-controls-current-time-display: none !important;
+    -webkit-media-controls-time-remaining-display: none !important;
+    -webkit-media-controls-volume-slider: none !important;
+    -webkit-media-controls-mute-button: none !important;
+    -webkit-media-controls-fullscreen-button: none !important;
+    -webkit-media-controls-enclosure: none !important;
+    -webkit-media-controls-picture-in-picture-button: none !important;
+  }
+  
+  /* Firefox specific */
+  video::-moz-media-controls {
+    display: none !important;
+  }
+  
+  /* Edge specific */
+  video::-ms-media-controls {
+    display: none !important;
+  }
+  
+  /* Additional rules to prevent picture-in-picture */
+  video::-webkit-media-controls-overlay-play-button {
+    display: none !important;
+  }
+  
+  video::-webkit-media-controls-start-playback-button {
+    display: none !important;
+  }
+  
+  /* Force hide all media controls */
+  video[controls] {
+    -webkit-media-controls: none !important;
+  }
+  
+  video[controls]::-webkit-media-controls {
+    display: none !important;
+  }
+  
+  video[controls]::-webkit-media-controls-panel {
+    display: none !important;
+  }
+  
+  video[controls]::-webkit-media-controls-picture-in-picture-button {
+    display: none !important;
+  }
+  
+  /* Custom video player class - completely hide all controls */
+  .custom-video-player {
+    -webkit-media-controls: none !important;
+    -webkit-media-controls-panel: none !important;
+    -webkit-media-controls-play-button: none !important;
+    -webkit-media-controls-timeline: none !important;
+    -webkit-media-controls-current-time-display: none !important;
+    -webkit-media-controls-time-remaining-display: none !important;
+    -webkit-media-controls-volume-slider: none !important;
+    -webkit-media-controls-mute-button: none !important;
+    -webkit-media-controls-fullscreen-button: none !important;
+    -webkit-media-controls-enclosure: none !important;
+    -webkit-media-controls-picture-in-picture-button: none !important;
+    -webkit-media-controls-overlay-play-button: none !important;
+    -webkit-media-controls-start-playback-button: none !important;
+  }
+  
+  .custom-video-player::-webkit-media-controls {
+    display: none !important;
+  }
+  
+  .custom-video-player::-webkit-media-controls-panel {
+    display: none !important;
+  }
+  
+  .custom-video-player::-webkit-media-controls-picture-in-picture-button {
+    display: none !important;
+  }
+  
   /* Improved focus styles for accessibility */
   *:focus-visible {
     @apply outline-none ring-2 ring-primary-500 ring-offset-2 dark:ring-offset-gray-900;
@@ -115,6 +246,22 @@
   @media print {
     .no-print {
       display: none !important;
+    }
+  }
+  
+  /* Mobile menu animations */
+  .animate-slide-down {
+    animation: slideDown 0.2s ease-out;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
   

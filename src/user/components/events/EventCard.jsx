@@ -18,6 +18,7 @@ import {
   TrendingUp,
 } from 'lucide-react';
 import RSVPButtons from './RSVPButtons';
+import ShareModal from './ShareModal';
 import useEventBanner from '../../hooks/events/useEventBanner';
 
 /**
@@ -41,6 +42,7 @@ const EventCard = ({
   onDelete, 
   getEventTypeLabel, 
   formatDate,
+  formatTime,
   // Phase 3: Event Participation props
   onRsvp,
   onUpdateRsvp,
@@ -51,6 +53,7 @@ const EventCard = ({
 }) => {
   const navigate = useNavigate();
   const { bannerUrl, loadBannerUrl } = useEventBanner(event?.id);
+  const [showShareModal, setShowShareModal] = useState(false);
 
   // Load banner URL when component mounts
   useEffect(() => {
@@ -64,7 +67,12 @@ const EventCard = ({
     if (e.target.closest('button')) {
       return;
     }
-    navigate(`/events/${event.id}`);
+    navigate(`/user/events/${event.id}`);
+  };
+
+  const handleShareClick = (e) => {
+    e.stopPropagation();
+    setShowShareModal(true);
   };
   const isUpcoming = new Date(event.startDate) > new Date();
   const isPopular = (event.currentParticipants || 0) > (event.maxParticipants || 0) * 0.7;
@@ -119,6 +127,13 @@ const EventCard = ({
 
                 {/* Action Buttons */}
                 <div className="flex items-center space-x-2 flex-shrink-0 ml-4">
+                  <button
+                    onClick={handleShareClick}
+                    className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                    title="Share Event"
+                  >
+                    <Share2 className="h-4 w-4" />
+                  </button>
                   {isMyEvent && (
                     <>
                       <button
@@ -178,163 +193,102 @@ const EventCard = ({
             </div>
           </div>
         </div>
+
+        {/* Share Modal */}
+        <ShareModal
+          isOpen={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          event={event}
+          formatDate={formatDate}
+          formatTime={formatTime}
+        />
       </div>
     );
   }
 
-  // Grid view (default)
+  // Grid view (default) - Updated to match UserCard structure with fixed height and bottom buttons
   return (
     <div 
-      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:shadow-sm transition-shadow overflow-hidden group cursor-pointer"
+      className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl hover:shadow-lg transition-all duration-200 overflow-hidden group cursor-pointer w-full flex flex-col h-full"
       onClick={handleCardClick}
     >
-      {/* Event Header */}
-      <div className="relative h-32 bg-gray-100 dark:bg-gray-700" style={{
+      {/* Event Image - Fixed Height */}
+      <div className="relative h-56 bg-gray-100 dark:bg-gray-700" style={{
         backgroundImage: `url(${bannerUrl || event.coverImage || event.image || '/cover.jpg'})`,
         backgroundSize: 'cover',
         backgroundPosition: 'center',
         backgroundRepeat: 'no-repeat'
       }}>
-        {/* Overlay for better text readability */}
-        <div className="absolute inset-0 bg-black bg-opacity-30"></div>
-        <div className="absolute top-3 left-3 right-3 flex items-start justify-between">
+        {/* Kebab menu in top-right corner */}
+        <div className="absolute top-3 right-3">
+          <button className="p-1.5 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-600/50 rounded-lg transition-colors">
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Event Content - Flexible height with fixed bottom buttons */}
+      <div className="p-4 flex flex-col">
+        {/* Date - Fixed Height */}
+        <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">
+          {event.endDate ? (() => {
+            const start = new Date(event.startDate);
+            const end = new Date(event.endDate);
+            const isSameDay = start.toDateString() === end.toDateString();
+            
+            if (isSameDay) {
+              // Same day: "Wednesday, October 15, 2025 at 11:00 AM - 2:00 PM"
+              return `${formatDate(event.startDate)} at ${formatTime(event.startDate)} - ${formatTime(event.endDate)}`;
+            } else {
+              // Different days: "Wednesday, October 15, 2025 at 11:00 AM - Thursday, October 16, 2025 at 11:00 AM"
+              return `${formatDate(event.startDate)} at ${formatTime(event.startDate)} - ${formatDate(event.endDate)} at ${formatTime(event.endDate)}`;
+            }
+          })() : 
+            `${formatDate(event.startDate)} at ${formatTime(event.startDate)}`
+          }
+        </div>
+
+        {/* Event Title - Fixed Height */}
+        <h3 className="text-gray-900 dark:text-white font-bold text-lg mb-1 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors min-h-[2.5rem]">
+          {event.title}
+        </h3>
+
+        {/* Location/Organizer - Fixed Height */}
+        <div className="text-gray-500 dark:text-gray-400 text-sm mb-1 line-clamp-1 min-h-[1.25rem]">
+          {event.location || event.organizerName || "Location TBD"}
+        </div>
+
+        {/* Interest/Going Count - Fixed Height */}
+        <div className="text-gray-500 dark:text-gray-400 text-sm mb-3 min-h-[1.25rem]">
+          {Math.floor((event.currentParticipants || 0) * 0.8)} interested • {event.currentParticipants || 0} going
+        </div>
+
+        {/* Action Buttons - Fixed at bottom */}
+        <div className="mt-auto">
           <div className="flex items-center space-x-2">
-            <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300">
-              {getEventTypeLabel(event.category || event.eventType)}
-            </span>
-            {isUpcoming && (
-              <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300">
-                Upcoming
-              </span>
-            )}
-          </div>
-          
-          {/* Action Menu */}
-          <div className="flex items-center space-x-1">
-            {isMyEvent && (
-              <>
-                <button
-                  onClick={() => onEdit(event)}
-                  className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
-                  title="Edit Event"
-                >
-                  <Edit className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => onDelete(event.id)}
-                  className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                  title="Delete Event"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </>
-            )}
-            <button className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors">
-              <MoreHorizontal className="h-4 w-4" />
+            <button className="flex-1 flex items-center justify-center space-x-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white px-3 py-2 rounded-lg transition-colors font-medium">
+              <Star className="h-4 w-4" />
+              <span>Interested</span>
+            </button>
+            <button 
+              onClick={handleShareClick}
+              className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-lg transition-colors"
+              title="Share Event"
+            >
+              <Share2 className="h-4 w-4" />
             </button>
           </div>
         </div>
-        
-        {/* Popular Badge */}
-        {isPopular && (
-          <div className="absolute top-3 right-3">
-            <div className="flex items-center space-x-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/50 rounded-full">
-              <TrendingUp className="h-3 w-3 text-orange-600 dark:text-orange-400" />
-              <span className="text-xs font-medium text-orange-800 dark:text-orange-300">Popular</span>
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Event Content */}
-      <div className="p-4">
-        <div className="mb-3">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-            {event.title}
-          </h3>
-          <p className="text-gray-600 dark:text-gray-400 text-sm line-clamp-2 mb-3">
-            {event.description}
-          </p>
-        </div>
-
-        {/* Event Details */}
-        <div className="space-y-2 mb-4">
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-            <Clock className="h-4 w-4 flex-shrink-0 text-gray-400" />
-            <span className="truncate">{formatDate(event.startDate)}</span>
-          </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-            <MapPin className="h-4 w-4 flex-shrink-0 text-gray-400" />
-            <span className="truncate">
-              {isOnline ? (
-                <span className="flex items-center space-x-1">
-                  <span>🌐</span>
-                  <span>Online Event</span>
-                </span>
-              ) : (
-                event.location || "Location TBD"
-              )}
-            </span>
-          </div>
-          <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
-            <Users className="h-4 w-4 flex-shrink-0 text-gray-400" />
-            <span className="truncate">
-              {event.currentParticipants || 0} of {event.maxParticipants || '∞'} participants
-            </span>
-          </div>
-        </div>
-
-        {/* Organizer Info */}
-        <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
-              <User className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-            </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900 dark:text-white">
-                {event.organizerName || "Organizer"}
-              </p>
-              <div className="flex items-center space-x-1">
-                {event.isPublic !== false ? (
-                  <>
-                    <ShieldCheck className="h-3 w-3 text-green-500" />
-                    <span className="text-xs text-green-600 dark:text-green-400">Public</span>
-                  </>
-                ) : (
-                  <>
-                    <ShieldX className="h-3 w-3 text-orange-500" />
-                    <span className="text-xs text-orange-600 dark:text-orange-400">Private</span>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div className="flex items-center justify-end space-x-1">
-          <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
-            <Heart className="h-4 w-4" />
-          </button>
-          <button className="p-2 text-gray-400 hover:text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors">
-            <Share2 className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* RSVP Buttons - Phase 3 */}
-        {showRsvpButtons && !isMyEvent && (
-          <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-            <RSVPButtons
-              eventId={event.id}
-              currentStatus={currentParticipationStatus}
-              onRsvp={onRsvp}
-              onUpdateRsvp={onUpdateRsvp}
-              loading={rsvpLoading}
-              showMessageInput={false}
-            />
-          </div>
-        )}
-      </div>
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        event={event}
+        formatDate={formatDate}
+        formatTime={formatTime}
+      />
     </div>
   );
 };

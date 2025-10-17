@@ -41,6 +41,7 @@ const EventDetailsModal = ({
   onAcceptInvitation = () => {},
   onDeclineInvitation = () => {},
   formatDate = (date) => new Date(date).toLocaleDateString(),
+  formatTime = (date) => new Date(date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }),
   getEventTypeLabel = (type) => type,
   participationStatus
 }) => {
@@ -119,7 +120,21 @@ const EventDetailsModal = ({
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">Date & Time</p>
                   <p className="text-gray-900 dark:text-white">
-                    {formatDate(event.startDate)} - {formatDate(event.endDate)}
+                    {event.endDate ? (() => {
+                      const start = new Date(event.startDate);
+                      const end = new Date(event.endDate);
+                      const isSameDay = start.toDateString() === end.toDateString();
+                      
+                      if (isSameDay) {
+                        // Same day: "Wednesday, October 15, 2025 at 11:00 AM - 2:00 PM"
+                        return `${formatDate(event.startDate)} at ${formatTime(event.startDate)} - ${formatTime(event.endDate)}`;
+                      } else {
+                        // Different days: "Wednesday, October 15, 2025 at 11:00 AM - Thursday, October 16, 2025 at 11:00 AM"
+                        return `${formatDate(event.startDate)} at ${formatTime(event.startDate)} - ${formatDate(event.endDate)} at ${formatTime(event.endDate)}`;
+                      }
+                    })() : 
+                      `${formatDate(event.startDate)} at ${formatTime(event.startDate)}`
+                    }
                   </p>
                 </div>
               </div>

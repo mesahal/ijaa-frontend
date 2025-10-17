@@ -1,16 +1,19 @@
-import axios from 'axios';
-import TokenManager from './TokenManager';
+import axios from "axios";
+import TokenManager from "./TokenManager";
 
 // Get API base URL from environment or use default
-const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/ijaa/api/v1';
-const ADMIN_API_BASE = process.env.REACT_APP_API_ADMIN_URL || 'http://localhost:8000/ijaa/api/v1/admin';
+const API_BASE =
+  process.env.REACT_APP_API_BASE_URL || "localhost:8000/ijaa/api/v1";
+const ADMIN_API_BASE =
+  process.env.REACT_APP_API_ADMIN_URL ||
+  "http://localhost:8000/ijaa/api/v1/admin";
 
 // Create axios instance for authentication
 const authClient = axios.create({
   baseURL: API_BASE,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true, // Important for HttpOnly cookies
 });
@@ -20,7 +23,7 @@ const adminAuthClient = axios.create({
   baseURL: ADMIN_API_BASE,
   timeout: 10000,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   withCredentials: true, // Important for HttpOnly cookies
 });
@@ -42,65 +45,70 @@ class AuthService {
    */
   static async login(credentials) {
     try {
-      console.log('🔐 [AuthService] Starting login process for:', credentials.username);
-      
+      console.log(
+        "🔐 [AuthService] Starting login process for:",
+        credentials.username
+      );
+
       // Log cookies before login
-      console.log('🍪 [AuthService] Cookies BEFORE login:', {
+      console.log("🍪 [AuthService] Cookies BEFORE login:", {
         allCookies: document.cookie,
-        hasRefreshToken: document.cookie.includes('refreshToken'),
-        cookieCount: document.cookie.split(';').filter(c => c.trim()).length,
-        timestamp: new Date().toISOString()
+        hasRefreshToken: document.cookie.includes("refreshToken"),
+        cookieCount: document.cookie.split(";").filter((c) => c.trim()).length,
+        timestamp: new Date().toISOString(),
       });
-      
+
       // Use authClient for login (no token needed)
-      const response = await authClient.post('/auth/login', {
+      const response = await authClient.post("/auth/login", {
         username: credentials.username,
         password: credentials.password,
       });
 
       const responseData = response.data;
-      
+
       // Log cookies after login
-      console.log('🍪 [AuthService] Cookies AFTER login:', {
+      console.log("🍪 [AuthService] Cookies AFTER login:", {
         allCookies: document.cookie,
-        hasRefreshToken: document.cookie.includes('refreshToken'),
-        cookieCount: document.cookie.split(';').filter(c => c.trim()).length,
-        refreshTokenCookie: document.cookie.split(';').find(c => c.includes('refreshToken')),
-        timestamp: new Date().toISOString()
+        hasRefreshToken: document.cookie.includes("refreshToken"),
+        cookieCount: document.cookie.split(";").filter((c) => c.trim()).length,
+        refreshTokenCookie: document.cookie
+          .split(";")
+          .find((c) => c.includes("refreshToken")),
+        timestamp: new Date().toISOString(),
       });
-      
+
       // Log response headers for Set-Cookie
-      console.log('📋 [AuthService] Response headers:', {
-        setCookie: response.headers['set-cookie'],
+      console.log("📋 [AuthService] Response headers:", {
+        setCookie: response.headers["set-cookie"],
         allHeaders: Object.keys(response.headers),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
-      console.log('✅ [AuthService] Login successful:', {
+
+      console.log("✅ [AuthService] Login successful:", {
         hasAccessToken: !!responseData.data.accessToken,
-        tokenType: responseData.data.tokenType || 'Bearer',
+        tokenType: responseData.data.tokenType || "Bearer",
         userId: responseData.data.userId,
         username: credentials.username,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       return {
-        accessToken: responseData.data.accessToken,  // Backend returns 'accessToken' in data.data
-        tokenType: responseData.data.tokenType || 'Bearer',
+        accessToken: responseData.data.accessToken, // Backend returns 'accessToken' in data.data
+        tokenType: responseData.data.tokenType || "Bearer",
         userId: responseData.data.userId,
         username: credentials.username,
       };
     } catch (error) {
-      console.error('❌ [AuthService] Login failed:', {
+      console.error("❌ [AuthService] Login failed:", {
         error: error.message,
         status: error.response?.status,
         response: error.response?.data,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       throw new Error(
-        error.response?.data?.message || 
-        'Login failed. Please check your credentials.'
+        error.response?.data?.message ||
+          "Login failed. Please check your credentials."
       );
     }
   }
@@ -111,79 +119,94 @@ class AuthService {
    */
   static async refreshToken() {
     try {
-      console.log('🔄 [AuthService] Starting token refresh...', {
-        hasRefreshCookie: document.cookie.includes('refreshToken'),
+      console.log("🔄 [AuthService] Starting token refresh...", {
+        hasRefreshCookie: document.cookie.includes("refreshToken"),
         currentTime: new Date().toISOString(),
         allCookies: document.cookie,
-        refreshTokenCookies: document.cookie.split(';').filter(c => c.includes('refreshToken')),
-        cookieCount: document.cookie.split(';').filter(c => c.trim()).length
+        refreshTokenCookies: document.cookie
+          .split(";")
+          .filter((c) => c.includes("refreshToken")),
+        cookieCount: document.cookie.split(";").filter((c) => c.trim()).length,
       });
-      
+
       // Use authClient for refresh (no token needed, uses HttpOnly cookie)
-      const response = await authClient.post('/auth/refresh');
-      
+      const response = await authClient.post("/auth/refresh");
+
       const responseData = response.data;
-      
-      console.log('📊 [AuthService] Refresh response received:', {
+
+      console.log("📊 [AuthService] Refresh response received:", {
         hasData: !!responseData,
         hasAccessToken: !!responseData?.data?.accessToken,
         tokenType: responseData?.data?.tokenType,
         userId: responseData?.data?.userId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       // Log cookies after refresh
-      console.log('🍪 [AuthService] Cookies AFTER refresh:', {
+      console.log("🍪 [AuthService] Cookies AFTER refresh:", {
         allCookies: document.cookie,
-        hasRefreshToken: document.cookie.includes('refreshToken'),
-        refreshTokenCookie: document.cookie.split(';').find(c => c.includes('refreshToken')),
-        cookieCount: document.cookie.split(';').filter(c => c.trim()).length,
-        timestamp: new Date().toISOString()
+        hasRefreshToken: document.cookie.includes("refreshToken"),
+        refreshTokenCookie: document.cookie
+          .split(";")
+          .find((c) => c.includes("refreshToken")),
+        cookieCount: document.cookie.split(";").filter((c) => c.trim()).length,
+        timestamp: new Date().toISOString(),
       });
-      
+
       // Validate response structure
-      if (!responseData || !responseData.data || !responseData.data.accessToken) {
-        console.error('❌ [AuthService] Invalid refresh response structure:', responseData);
-        throw new Error('Invalid refresh response from server');
+      if (
+        !responseData ||
+        !responseData.data ||
+        !responseData.data.accessToken
+      ) {
+        console.error(
+          "❌ [AuthService] Invalid refresh response structure:",
+          responseData
+        );
+        throw new Error("Invalid refresh response from server");
       }
-      
-      console.log('✅ [AuthService] Token refresh successful:', {
+
+      console.log("✅ [AuthService] Token refresh successful:", {
         newTokenLength: responseData.data.accessToken.length,
-        tokenPreview: responseData.data.accessToken.substring(0, 20) + '...',
-        tokenType: responseData.data.tokenType || 'Bearer',
+        tokenPreview: responseData.data.accessToken.substring(0, 20) + "...",
+        tokenType: responseData.data.tokenType || "Bearer",
         userId: responseData.data.userId,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       return {
-        accessToken: responseData.data.accessToken,  // Backend returns 'accessToken' in data.data
-        tokenType: responseData.data.tokenType || 'Bearer',
+        accessToken: responseData.data.accessToken, // Backend returns 'accessToken' in data.data
+        tokenType: responseData.data.tokenType || "Bearer",
         userId: responseData.data.userId,
       };
     } catch (error) {
-      console.error('❌ [AuthService] Token refresh failed:', {
+      console.error("❌ [AuthService] Token refresh failed:", {
         error: error.message,
         status: error.response?.status,
         statusText: error.response?.statusText,
         response: error.response?.data,
-        hasRefreshCookie: document.cookie.includes('refreshToken'),
+        hasRefreshCookie: document.cookie.includes("refreshToken"),
         allCookies: document.cookie,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       // Provide more specific error messages
-      let errorMessage = 'Token refresh failed. Please login again.';
-      
+      let errorMessage = "Token refresh failed. Please login again.";
+
       if (error.response?.status === 401) {
-        errorMessage = 'Refresh token expired. Please login again.';
-        console.warn('⚠️ [AuthService] Refresh token expired - user needs to login again');
+        errorMessage = "Refresh token expired. Please login again.";
+        console.warn(
+          "⚠️ [AuthService] Refresh token expired - user needs to login again"
+        );
       } else if (error.response?.status === 403) {
-        errorMessage = 'Refresh token invalid. Please login again.';
-        console.warn('⚠️ [AuthService] Refresh token invalid - user needs to login again');
+        errorMessage = "Refresh token invalid. Please login again.";
+        console.warn(
+          "⚠️ [AuthService] Refresh token invalid - user needs to login again"
+        );
       } else if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
-      
+
       throw new Error(errorMessage);
     }
   }
@@ -194,31 +217,42 @@ class AuthService {
    */
   static async logout() {
     try {
-      console.log('🚪 [AuthService] Starting logout process...', {
-        hasRefreshCookie: document.cookie.includes('refreshToken'),
-        timestamp: new Date().toISOString()
+      console.log("🚪 [AuthService] Starting logout process...", {
+        hasRefreshCookie: document.cookie.includes("refreshToken"),
+        timestamp: new Date().toISOString(),
       });
-      
+
       // Get the current access token for authentication
       const accessToken = TokenManager.getAccessToken();
-      
+
       if (accessToken) {
         // Include access token in the logout request
-        await authClient.post('/auth/logout', {}, {
-          headers: {
-            'Authorization': `Bearer ${accessToken}`
+        await authClient.post(
+          "/auth/logout",
+          {},
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
           }
-        });
-        console.log('✅ [AuthService] Logout successful - refresh token cleared on server');
+        );
+        console.log(
+          "✅ [AuthService] Logout successful - refresh token cleared on server"
+        );
       } else {
-        console.warn('⚠️ [AuthService] No access token found, skipping server logout');
+        console.warn(
+          "⚠️ [AuthService] No access token found, skipping server logout"
+        );
       }
     } catch (error) {
-      console.warn('⚠️ [AuthService] Logout request failed, but continuing with local cleanup:', {
-        error: error.message,
-        status: error.response?.status,
-        timestamp: new Date().toISOString()
-      });
+      console.warn(
+        "⚠️ [AuthService] Logout request failed, but continuing with local cleanup:",
+        {
+          error: error.message,
+          status: error.response?.status,
+          timestamp: new Date().toISOString(),
+        }
+      );
       // Even if logout fails on server, we should clear local state
     }
   }
@@ -230,7 +264,7 @@ class AuthService {
    */
   static async register(userData) {
     try {
-      const response = await authClient.post('/auth/register', {
+      const response = await authClient.post("/auth/register", {
         username: userData.email,
         password: userData.password,
         firstName: userData.firstName,
@@ -241,8 +275,8 @@ class AuthService {
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || 
-        'Registration failed. Please try again.'
+        error.response?.data?.message ||
+          "Registration failed. Please try again."
       );
     }
   }
@@ -256,51 +290,56 @@ class AuthService {
    */
   static async adminLogin(credentials) {
     try {
-      console.log('👨‍💼 [AuthService] Starting admin login process for:', credentials.username);
-      
+      console.log(
+        "👨‍💼 [AuthService] Starting admin login process for:",
+        credentials.username
+      );
+
       // Log cookies before admin login
-      console.log('🍪 [AuthService] Cookies BEFORE admin login:', {
+      console.log("🍪 [AuthService] Cookies BEFORE admin login:", {
         allCookies: document.cookie,
-        hasRefreshToken: document.cookie.includes('refreshToken'),
-        cookieCount: document.cookie.split(';').filter(c => c.trim()).length,
-        timestamp: new Date().toISOString()
+        hasRefreshToken: document.cookie.includes("refreshToken"),
+        cookieCount: document.cookie.split(";").filter((c) => c.trim()).length,
+        timestamp: new Date().toISOString(),
       });
-      
+
       // Use adminAuthClient for admin login (no token needed)
-      const response = await adminAuthClient.post('/login', {
+      const response = await adminAuthClient.post("/login", {
         email: credentials.username,
         password: credentials.password,
       });
 
       const responseData = response.data;
-      
+
       // Log cookies after admin login
-      console.log('🍪 [AuthService] Cookies AFTER admin login:', {
+      console.log("🍪 [AuthService] Cookies AFTER admin login:", {
         allCookies: document.cookie,
-        hasRefreshToken: document.cookie.includes('refreshToken'),
-        cookieCount: document.cookie.split(';').filter(c => c.trim()).length,
-        refreshTokenCookie: document.cookie.split(';').find(c => c.includes('refreshToken')),
-        timestamp: new Date().toISOString()
+        hasRefreshToken: document.cookie.includes("refreshToken"),
+        cookieCount: document.cookie.split(";").filter((c) => c.trim()).length,
+        refreshTokenCookie: document.cookie
+          .split(";")
+          .find((c) => c.includes("refreshToken")),
+        timestamp: new Date().toISOString(),
       });
-      
+
       // Log response headers for Set-Cookie
-      console.log('📋 [AuthService] Admin login response headers:', {
-        setCookie: response.headers['set-cookie'],
+      console.log("📋 [AuthService] Admin login response headers:", {
+        setCookie: response.headers["set-cookie"],
         allHeaders: Object.keys(response.headers),
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
-      console.log('✅ [AuthService] Admin login successful:', {
+
+      console.log("✅ [AuthService] Admin login successful:", {
         hasAccessToken: !!responseData.data.accessToken,
-        tokenType: responseData.data.tokenType || 'Bearer',
+        tokenType: responseData.data.tokenType || "Bearer",
         adminId: responseData.data.adminId,
         username: credentials.username,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       return {
-        accessToken: responseData.data.accessToken,  // Backend returns 'accessToken' in data.data
-        tokenType: responseData.data.tokenType || 'Bearer',
+        accessToken: responseData.data.accessToken, // Backend returns 'accessToken' in data.data
+        tokenType: responseData.data.tokenType || "Bearer",
         adminId: responseData.data.adminId,
         username: credentials.username,
         name: responseData.data.name,
@@ -309,16 +348,16 @@ class AuthService {
         active: responseData.data.active,
       };
     } catch (error) {
-      console.error('❌ [AuthService] Admin login failed:', {
+      console.error("❌ [AuthService] Admin login failed:", {
         error: error.message,
         status: error.response?.status,
         response: error.response?.data,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       });
-      
+
       throw new Error(
-        error.response?.data?.message || 
-        'Admin login failed. Please check your credentials.'
+        error.response?.data?.message ||
+          "Admin login failed. Please check your credentials."
       );
     }
   }
@@ -333,17 +372,21 @@ class AuthService {
    */
   static async changePassword(passwordData, accessToken) {
     try {
-      const response = await authClient.post('/auth/change-password', passwordData, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-        },
-      });
+      const response = await authClient.post(
+        "/auth/change-password",
+        passwordData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
 
       return response.data;
     } catch (error) {
       throw new Error(
-        error.response?.data?.message || 
-        'Password change failed. Please try again.'
+        error.response?.data?.message ||
+          "Password change failed. Please try again."
       );
     }
   }

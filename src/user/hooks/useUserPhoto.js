@@ -9,23 +9,29 @@ export const useUserPhoto = (userId) => {
   useEffect(() => {
     const fetchProfilePhoto = async () => {
       if (!userId) {
+        console.log('🔍 [useUserPhoto] No userId provided');
         setProfilePhotoUrl(null);
         setError(null);
         return;
       }
 
+      console.log('🔍 [useUserPhoto] Fetching profile photo for userId:', userId);
       setLoading(true);
       setError(null);
 
       try {
         const result = await getProfilePhotoUrl(userId);
+        console.log('🔍 [useUserPhoto] API result:', result);
         
         if (result.exists && result.photoUrl) {
+          console.log('✅ [useUserPhoto] Profile photo found:', result.photoUrl);
           setProfilePhotoUrl(result.photoUrl);
         } else {
+          console.log('❌ [useUserPhoto] No profile photo found for user');
           setProfilePhotoUrl(null);
         }
       } catch (err) {
+        console.error('❌ [useUserPhoto] Error fetching profile photo:', err);
         setError(err.message);
         setProfilePhotoUrl(null);
       } finally {

@@ -20,6 +20,7 @@ const MyParticipations = ({
   onUpdateRsvp,
   rsvpLoading,
   formatDate,
+  formatTime,
   onViewEvent
 }) => {
   const [statusFilter, setStatusFilter] = useState('all');
@@ -156,7 +157,23 @@ const MyParticipations = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
                     <Calendar className="h-4 w-4" />
-                    <span>{formatDate(participation.eventStartDate)}</span>
+                    <span>
+                      {participation.eventEndDate ? (() => {
+                        const start = new Date(participation.eventStartDate);
+                        const end = new Date(participation.eventEndDate);
+                        const isSameDay = start.toDateString() === end.toDateString();
+                        
+                        if (isSameDay) {
+                          // Same day: "Wednesday, October 15, 2025 at 11:00 AM - 2:00 PM"
+                          return `${formatDate(participation.eventStartDate)} at ${formatTime(participation.eventStartDate)} - ${formatTime(participation.eventEndDate)}`;
+                        } else {
+                          // Different days: "Wednesday, October 15, 2025 at 11:00 AM - Thursday, October 16, 2025 at 11:00 AM"
+                          return `${formatDate(participation.eventStartDate)} at ${formatTime(participation.eventStartDate)} - ${formatDate(participation.eventEndDate)} at ${formatTime(participation.eventEndDate)}`;
+                        }
+                      })() : 
+                        `${formatDate(participation.eventStartDate)} at ${formatTime(participation.eventStartDate)}`
+                      }
+                    </span>
                   </div>
                   
                   {participation.eventLocation && (

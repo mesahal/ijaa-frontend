@@ -18,6 +18,7 @@ const UpcomingEvents = ({
   onLoadPrevious,
   getEventTypeLabel,
   formatDate,
+  formatTime,
   onViewEvent,
   onEditEvent,
   onDeleteEvent,
@@ -101,6 +102,7 @@ const UpcomingEvents = ({
               onDelete={onDeleteEvent}
               getEventTypeLabel={getEventTypeLabel}
               formatDate={formatDate}
+              formatTime={formatTime}
               // Phase 3: Event Participation props
               onRsvp={onRsvp}
               onUpdateRsvp={onUpdateRsvp}

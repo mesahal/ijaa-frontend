@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import AuthService from "../services/auth/AuthService";
 import TokenManager from "../services/auth/TokenManager";
 import SessionManager from "../services/auth/SessionManager";
+import apiClient from "../services/api/apiClient";
 import { ADMIN_ROLE } from '../utils/constants/roleConstants';
 
 const AuthContext = createContext();
@@ -113,18 +114,50 @@ export const AuthProvider = ({ children }) => {
         username: loginResponse.username
       });
 
-      const userData = {
+      // Store access token first
+      setAccessToken(loginResponse.accessToken);
+      TokenManager.setAccessToken(loginResponse.accessToken);
+      window.__accessToken = loginResponse.accessToken;
+
+      // Fetch user profile data to get the name field
+      let userData = {
         email: email,
         userId: loginResponse.userId,
         username: loginResponse.username,
       };
 
-      // Store access token and user data
-      setAccessToken(loginResponse.accessToken);
-      TokenManager.setAccessToken(loginResponse.accessToken);
-      window.__accessToken = loginResponse.accessToken;
+      try {
+        console.log('🔄 [AuthContext] Fetching user profile data...');
+        const profileResponse = await apiClient.get(`/users/${loginResponse.userId}`);
+        
+        if (profileResponse.data && profileResponse.data.data) {
+          const profile = profileResponse.data.data;
+          userData = {
+            ...userData,
+            name: profile.name || profile.username || email,
+            profession: profile.profession || '',
+            bio: profile.bio || '',
+            phone: profile.phone || '',
+            linkedIn: profile.linkedIn || '',
+            website: profile.website || '',
+            batch: profile.batch || '',
+            facebook: profile.facebook || '',
+            connections: profile.connections || 0,
+            countryName: profile.countryName || '',
+            cityName: profile.cityName || '',
+            // Add other profile fields as needed
+          };
+          console.log('✅ [AuthContext] User profile data fetched and merged:', {
+            name: userData.name,
+            profession: userData.profession
+          });
+        }
+      } catch (profileError) {
+        console.warn('⚠️ [AuthContext] Failed to fetch user profile, using basic data:', profileError.message);
+        // Continue with basic user data if profile fetch fails
+      }
       
-      // Store user session
+      // Store user session with enhanced data
       SessionManager.handleSessionConflict('user');
       SessionManager.setUser(userData);
       setUser(userData);

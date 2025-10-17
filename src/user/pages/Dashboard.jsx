@@ -133,7 +133,7 @@ const Dashboard = () => {
       description: "Organize a new event",
       icon: Plus,
       color: "blue",
-      action: () => navigate('/events/create'),
+      action: () => navigate('/user/events/create'),
     },
     {
       id: 2,
@@ -351,8 +351,10 @@ const Dashboard = () => {
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {profileData?.profession || "Profession"}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {profileData?.location || "Location"}
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                      {profileData?.cityName && profileData?.countryName
+                        ? `${profileData.cityName}, ${profileData.countryName}`
+                        : profileData?.cityName || profileData?.countryName || "Location"}
                     </p>
                   </div>
                 </div>
@@ -433,7 +435,7 @@ const Dashboard = () => {
                           </div>
                         </div>
                         <div className="ml-4">
-                          <Button size="sm" onClick={() => navigate(`/events/${event.id}`)}>
+                          <Button size="sm" onClick={() => navigate(`/user/events/${event.id}`)}>
                             View Details
                           </Button>
                         </div>

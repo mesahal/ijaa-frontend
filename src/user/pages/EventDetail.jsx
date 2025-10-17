@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Calendar,
@@ -6,35 +6,48 @@ import {
   Users,
   Share2,
   CheckCircle,
-  Link as LinkIcon,
   MessageCircle,
   ArrowLeft,
   User,
+  Star,
+  MoreHorizontal,
+  Globe,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
+import DropdownMenu from '../../components/ui/DropdownMenu';
 import { useAuth } from '../../hooks/useAuth';
 import eventService from '../../services/api/eventService';
-import CommentCard from '../components/events/CommentCard';
+import postService from '../../services/api/postService';
+import PostCard from '../components/events/PostCard';
+import PostModal from '../components/events/PostModal';
+import CreatePost from '../components/events/CreatePost';
+import ShareModal from '../components/events/ShareModal';
 import useEventBanner from '../hooks/events/useEventBanner';
 import BannerUpload from '../components/events/BannerUpload';
 
 const EventDetail = () => {
   const { eventId } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, accessToken, getAccessToken } = useAuth();
   
   const [event, setEvent] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [rsvpLoading, setRsvpLoading] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [newComment, setNewComment] = useState('');
-  const [commentLoading, setCommentLoading] = useState(false);
-  const [commentsLoading, setCommentsLoading] = useState(false);
-  const [commentError, setCommentError] = useState(null);
-  const [editingComment, setEditingComment] = useState(null);
-  const [editContent, setEditContent] = useState('');
+  const [posts, setPosts] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [postError, setPostError] = useState(null);
+  const [editingPost, setEditingPost] = useState(null);
+  const [editPostContent, setEditPostContent] = useState('');
   const [showBannerUpload, setShowBannerUpload] = useState(false);
+  const [selectedPost, setSelectedPost] = useState(null);
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [activeTab, setActiveTab] = useState('about');
+  const [canCreatePosts, setCanCreatePosts] = useState(false);
+  const [postLoading, setPostLoading] = useState(false);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const createPostRef = useRef(null);
 
   // Banner management
   const { 
@@ -49,7 +62,7 @@ const EventDetail = () => {
   } = useEventBanner(eventId);
 
   useEffect(() => {
-    const fetchEventDetails = async () => {
+    const loadEvent = async () => {
       if (!eventId) return;
       
       try {
@@ -67,13 +80,10 @@ const EventDetail = () => {
           setError('Failed to load event details');
         }
         
-        // Load comments for the event
-        await loadComments();
-        
-        // Load banner URL
-        await loadBannerUrl();
+        // Load posts for the event
+        await loadPosts();
       } catch (err) {
-        
+        console.error('Error loading event:', err);
         // Fallback to mock data for development/testing
         const mockEvent = {
           id: eventId,
@@ -86,261 +96,285 @@ const EventDetail = () => {
           maxParticipants: 50,
           currentParticipants: 23,
           organizerName: "Jorge Torres Gómez",
-          category: "EDUCATIONAL",
-          eventType: "TUTORIAL",
-          isOnline: false,
-          eventLink: "https://kuvs.de/netsys/2025/program/netsys-2025-tutorial-on-the-internet-of-bio-nano-things-iobn",
-          eventId: "c107384",
-          isPublic: true,
-          requiresApproval: false,
-          createdAt: "2024-11-01T10:00:00",
-          updatedAt: "2024-11-01T10:00:00"
+          category: "Conference",
+          status: "Active",
+          eventLink: "https://example.com/event",
+          isOnline: false
         };
-        
         setEvent(mockEvent);
         
-        // Load comments for the event
-        loadComments();
-        
-        // Load banner URL
-        loadBannerUrl();
+        // Load mock posts for development
+        await loadMockPosts();
       } finally {
         setLoading(false);
       }
     };
 
-    fetchEventDetails();
+    loadEvent();
   }, [eventId]);
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
+  // Separate useEffect for banner loading that depends on user token
+  useEffect(() => {
+    const token = accessToken || getAccessToken();
+    console.log('🔄 [EventDetail] Banner useEffect triggered', { 
+      eventId, 
+      hasToken: !!token, 
+      hasLoadBannerUrl: !!loadBannerUrl 
     });
-  };
-
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true,
-    });
-  };
-
-  const getTimeUntilEvent = (startDate) => {
-    const now = new Date();
-    const eventDate = new Date(startDate);
-    const diffTime = eventDate - now;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 0) return 'Today';
-    if (diffDays === 1) return 'Tomorrow';
-    if (diffDays > 1) return `${diffDays} days`;
-    return 'Past';
+    if (eventId && token) {
+      console.log('🔄 [EventDetail] Loading banner URL now that token is available');
+      loadBannerUrl();
+    } else {
+      console.log('❌ [EventDetail] Not loading banner - missing eventId or token', { 
+        eventId, 
+        hasToken: !!token 
+      });
+    }
+  }, [eventId, accessToken, loadBannerUrl]);
+
+  // Separate useEffect for feature flag check
+  useEffect(() => {
+    const checkFeatureFlag = async () => {
+      if (!user) return;
+      
+      try {
+        console.log('🔍 [EventDetail] Checking events.posts.create feature flag...');
+        const canCreate = await postService.checkFeatureFlag('events.posts.create');
+        console.log('🔍 [EventDetail] Feature flag result:', canCreate);
+        setCanCreatePosts(canCreate);
+      } catch (err) {
+        console.error('❌ [EventDetail] Error checking feature flag:', err);
+        setCanCreatePosts(false);
+      }
+    };
+
+    checkFeatureFlag();
+  }, [user]);
+
+  const loadPosts = async () => {
+    try {
+      setPostsLoading(true);
+      setPostError(null);
+      const response = await postService.getEventPosts(eventId);
+      setPosts(response.content || []);
+    } catch (err) {
+      console.error('Error loading posts:', err);
+      setPostError('Failed to load posts');
+    } finally {
+      setPostsLoading(false);
+    }
   };
 
-  const handleRsvp = async (status) => {
-    if (!user?.token) {
-      navigate('/signin');
+  const loadMockPosts = async () => {
+    // Mock posts for development
+    const mockPosts = [
+      {
+        id: 1,
+        eventId: parseInt(eventId),
+        username: "john_doe",
+        content: "This looks like an amazing event! Looking forward to attending and learning about the latest developments in the field.",
+        postType: "TEXT",
+        isEdited: false,
+        isDeleted: false,
+        likes: 5,
+        commentsCount: 3,
+        createdAt: "2024-01-15T10:30:00Z",
+        updatedAt: "2024-01-15T10:30:00Z",
+        likedByCurrentUser: false,
+        mediaUrls: []
+      },
+      {
+        id: 2,
+        eventId: parseInt(eventId),
+        username: "jane_smith",
+        content: "Great topic! Will there be any hands-on sessions? I'm particularly interested in the practical applications.",
+        postType: "TEXT",
+        isEdited: false,
+        isDeleted: false,
+        likes: 8,
+        commentsCount: 2,
+        createdAt: "2024-01-15T14:20:00Z",
+        updatedAt: "2024-01-15T14:20:00Z",
+        likedByCurrentUser: true,
+        mediaUrls: []
+      },
+      {
+        id: 3,
+        eventId: parseInt(eventId),
+        username: "alex_wilson",
+        content: "Excited to be part of this event! The agenda looks fantastic.",
+        postType: "TEXT",
+        isEdited: false,
+        isDeleted: false,
+        likes: 12,
+        commentsCount: 5,
+        createdAt: "2024-01-15T16:45:00Z",
+        updatedAt: "2024-01-15T16:45:00Z",
+        likedByCurrentUser: false,
+        mediaUrls: []
+      }
+    ];
+    
+    setPosts(mockPosts);
+  };
+
+  const handleRsvp = async () => {
+    if (!user) {
+      navigate('/auth/login');
       return;
     }
 
     try {
       setRsvpLoading(true);
-      const response = await eventService.rsvpToEvent({
-        eventId: parseInt(eventId),
-        status,
-        message: `I will ${status.toLowerCase()} this event`
-      });
-      
-      if (response && response.success) {
-        // Refresh event data to update participant count
-        const eventResponse = await eventService.getEventById(eventId);
-        if (eventResponse && eventResponse.data) {
-          setEvent(eventResponse.data);
-        } else if (eventResponse) {
-          setEvent(eventResponse);
-        }
-      }
+      // Add RSVP logic here
+      console.log('RSVP clicked for event:', eventId);
     } catch (err) {
+      console.error('Error with RSVP:', err);
     } finally {
       setRsvpLoading(false);
     }
   };
 
-  const handleShare = () => {
-    if (navigator.share) {
-      navigator.share({
-        title: event?.title,
-        text: event?.description,
-        url: window.location.href,
-      });
-    } else {
-      // Fallback: copy to clipboard
-      navigator.clipboard.writeText(window.location.href);
+  const handleCreatePost = async (postData) => {
+    if (!user) {
+      navigate('/auth/login');
+      return;
     }
-  };
-
-  const loadComments = async () => {
-    if (!eventId) return;
-    
-    try {
-      setCommentsLoading(true);
-      setCommentError(null);
-      
-      const response = await eventService.getEventComments(eventId);
-      
-      if (response && response.data) {
-        setComments(response.data);
-      } else if (response) {
-        setComments(response);
-      } else {
-        setComments([]);
-      }
-    } catch (err) {
-      setCommentError(err.message || 'Failed to load comments');
-      setComments([]);
-    } finally {
-      setCommentsLoading(false);
-    }
-  };
-
-  const handleAddComment = async (e) => {
-    e.preventDefault();
-    if (!newComment.trim() || !user?.token || !eventId) return;
 
     try {
-      setCommentLoading(true);
-      setCommentError(null);
+      setPostLoading(true);
+      const response = await postService.createPost(eventId, postData.content, postData.files);
+      setPosts(prev => [response, ...prev]);
       
-      const response = await eventService.createComment({
-        eventId: parseInt(eventId),
-        content: newComment.trim(),
-        parentCommentId: null
-      });
-      
-      if (response && response.data) {
-        // Add the new comment to the beginning of the list (only if it's a top-level comment)
-        if (!response.data.parentCommentId) {
-          setComments(prev => [response.data, ...prev]);
+      // Clear the form after successful post creation
+      setTimeout(() => {
+        if (createPostRef.current) {
+          console.log('EventDetail: Calling resetForm via ref');
+          createPostRef.current.resetForm();
+        } else {
+          console.log('EventDetail: createPostRef.current is null');
         }
-        setNewComment('');
-      }
+      }, 100);
     } catch (err) {
-      setCommentError(err.message || 'Failed to add comment');
+      console.error('Error creating post:', err);
+      // You might want to show a toast notification here
     } finally {
-      setCommentLoading(false);
+      setPostLoading(false);
     }
   };
 
-  const handleEditComment = async (commentId, content) => {
-    if (!content.trim() || !eventId) return;
+  const handleEditPost = (postId, content) => {
+    setEditingPost(postId);
+    setEditPostContent(content);
+  };
+
+  const handleSavePost = async (postId) => {
+    if (!editPostContent.trim()) return;
 
     try {
-      setCommentLoading(true);
-      setCommentError(null);
-      
-      const response = await eventService.updateComment(commentId, {
-        eventId: parseInt(eventId),
-        content: content.trim()
-      });
-      
-      if (response && response.data) {
-        // Update the comment in the list
-        setComments(prev => prev.map(comment => 
-          comment.id === commentId ? response.data : comment
-        ));
-        setEditingComment(null);
-        setEditContent('');
-      }
+      await postService.updatePost(postId, editPostContent.trim());
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, content: editPostContent.trim(), isEdited: true }
+          : post
+      ));
+      setEditingPost(null);
+      setEditPostContent('');
     } catch (err) {
-      setCommentError(err.message || 'Failed to update comment');
-    } finally {
-      setCommentLoading(false);
+      console.error('Error saving post:', err);
     }
   };
 
-  const handleDeleteComment = async (commentId) => {
-    if (!window.confirm('Are you sure you want to delete this comment?')) return;
+  const handleCancelPost = () => {
+    setEditingPost(null);
+    setEditPostContent('');
+  };
 
+  const handleDeletePost = async (postId) => {
     try {
-      setCommentLoading(true);
-      setCommentError(null);
-      
-      await eventService.deleteComment(commentId);
-      
-      // Remove the comment from the list
-      setComments(prev => prev.filter(comment => comment.id !== commentId));
+      await postService.deletePost(postId);
+      setPosts(prev => prev.filter(post => post.id !== postId));
     } catch (err) {
-      setCommentError(err.message || 'Failed to delete comment');
-    } finally {
-      setCommentLoading(false);
+      console.error('Error deleting post:', err);
     }
   };
 
-  const handleLikeComment = async (commentId) => {
-    if (!user?.token) return;
-
+  const handleLikePost = async (postId) => {
     try {
-      setCommentError(null);
-      
-      const response = await eventService.toggleCommentLike(commentId);
-      
-      if (response && response.data) {
-        // Update the comment in the list
-        setComments(prev => prev.map(comment => 
-          comment.id === commentId ? response.data : comment
-        ));
-      }
+      const response = await postService.likePost(postId);
+      setPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { 
+              ...post, 
+              likes: response.likes,
+              isLikedByUser: response.isLikedByUser,
+              likedByCurrentUser: response.likedByCurrentUser
+            }
+          : post
+      ));
     } catch (err) {
-      setCommentError(err.message || 'Failed to like comment');
+      console.error('Error liking post:', err);
     }
   };
 
-  const handleReplyToComment = async (parentCommentId, content) => {
-    if (!content.trim() || !user?.token || !eventId) return;
-
-    try {
-      setCommentLoading(true);
-      setCommentError(null);
-      
-      const response = await eventService.createComment({
-        eventId: parseInt(eventId),
-        content: content.trim(),
-        parentCommentId: parentCommentId
-      });
-      
-      if (response && response.data) {
-        // Reload comments to get the updated structure with replies
-        await loadComments();
-      }
-    } catch (err) {
-      setCommentError(err.message || 'Failed to add reply');
-    } finally {
-      setCommentLoading(false);
-    }
+  const handleCommentPost = (postId) => {
+    const post = posts.find(p => p.id === postId);
+    setSelectedPost(post);
+    setShowPostModal(true);
   };
 
-  const formatCommentDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
+  const handleOpenPostModal = (post) => {
+    setSelectedPost(post);
+    setShowPostModal(true);
+  };
+
+  const handleClosePostModal = () => {
+    setShowPostModal(false);
+    setSelectedPost(null);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString('en-US', {
+      hour: 'numeric',
       minute: '2-digit'
     });
   };
 
-  const canEditComment = (comment) => {
-    return user?.username === comment.username || user?.name === comment.authorName;
+  const canEditPost = (post) => {
+    return user?.username === post.username;
   };
 
-  const canDeleteComment = (comment) => {
-    return user?.username === comment.username || user?.name === comment.authorName;
+  const canDeletePost = (post) => {
+    return user?.username === post.username;
+  };
+
+  // Check if current user is the event creator
+  const isEventCreator = () => {
+    if (!user || !event) {
+      console.log('🔍 [isEventCreator] Missing user or event', { hasUser: !!user, hasEvent: !!event });
+      return false;
+    }
+    
+    const isCreator = user.username === event.organizerName || user.email === event.organizerEmail;
+    console.log('🔍 [isEventCreator] Checking creator status', {
+      userUsername: user.username,
+      userEmail: user.email,
+      eventOrganizerName: event.organizerName,
+      eventOrganizerEmail: event.organizerEmail,
+      isCreator
+    });
+    
+    return isCreator;
   };
 
   // Banner upload handlers
@@ -349,6 +383,7 @@ const EventDetail = () => {
       await uploadBanner(file);
       setShowBannerUpload(false);
     } catch (err) {
+      console.error('Error uploading banner:', err);
     }
   };
 
@@ -356,15 +391,16 @@ const EventDetail = () => {
     try {
       await deleteBanner();
     } catch (err) {
+      console.error('Error deleting banner:', err);
     }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-gray-400">Loading event details...</p>
+          <p className="text-gray-400 dark:text-gray-400">Loading event details...</p>
         </div>
       </div>
     );
@@ -372,7 +408,7 @@ const EventDetail = () => {
 
   if (error || !event) {
     return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
           <p className="text-red-400 mb-4">{error || 'Event not found'}</p>
           <Button onClick={() => navigate('/events')} variant="outline">
@@ -398,278 +434,264 @@ const EventDetail = () => {
         {/* Main Event Card */}
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
           {/* Cover Photo/Banner */}
-          <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative" style={{
+          <div className="h-64 bg-gradient-to-r from-blue-600 to-emerald-600 relative" style={{
             backgroundImage: `url(${bannerUrl || event.coverImage || event.image || '/cover.jpg'})`,
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat'
           }}>
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-blue-800 to-indigo-900 opacity-90"></div>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="text-center text-white">
-                <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                  {event.title}
-                </h1>
-                <p className="text-lg text-white/90">
-                  {formatDate(event.startDate)} • {formatTime(event.startDate)} - {formatTime(event.endDate)}
-                </p>
+          </div>
+
+          {/* Event Summary Section */}
+          <div className="px-6 py-6">
+            {/* Date and Time */}
+            <div className="flex items-start gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                  <Calendar className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <div className="text-red-500 font-semibold text-sm">
+                    {event.endDate ? (() => {
+                      const start = new Date(event.startDate);
+                      const end = new Date(event.endDate);
+                      const isSameDay = start.toDateString() === end.toDateString();
+                      
+                      if (isSameDay) {
+                        // Same day: "Wednesday, October 15, 2025 at 11:00 AM - 2:00 PM"
+                        return `${formatDate(event.startDate)} at ${formatTime(event.startDate)} - ${formatTime(event.endDate)}`;
+                      } else {
+                        // Different days: "Wednesday, October 15, 2025 at 11:00 AM - Thursday, October 16, 2025 at 11:00 AM"
+                        return `${formatDate(event.startDate)} at ${formatTime(event.startDate)} - ${formatDate(event.endDate)} at ${formatTime(event.endDate)}`;
+                      }
+                    })() : 
+                      `${formatDate(event.startDate)} at ${formatTime(event.startDate)}`
+                    }
+                  </div>
+                </div>
               </div>
+            </div>
+
+            {/* Event Title */}
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+              {event.title}
+            </h1>
+
+            {/* Location */}
+            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 mb-6">
+              <MapPin className="h-4 w-4" />
+              <span>{event.location || event.venue || "Location TBD"}</span>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-lg transition-colors">
+                <Star className="h-4 w-4" />
+                <span>Interested</span>
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
+                <CheckCircle className="h-4 w-4" />
+                <span>Going</span>
+              </button>
+              <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-lg transition-colors">
+                <MessageCircle className="h-4 w-4" />
+                <span>Invite</span>
+              </button>
+              <DropdownMenu
+                align="right"
+                items={[
+                  {
+                    label: 'Share Event',
+                    icon: <Share2 className="h-4 w-4" />,
+                    onClick: () => setShowShareModal(true)
+                  }
+                ]}
+                trigger={
+                  <button className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-lg transition-colors">
+                    <MoreHorizontal className="h-4 w-4" />
+                  </button>
+                }
+              />
             </div>
           </div>
 
-          <div className="px-4 sm:px-8 pb-8">
-            {/* Header Content */}
-            <div className="pt-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="space-y-2 flex-1">
-                  {/* Event Title */}
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
-                    {event.title}
-                  </h1>
+          {/* Tabs */}
+          <div className="border-t border-gray-200 dark:border-gray-700">
+            <div className="flex">
+              <button
+                onClick={() => setActiveTab('about')}
+                className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'about'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                About
+              </button>
+              <button
+                onClick={() => setActiveTab('discussion')}
+                className={`flex-1 px-6 py-4 text-sm font-medium border-b-2 transition-colors ${
+                  activeTab === 'discussion'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+                }`}
+              >
+                Discussion
+              </button>
+            </div>
+          </div>
 
-                  {/* Event Type/Category */}
-                  <p className="text-lg text-gray-600 dark:text-gray-300">
-                    {event.category || 'Event'}
+          {/* Tab Content */}
+          <div className="px-6 py-6">
+            {activeTab === 'about' && (
+              <div className="space-y-6">
+                {/* Details Section */}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Details</h2>
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <Users className="h-4 w-4" />
+                      <span>{event.currentParticipants || 0} people responded</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <User className="h-4 w-4" />
+                      <span>Event by {event.organizerName || "Organizer"}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin className="h-4 w-4" />
+                      <span>{event.location || event.venue || "Location TBD"}</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <Calendar className="h-4 w-4" />
+                      <span>Duration: {event.startDate && event.endDate ? 
+                        Math.ceil((new Date(event.endDate) - new Date(event.startDate)) / (1000 * 60 * 60 * 24)) : 1} days</span>
+                    </div>
+                    <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                      <Globe className="h-4 w-4" />
+                      <span>Public - Anyone can view</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Description */}
+                <div>
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {event.description || "No description available for this event."}
                   </p>
-
-                  {/* Event Details */}
-                  <div className="flex flex-col space-y-4 mt-4 text-sm text-gray-500 dark:text-gray-400">
-                    {/* Date & Time and Location - Side by side */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <div>
-                          <span className="font-medium text-gray-700 dark:text-gray-300">Date & Time</span>
-                          <div className="text-gray-500 dark:text-gray-400">
-                            {formatDate(event.startDate)}, {formatTime(event.startDate)} - {formatTime(event.endDate)}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <MapPin className="h-4 w-4" />
-                        <div>
-                          <span className="font-medium text-gray-700 dark:text-gray-300">Location</span>
-                          <div className="text-gray-500 dark:text-gray-400">
-                            {event.location}
-                            {event.venue && (
-                              <div className="text-gray-400 dark:text-gray-500">{event.venue}</div>
-                            )}
-                          </div>
-                        </div>
-                      </div>
+                  {event.location && (
+                    <div className="mt-4">
+                      <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-sm">
+                        {event.location.split(',')[0]}
+                      </span>
                     </div>
+                  )}
+                </div>
+              </div>
+            )}
 
-                    {/* Attendance and Organizer - Side by side */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="flex items-center gap-2">
-                        <Users className="h-4 w-4" />
-                        <div>
-                          <span className="font-medium text-gray-700 dark:text-gray-300">Attendance</span>
-                          <div className="text-gray-500 dark:text-gray-400">
-                            {event.currentParticipants || 0} of {event.maxParticipants || '∞'} attending
-                          </div>
-                        </div>
-                      </div>
+            {activeTab === 'discussion' && (
+              <div className="space-y-6">
+                {/* Posts Section */}
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Discussion</h2>
+                  
+                  {/* Create Post Form - Only for event creators */}
+                  {user && canCreatePosts && isEventCreator() && (
+                    <CreatePost
+                      ref={createPostRef}
+                      onSubmit={handleCreatePost}
+                      loading={postLoading}
+                    />
+                  )}
 
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4" />
-                        <div>
-                          <span className="font-medium text-gray-700 dark:text-gray-300">Organizer</span>
-                          <div className="text-gray-500 dark:text-gray-400">
-                            {event.organizerName}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
 
-                    {/* Status - Full width */}
-                    <div className="flex items-center gap-2">
-                      <div className="h-4 w-4 flex items-center justify-center">
-                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  {/* Posts List */}
+                  <div className="space-y-4">
+                    {postsLoading ? (
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500 mx-auto"></div>
+                        <p className="text-gray-500 dark:text-gray-400 mt-2">Loading posts...</p>
                       </div>
-                      <div>
-                        <span className="font-medium text-gray-700 dark:text-gray-300">Status</span>
-                        <div className="text-gray-500 dark:text-gray-400">
-                          {event.status || 'Active'} • {getTimeUntilEvent(event.startDate)}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Event Link - Full width (if available) */}
-                    {event.eventLink && (
-                      <div className="flex items-center gap-2">
-                        <LinkIcon className="h-4 w-4" />
-                        <div>
-                          <span className="font-medium text-gray-700 dark:text-gray-300">Event Link</span>
-                          <div className="text-gray-500 dark:text-gray-400">
-                            <a 
-                              href={event.eventLink} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-blue-600 dark:text-blue-400 hover:underline break-all"
-                            >
-                              {event.eventLink}
-                            </a>
-                          </div>
-                        </div>
+                    ) : posts.length > 0 ? (
+                      posts.map((post) => (
+                        <PostCard
+                          key={post.id}
+                          post={post}
+                          onLike={handleLikePost}
+                          onComment={handleCommentPost}
+                          onEdit={handleEditPost}
+                          onDelete={handleDeletePost}
+                          onShare={() => {/* Handle share */}}
+                          canEdit={canEditPost(post)}
+                          canDelete={canDeletePost(post)}
+                          isLiked={post.isLikedByUser || post.likedByCurrentUser}
+                          isEditing={editingPost === post.id}
+                          editContent={editPostContent}
+                          setEditContent={setEditPostContent}
+                          onSaveEdit={handleSavePost}
+                          onCancelEdit={handleCancelPost}
+                          onOpenModal={handleOpenPostModal}
+                        />
+                      ))
+                    ) : (
+                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+                        <MessageCircle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No posts yet. Be the first to share your thoughts!</p>
                       </div>
                     )}
                   </div>
                 </div>
-
-                {/* Action Buttons */}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={() => handleRsvp('CONFIRMED')}
-                    disabled={rsvpLoading}
-                    className="bg-blue-600 text-white px-4 sm:px-6 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    <span>
-                      {rsvpLoading ? "Loading..." : "Join"}
-                    </span>
-                  </Button>
-                  <Button
-                    onClick={handleShare}
-                    variant="outline"
-                    className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors"
-                  >
-                    Share
-                  </Button>
-                  
-                                     {/* Banner Upload Button (for event organizers) */}
-                   {event.organizerName === user?.username && (
-                     <Button
-                       onClick={() => setShowBannerUpload(!showBannerUpload)}
-                       variant="outline"
-                       className="border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 px-4 sm:px-6 py-2 rounded-lg font-medium transition-colors"
-                     >
-                       {bannerExists ? 'Edit Banner' : 'Add Banner'}
-                     </Button>
-                   )}
-                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Main Content */}
-        <div className="space-y-8">
-            {/* Banner Upload Section (for event organizers) */}
-            {showBannerUpload && event.organizerName === user?.username && (
-              <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                  Event Banner
-                </h2>
-                <BannerUpload
-                  eventId={eventId}
-                  currentBannerUrl={bannerUrl}
-                  onUpload={handleBannerUpload}
-                  onDelete={handleBannerDelete}
-                  loading={bannerLoading}
-                  error={bannerError}
-                  onErrorClear={clearBannerError}
-                />
-              </div>
-            )}
+        {/* Banner Upload Section (for event organizers) */}
+        {showBannerUpload && event.organizerName === user?.username && (
+          <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Event Banner
+            </h2>
+            <BannerUpload
+              eventId={eventId}
+              currentBannerUrl={bannerUrl}
+              onUpload={handleBannerUpload}
+              onDelete={handleBannerDelete}
+              loading={bannerLoading}
+              error={bannerError}
+              onErrorClear={clearBannerError}
+            />
+          </div>
+        )}
 
-            {/* About Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-                About this event
-              </h2>
-              <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
-                {event.description || "No description available for this event."}
-              </p>
-            </div>
+        {/* Post Modal */}
+        <PostModal
+          post={selectedPost}
+          isOpen={showPostModal}
+          onClose={handleClosePostModal}
+          onLike={handleLikePost}
+          onEdit={handleEditPost}
+          onDelete={handleDeletePost}
+          canEdit={selectedPost ? canEditPost(selectedPost) : false}
+          canDelete={selectedPost ? canDeletePost(selectedPost) : false}
+          isLiked={selectedPost?.isLikedByUser || selectedPost?.likedByCurrentUser || false}
+          isEditing={editingPost === selectedPost?.id}
+          editContent={editPostContent}
+          setEditContent={setEditPostContent}
+          onSaveEdit={handleSavePost}
+          onCancelEdit={handleCancelPost}
+        />
 
-            {/* Comments Section */}
-            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">
-                Comments
-              </h2>
-              
-              {/* Error Message */}
-              {commentError && (
-                <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-                  <p className="text-red-700 dark:text-red-300 text-sm">{commentError}</p>
-                </div>
-              )}
-
-              {/* Add Comment Form */}
-              {user?.token && (
-                <div className="mb-6">
-                  <form onSubmit={handleAddComment} className="space-y-4">
-                    <textarea
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
-                      placeholder="Add a comment..."
-                      className="w-full p-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                      rows={3}
-                    />
-                    <div className="flex justify-end">
-                      <Button
-                        type="submit"
-                        disabled={!newComment.trim() || commentLoading}
-                        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium"
-                      >
-                        {commentLoading ? 'Posting...' : 'Post Comment'}
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* Comments List */}
-              <div className="space-y-4">
-                {commentsLoading ? (
-                  <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                    <p>Loading comments...</p>
-                  </div>
-                ) : comments.length === 0 ? (
-                  <div className="text-gray-500 dark:text-gray-400 text-center py-8">
-                    <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                    <p>No comments yet. Be the first to comment!</p>
-                  </div>
-                ) : (
-                  comments
-                    .filter(comment => !comment.parentCommentId) // Only show top-level comments
-                    .map((comment) => {
-                      // Add permission flags to comment object
-                      const commentWithPermissions = {
-                        ...comment,
-                        canEdit: canEditComment(comment),
-                        canDelete: canDeleteComment(comment)
-                      };
-
-                      return (
-                        <CommentCard
-                          key={comment.id}
-                          comment={commentWithPermissions}
-                          onEdit={(commentId, content) => {
-                            setEditingComment(commentId);
-                            setEditContent(content);
-                          }}
-                          onDelete={handleDeleteComment}
-                          onLike={handleLikeComment}
-                          onReply={handleReplyToComment}
-                          onCancelEdit={() => {
-                            setEditingComment(null);
-                            setEditContent('');
-                          }}
-                          isEditing={editingComment === comment.id}
-                          editContent={editContent}
-                          setEditContent={setEditContent}
-                          loading={commentLoading}
-                        />
-                      );
-                    })
-                )}
-              </div>
-            </div>
-        </div>
+        {/* Share Modal */}
+        {event && (
+          <ShareModal
+            isOpen={showShareModal}
+            onClose={() => setShowShareModal(false)}
+            event={event}
+            formatDate={formatDate}
+            formatTime={formatTime}
+          />
+        )}
       </div>
     </div>
   );

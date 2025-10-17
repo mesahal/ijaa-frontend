@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Camera, X, Upload, Trash2 } from "lucide-react";
 import { Button } from "../../components/ui";
 import FeatureFlagWrapper from "../../components/layout/FeatureFlagWrapper";
@@ -11,6 +11,49 @@ import { uploadProfilePhoto,
   validateImageFile,
   handlePhotoApiError,
  } from '../../services/api/photoApi';
+import ReactCrop from 'react-image-crop';
+import 'react-image-crop/dist/ReactCrop.css';
+
+// Simple helper to create a cropped Blob from an HTMLImageElement and a crop rect
+const getCroppedBlob = (image, crop, mimeType = 'image/jpeg', quality = 0.92) => {
+  return new Promise((resolve, reject) => {
+    if (!image || !crop || !crop.width || !crop.height) {
+      reject(new Error('Invalid crop'));
+      return;
+    }
+
+    const canvas = document.createElement('canvas');
+    const scaleX = image.naturalWidth / image.width;
+    const scaleY = image.naturalHeight / image.height;
+    const pixelX = crop.x * scaleX;
+    const pixelY = crop.y * scaleY;
+    const pixelW = crop.width * scaleX;
+    const pixelH = crop.height * scaleY;
+
+    canvas.width = Math.max(1, Math.floor(pixelW));
+    canvas.height = Math.max(1, Math.floor(pixelH));
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(
+      image,
+      pixelX,
+      pixelY,
+      pixelW,
+      pixelH,
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('Canvas is empty'));
+        return;
+      }
+      resolve(blob);
+    }, mimeType, quality);
+  });
+};
 
 // Custom hook for photo management
 export const usePhotoManager = ({ userId, onPhotoUpdate = null, previewMode = false }) => {
@@ -241,20 +284,56 @@ export const ProfilePhotoUploadButton = ({
   onFileSelect,
 }) => {
   const [showFileInput, setShowFileInput] = useState(false);
+  const [cropSrc, setCropSrc] = useState(null);
+  const [showCrop, setShowCrop] = useState(false);
+  const [crop, setCrop] = useState({ unit: '%', width: 80, aspect: 1 });
+  const [completedCrop, setCompletedCrop] = useState(null);
+  const imgRef = useRef(null);
+  const fileRef = useRef(null);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      if (onFileSelect) {
-        onFileSelect(file, "profile");
-      } else if (onFileUpload) {
-        onFileUpload(file, "profile");
-      } else if (onPhotoUpdate) {
-        onPhotoUpdate("profile", file);
+      try {
+        validateImageFile(file);
+      } catch (e) {
+        // Fall back to direct handlers with error handled upstream
       }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropSrc(reader.result);
+        fileRef.current = file;
+        setShowCrop(true);
+      };
+      reader.readAsDataURL(file);
     }
     setShowFileInput(false);
     event.target.value = "";
+  };
+
+  const handleCropConfirm = async () => {
+    if (!imgRef.current || !completedCrop || !completedCrop.width || !completedCrop.height) {
+      setShowCrop(false);
+      setCropSrc(null);
+      return;
+    }
+    const srcFile = fileRef.current;
+    try {
+      const blob = await getCroppedBlob(imgRef.current, completedCrop, srcFile?.type || 'image/jpeg');
+      const croppedFile = new File([blob], srcFile?.name || 'profile.jpg', { type: blob.type });
+      if (onFileSelect) {
+        onFileSelect(croppedFile, "profile");
+      } else if (onFileUpload) {
+        onFileUpload(croppedFile, "profile");
+      } else if (onPhotoUpdate) {
+        onPhotoUpdate("profile", croppedFile);
+      }
+    } finally {
+      setShowCrop(false);
+      setCropSrc(null);
+      setCompletedCrop(null);
+      setCrop({ unit: '%', width: 80, aspect: 1 });
+    }
   };
 
   if (!isEditing) return null;
@@ -288,6 +367,42 @@ export const ProfilePhotoUploadButton = ({
             }
           }}
         />
+
+        {showCrop && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setShowCrop(false)} />
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-xl w-full p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Crop profile photo</h3>
+                <button onClick={() => setShowCrop(false)} className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="max-h-[60vh] overflow-auto">
+                {cropSrc && (
+                  <ReactCrop crop={crop} onChange={(c) => setCrop(c)} onComplete={(c) => setCompletedCrop(c)} aspect={1}>
+                    <img
+                      ref={imgRef}
+                      src={cropSrc}
+                      alt="Crop source"
+                      className="max-w-full h-auto"
+                      onLoad={(e) => {
+                        // Ensure a centered initial crop
+                        const img = e.currentTarget;
+                        const side = Math.min(img.width, img.height) * 0.8;
+                        setCrop({ unit: 'px', width: side, height: side, x: (img.width - side) / 2, y: (img.height - side) / 2 });
+                      }}
+                    />
+                  </ReactCrop>
+                )}
+              </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <Button variant="secondary" onClick={() => setShowCrop(false)}>Cancel</Button>
+                <Button onClick={handleCropConfirm}>Apply</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </FeatureFlagWrapper>
   );
@@ -302,20 +417,55 @@ export const CoverPhotoUploadButton = ({
   onFileSelect,
 }) => {
   const [showFileInput, setShowFileInput] = useState(false);
+  const [cropSrc, setCropSrc] = useState(null);
+  const [showCrop, setShowCrop] = useState(false);
+  const [crop, setCrop] = useState({ unit: '%', width: 90, aspect: 16 / 9 });
+  const [completedCrop, setCompletedCrop] = useState(null);
+  const imgRef = useRef(null);
+  const fileRef = useRef(null);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
     if (file) {
-      if (onFileSelect) {
-        onFileSelect(file, "cover");
-      } else if (onFileUpload) {
-        onFileUpload(file, "cover");
-      } else if (onPhotoUpdate) {
-        onPhotoUpdate("cover", file);
+      try {
+        validateImageFile(file);
+      } catch (e) {
       }
+      const reader = new FileReader();
+      reader.onload = () => {
+        setCropSrc(reader.result);
+        fileRef.current = file;
+        setShowCrop(true);
+      };
+      reader.readAsDataURL(file);
     }
     setShowFileInput(false);
     event.target.value = "";
+  };
+
+  const handleCropConfirm = async () => {
+    if (!imgRef.current || !completedCrop || !completedCrop.width || !completedCrop.height) {
+      setShowCrop(false);
+      setCropSrc(null);
+      return;
+    }
+    const srcFile = fileRef.current;
+    try {
+      const blob = await getCroppedBlob(imgRef.current, completedCrop, srcFile?.type || 'image/jpeg');
+      const croppedFile = new File([blob], srcFile?.name || 'cover.jpg', { type: blob.type });
+      if (onFileSelect) {
+        onFileSelect(croppedFile, "cover");
+      } else if (onFileUpload) {
+        onFileUpload(croppedFile, "cover");
+      } else if (onPhotoUpdate) {
+        onPhotoUpdate("cover", croppedFile);
+      }
+    } finally {
+      setShowCrop(false);
+      setCropSrc(null);
+      setCompletedCrop(null);
+      setCrop({ unit: '%', width: 90, aspect: 16 / 9 });
+    }
   };
 
   if (!isEditing) return null;
@@ -349,6 +499,44 @@ export const CoverPhotoUploadButton = ({
             }
           }}
         />
+
+        {showCrop && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-black/60" onClick={() => setShowCrop(false)} />
+            <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Crop cover photo</h3>
+                <button onClick={() => setShowCrop(false)} className="text-gray-200 hover:text-gray-300 dark:text-gray-400 dark:hover:text-gray-200" aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="max-h-[70vh] overflow-auto">
+                {cropSrc && (
+                  <ReactCrop crop={crop} onChange={(c) => setCrop(c)} onComplete={(c) => setCompletedCrop(c)} aspect={16/9}>
+                    <img
+                      ref={imgRef}
+                      src={cropSrc}
+                      alt="Crop source"
+                      className="max-w-full h-auto"
+                      onLoad={(e) => {
+                        const img = e.currentTarget;
+                        const width = Math.min(img.width * 0.9, img.width);
+                        const height = width * (9/16);
+                        const clampedH = Math.min(height, img.height * 0.9);
+                        const clampedW = clampedH * (16/9);
+                        setCrop({ unit: 'px', width: clampedW, height: clampedH, x: (img.width - clampedW) / 2, y: (img.height - clampedH) / 2 });
+                      }}
+                    />
+                  </ReactCrop>
+                )}
+              </div>
+              <div className="mt-4 flex justify-end gap-2">
+                <Button variant="secondary" onClick={() => setShowCrop(false)}>Cancel</Button>
+                <Button onClick={handleCropConfirm}>Apply</Button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </FeatureFlagWrapper>
   );

@@ -14,6 +14,7 @@ const TrendingEvents = ({
   error, 
   getEventTypeLabel,
   formatDate,
+  formatTime,
   onViewEvent,
   onEditEvent,
   onDeleteEvent,
@@ -115,6 +116,7 @@ const TrendingEvents = ({
                 onDelete={onDeleteEvent}
                 getEventTypeLabel={getEventTypeLabel}
                 formatDate={formatDate}
+                formatTime={formatTime}
                 // Phase 3: Event Participation props
                 onRsvp={onRsvp}
                 onUpdateRsvp={onUpdateRsvp}

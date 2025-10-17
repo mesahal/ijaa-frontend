@@ -5,7 +5,7 @@ import eventService from '../../../services/api/eventService';
  * Custom hook for managing event actions (CRUD operations, RSVP, etc.)
  * Handles create, update, delete, and participation actions for Phase 1: Core Event Management
  */
-export const useEventActions = (refreshEvents) => {
+export const useEventActions = (refreshEvents = null) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -18,8 +18,8 @@ export const useEventActions = (refreshEvents) => {
 
     try {
       // Enhanced validation for Phase 1 requirements
-      if (!eventForm.title || !eventForm.startDate || !eventForm.endDate || !eventForm.category) {
-        throw new Error('Please fill in all required fields: title, start date, end date, and category');
+      if (!eventForm.title || !eventForm.startDate || !eventForm.endDate) {
+        throw new Error('Please fill in all required fields: title, start date, and end date');
       }
 
       if (new Date(eventForm.startDate) >= new Date(eventForm.endDate)) {
@@ -45,24 +45,32 @@ export const useEventActions = (refreshEvents) => {
           description: eventForm.description || '',
           startDate: eventForm.startDate,
           endDate: eventForm.endDate,
-          location: eventForm.location || '',
-          category: eventForm.category || 'SOCIAL',
+          location: eventForm.isOnline ? eventForm.meetingLink : (eventForm.location || ''),
+          category: eventForm.eventType || 'NETWORKING',
           maxParticipants: eventForm.maxParticipants || 50,
-          isPublic: eventForm.isPublic !== false, // Default to true
-          requiresApproval: eventForm.requiresApproval || false
+          isPublic: eventForm.privacy !== 'PRIVATE', // Default to true
+          requiresApproval: false,
+          organizerName: eventForm.organizerName || 'Event Organizer',
+          organizerEmail: eventForm.organizerEmail || 'organizer@example.com',
+          isOnline: eventForm.isOnline || false
         };
         
+        console.log('Creating event with data:', eventData);
         response = await eventService.createEvent(eventData);
         result = response;
       }
 
-      if (result && result.success) {
-        await refreshEvents();
-        return { success: true, data: result.data };
+      // Check if the response indicates success
+      if (result && (result.success || result.message === 'Event created successfully' || result.status === 200)) {
+        if (refreshEvents) {
+          await refreshEvents();
+        }
+        return { success: true, data: result.data || result };
       } else {
         throw new Error(result?.message || 'Failed to save event');
       }
     } catch (err) {
+      console.error('Error creating event:', err);
       setError(err.message || 'Failed to save event');
       return { success: false, error: err.message };
     } finally {

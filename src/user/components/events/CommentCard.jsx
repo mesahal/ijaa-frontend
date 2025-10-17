@@ -10,6 +10,7 @@ import {
   MoreHorizontal,
 } from 'lucide-react';
 import Button from '../../../components/ui/Button';
+import UserAvatar from '../../../components/common/UserAvatar';
 
 const CommentCard = ({
   comment,
@@ -22,11 +23,16 @@ const CommentCard = ({
   editContent,
   setEditContent,
   loading = false,
-  depth = 0
+  depth = 0,
+  canEdit = false,
+  canDelete = false
 }) => {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [replyContent, setReplyContent] = useState('');
   const [showActions, setShowActions] = useState(false);
+
+  // Check if this is a root/parent comment (no parentCommentId)
+  const isRootComment = !comment.parentCommentId;
 
   const handleEdit = () => {
     if (editContent.trim()) {
@@ -57,18 +63,20 @@ const CommentCard = ({
     setShowReplyForm(false);
   };
 
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+  const formatTimeAgo = (dateString) => {
+    const now = new Date();
+    const commentDate = new Date(dateString);
+    const diffInSeconds = Math.floor((now - commentDate) / 1000);
+
+    if (diffInSeconds < 60) return 'Just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h`;
+    if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d`;
+    return commentDate.toLocaleDateString();
   };
 
   const getAuthorName = (comment) => {
-    return comment.authorName || comment.userName || 'Anonymous';
+    return comment.authorName || comment.username || 'Anonymous';
   };
 
   const getAuthorInitial = (comment) => {
@@ -77,76 +85,89 @@ const CommentCard = ({
   };
 
   return (
-    <div className={`bg-gray-700 rounded-lg p-4 ${depth > 0 ? 'ml-8 border-l-2 border-gray-600' : ''}`}>
-      <div className="flex items-start space-x-3">
-        {/* Author Avatar */}
-        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
-          <span className="text-white text-sm font-medium">
-            {getAuthorInitial(comment)}
-          </span>
+    <div className={`${depth > 0 ? 'ml-8' : ''} mb-3 relative`}>
+      {/* Visual hierarchy lines */}
+      {depth > 0 ? (
+        <div className="absolute left-0 top-0 bottom-0 w-8 flex items-start justify-center">
+          <div className="w-px bg-gray-300 dark:bg-gray-600 h-full"></div>
+          <div className="absolute top-6 left-0 w-8 h-px bg-gray-300 dark:bg-gray-600 rounded-full"></div>
         </div>
+      ) : (
+        <div className="absolute left-4 top-6 bottom-0 w-px bg-gray-200 dark:bg-gray-700"></div>
+      )}
+      <div className="flex items-start space-x-3 relative">
+        {/* Author Avatar */}
+        <UserAvatar
+          userId={comment.userId}
+          username={comment.username}
+          name={comment.authorName}
+          size="sm"
+          className="flex-shrink-0"
+        />
 
         {/* Comment Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 bg-transparent">
           {/* Comment Header */}
-          <div className="flex items-center justify-between mb-1">
+          <div className="flex items-center justify-between mb-2">
             <div className="flex items-center space-x-2">
-              <span className="text-white font-medium">{getAuthorName(comment)}</span>
-              <span className="text-gray-400 text-sm">
-                {formatDate(comment.createdAt)}
+              <span className="font-medium text-gray-900 dark:text-white">{getAuthorName(comment)}</span>
+              <span className="text-gray-500 dark:text-gray-400 text-sm">
+                {formatTimeAgo(comment.createdAt)}
               </span>
               {comment.isEdited && (
-                <span className="text-gray-500 text-xs">(edited)</span>
+                <span className="text-gray-500 dark:text-gray-400 text-xs">• Edited</span>
               )}
             </div>
 
             {/* Action Menu */}
-            <div className="relative">
-              <button
-                onClick={() => setShowActions(!showActions)}
-                className="p-1 text-gray-400 hover:text-gray-300 transition-colors"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
+            {(canEdit || canDelete) && (
+              <div className="relative">
+                <button
+                  onClick={() => setShowActions(!showActions)}
+                  className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <MoreHorizontal className="h-4 w-4" />
+                </button>
 
-              {showActions && (
-                <div className="absolute right-0 top-6 bg-gray-800 border border-gray-600 rounded-lg shadow-lg z-10 min-w-32">
-                  {comment.canEdit && (
-                    <button
-                      onClick={() => {
-                        setShowActions(false);
-                        onEdit(comment.id, comment.content);
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm text-gray-300 hover:bg-gray-700 flex items-center space-x-2"
-                    >
-                      <Edit3 className="h-3 w-3" />
-                      <span>Edit</span>
-                    </button>
-                  )}
-                  {comment.canDelete && (
-                    <button
-                      onClick={() => {
-                        setShowActions(false);
-                        handleDelete();
-                      }}
-                      className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-gray-700 flex items-center space-x-2"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                      <span>Delete</span>
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
+                {showActions && (
+                  <div className="absolute right-0 top-8 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 min-w-32">
+                    {canEdit && (
+                      <button
+                        onClick={() => {
+                          setShowActions(false);
+                          onEdit(comment.id, comment.content);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center space-x-2"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                        <span>Edit</span>
+                      </button>
+                    )}
+                    {canDelete && (
+                      <button
+                        onClick={() => {
+                          setShowActions(false);
+                          handleDelete();
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-600 flex items-center space-x-2"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                        <span>Delete</span>
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Comment Text */}
           {isEditing ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               <textarea
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
-                className="w-full p-2 bg-gray-600 border border-gray-500 rounded text-white placeholder-gray-400 resize-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
                 rows={3}
                 placeholder="Edit your comment..."
               />
@@ -154,7 +175,7 @@ const CommentCard = ({
                 <Button
                   onClick={handleEdit}
                   disabled={loading || !editContent.trim()}
-                  className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700"
+                  size="sm"
                 >
                   <Check className="h-3 w-3 mr-1" />
                   Save
@@ -163,7 +184,7 @@ const CommentCard = ({
                   onClick={onCancelEdit}
                   disabled={loading}
                   variant="outline"
-                  className="px-3 py-1 text-sm"
+                  size="sm"
                 >
                   <X className="h-3 w-3 mr-1" />
                   Cancel
@@ -171,7 +192,7 @@ const CommentCard = ({
               </div>
             </div>
           ) : (
-            <p className="text-gray-300 mb-3">{comment.content}</p>
+            <p className="text-gray-900 dark:text-white mb-2 leading-relaxed text-sm">{comment.content}</p>
           )}
 
           {/* Comment Actions */}
@@ -180,35 +201,42 @@ const CommentCard = ({
               <button
                 onClick={handleLike}
                 disabled={loading}
-                className="flex items-center space-x-1 text-gray-400 hover:text-blue-400 transition-colors"
+                className={`flex items-center space-x-1 text-xs font-medium transition-colors ${
+                  comment.isLikedByCurrentUser
+                    ? 'text-red-600 dark:text-red-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
+                }`}
               >
-                <Heart className={`h-4 w-4 ${comment.isLiked ? 'text-red-500 fill-current' : ''}`} />
-                <span className="text-sm">{comment.likes || 0}</span>
+                <Heart className={`h-3 w-3 ${comment.isLikedByCurrentUser ? 'fill-current' : ''}`} />
+                <span>{comment.likes || 0}</span>
               </button>
 
-              <button
-                onClick={() => setShowReplyForm(!showReplyForm)}
-                className="flex items-center space-x-1 text-gray-400 hover:text-blue-400 transition-colors"
-              >
-                <Reply className="h-4 w-4" />
-                <span className="text-sm">Reply</span>
-              </button>
+              {/* Only show reply button for root/parent comments */}
+              {isRootComment && (
+                <button
+                  onClick={() => setShowReplyForm(!showReplyForm)}
+                  className="flex items-center space-x-1 text-xs font-medium text-gray-500 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                >
+                  <Reply className="h-3 w-3" />
+                  <span>Reply</span>
+                </button>
+              )}
 
-              {comment.replyCount > 0 && (
-                <span className="text-gray-500 text-sm">
+              {isRootComment && comment.replyCount > 0 && (
+                <span className="text-gray-500 dark:text-gray-400 text-xs">
                   {comment.replyCount} {comment.replyCount === 1 ? 'reply' : 'replies'}
                 </span>
               )}
             </div>
           )}
 
-          {/* Reply Form */}
-          {showReplyForm && !isEditing && (
-            <div className="mt-3 space-y-2">
+          {/* Reply Form - Only show for root comments */}
+          {showReplyForm && !isEditing && isRootComment && (
+            <div className="mt-3 space-y-3">
               <textarea
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.target.value)}
-                className="w-full p-2 bg-gray-600 border border-gray-500 rounded text-white placeholder-gray-400 resize-none"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
                 rows={2}
                 placeholder="Write a reply..."
               />
@@ -216,7 +244,7 @@ const CommentCard = ({
                 <Button
                   onClick={handleReply}
                   disabled={loading || !replyContent.trim()}
-                  className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700"
+                  size="sm"
                 >
                   Reply
                 </Button>
@@ -224,7 +252,7 @@ const CommentCard = ({
                   onClick={handleCancelReply}
                   disabled={loading}
                   variant="outline"
-                  className="px-3 py-1 text-sm"
+                  size="sm"
                 >
                   Cancel
                 </Button>
@@ -234,24 +262,27 @@ const CommentCard = ({
         </div>
       </div>
 
-      {/* Nested Replies */}
-      {comment.replies && comment.replies.length > 0 && (
-        <div className="mt-4 space-y-3">
+      {/* Replies - Only show for root comments, display vertically */}
+      {isRootComment && comment.replies && comment.replies.length > 0 && (
+        <div className="mt-4 space-y-2">
           {comment.replies.map((reply) => (
-            <CommentCard
-              key={reply.id}
-              comment={reply}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onLike={onLike}
-              onReply={onReply}
-              onCancelEdit={onCancelEdit}
-              isEditing={isEditing}
-              editContent={editContent}
-              setEditContent={setEditContent}
-              loading={loading}
-              depth={depth + 1}
-            />
+            <div key={reply.id} className="ml-8 mb-3 relative">
+              <CommentCard
+                comment={reply}
+                onEdit={onEdit}
+                onDelete={onDelete}
+                onLike={onLike}
+                onReply={onReply}
+                onCancelEdit={onCancelEdit}
+                isEditing={isEditing}
+                editContent={editContent}
+                setEditContent={setEditContent}
+                loading={loading}
+                depth={depth + 1}
+                canEdit={canEdit}
+                canDelete={canDelete}
+              />
+            </div>
           ))}
         </div>
       )}

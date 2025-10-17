@@ -156,8 +156,8 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      {/* Navigation */}
-      <nav className="bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
+      {/* Navigation - Hidden on mobile */}
+      <nav className="hidden md:block bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
@@ -206,21 +206,21 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 py-20 overflow-hidden">
+      <section className="relative bg-gradient-to-br from-primary-50 via-white to-primary-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 py-8 md:py-20 overflow-hidden">
         <div className="absolute inset-0 bg-grid-pattern opacity-5"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <div className="space-y-4">
+          <div className="grid lg:grid-cols-2 gap-8 md:gap-12 items-center">
+            <div className="space-y-6 md:space-y-8">
+              <div className="space-y-3 md:space-y-4">
                 <Badge variant="outline" className="w-fit">
                   <Star className="h-3 w-3 mr-1" />
                   Trusted by 5000+ Alumni
                 </Badge>
-                <h1 className="text-4xl md:text-6xl font-bold text-gray-900 dark:text-white leading-tight">
+                <h1 className="text-3xl md:text-4xl lg:text-6xl font-bold text-gray-900 dark:text-white leading-tight">
                   Connect with{" "}
                   <span className="gradient-text">IIT JU Alumni</span> Worldwide
                 </h1>
-                <p className="text-xl text-gray-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-lg md:text-xl text-gray-600 dark:text-gray-400 leading-relaxed">
                   Join the largest network of IIT JU graduates. Connect,
                   collaborate, and grow your professional network with fellow
                   alumni from around the world.
@@ -249,7 +249,7 @@ const LandingPage = () => {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 pt-8">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 md:gap-6 pt-4 md:pt-8">
                 {stats.map((stat, index) => (
                   <div key={index} className="text-center">
                     <div className="flex items-center justify-center mb-2">

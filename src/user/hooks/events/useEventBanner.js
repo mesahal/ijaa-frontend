@@ -7,7 +7,7 @@ import { useAuth } from '../../../hooks/useAuth';
  * Provides upload, get, and delete functionality for event banner images
  */
 const useEventBanner = (eventId) => {
-  const { user } = useAuth();
+  const { user, accessToken, getAccessToken } = useAuth();
   const [bannerUrl, setBannerUrl] = useState(null);
   const [bannerExists, setBannerExists] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -17,7 +17,11 @@ const useEventBanner = (eventId) => {
    * Load event banner URL
    */
   const loadBannerUrl = useCallback(async () => {
-    if (!eventId || !user?.token) {
+    const token = accessToken || getAccessToken();
+    console.log('🔍 [useEventBanner] loadBannerUrl called', { eventId, hasToken: !!token });
+    
+    if (!eventId || !token) {
+      console.log('❌ [useEventBanner] Missing eventId or token', { eventId, hasToken: !!token });
       setBannerUrl(null);
       setBannerExists(false);
       return;
@@ -27,34 +31,41 @@ const useEventBanner = (eventId) => {
       setLoading(true);
       setError(null);
       
+      console.log('📤 [useEventBanner] Making request to getEventBannerUrl', { eventId });
       const response = await eventService.getEventBannerUrl(eventId);
+      console.log('📥 [useEventBanner] getEventBannerUrl response', { response });
       
       if (response && response.success && response.data) {
         if (response.data.exists && response.data.photoUrl) {
+          console.log('✅ [useEventBanner] Banner found', { photoUrl: response.data.photoUrl });
           setBannerUrl(response.data.photoUrl);
           setBannerExists(true);
         } else {
+          console.log('ℹ️ [useEventBanner] Banner not found or no photoUrl');
           setBannerUrl(null);
           setBannerExists(false);
         }
       } else {
+        console.log('ℹ️ [useEventBanner] Invalid response structure');
         setBannerUrl(null);
         setBannerExists(false);
       }
     } catch (err) {
+      console.error('❌ [useEventBanner] Error loading banner', err);
       setError(err.message || 'Failed to load banner');
       setBannerUrl(null);
       setBannerExists(false);
     } finally {
       setLoading(false);
     }
-  }, [eventId, user?.token]);
+  }, [eventId, accessToken]);
 
   /**
    * Upload event banner
    */
   const uploadBanner = useCallback(async (file) => {
-    if (!eventId || !user?.token || !file) {
+    const token = accessToken || getAccessToken();
+    if (!eventId || !token || !file) {
       throw new Error('Missing required parameters for banner upload');
     }
 
@@ -77,13 +88,14 @@ const useEventBanner = (eventId) => {
     } finally {
       setLoading(false);
     }
-  }, [eventId, user?.token]);
+  }, [eventId, accessToken]);
 
   /**
    * Delete event banner
    */
   const deleteBanner = useCallback(async () => {
-    if (!eventId || !user?.token) {
+    const token = accessToken || getAccessToken();
+    if (!eventId || !token) {
       throw new Error('Missing required parameters for banner deletion');
     }
 
@@ -101,7 +113,7 @@ const useEventBanner = (eventId) => {
     } finally {
       setLoading(false);
     }
-  }, [eventId, user?.token]);
+  }, [eventId, accessToken]);
 
   /**
    * Clear error state

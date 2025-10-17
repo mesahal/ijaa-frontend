@@ -319,14 +319,102 @@ const Events = () => {
   const formatDate = useCallback((dateString) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
-      weekday: 'short',
+      weekday: 'long',
       year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+      month: 'long',
+      day: 'numeric'
     });
   }, []);
+
+  /**
+   * Format time for display
+   */
+  const formatTime = useCallback((dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+  }, []);
+
+  /**
+   * Format date and time range for display
+   */
+  const formatDateTimeRange = useCallback((startDate, endDate) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    
+    // Check if it's the same day
+    const isSameDay = start.toDateString() === end.toDateString();
+    
+    if (isSameDay) {
+      // Same day: "Monday, October 13, 2025 at 3:43 AM - 3:43 PM"
+      const dateStr = start.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const startTime = start.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      const endTime = end.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      return `${dateStr} at ${startTime} - ${endTime}`;
+    } else {
+      // Different days: "Monday, October 13, 2025 at 3:43 AM - Tuesday, October 14, 2025 at 3:43 PM"
+      const startDateStr = start.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const endDateStr = end.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      const startTime = start.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      const endTime = end.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true
+      });
+      return `${startDateStr} at ${startTime} - ${endDateStr} at ${endTime}`;
+    }
+  }, []);
+
+  /**
+   * Format event date and time with proper day handling
+   */
+  const formatEventDateTime = useCallback((event) => {
+    if (!event.endDate) {
+      return `${formatDate(event.startDate)} at ${formatTime(event.startDate)}`;
+    }
+    
+    const start = new Date(event.startDate);
+    const end = new Date(event.endDate);
+    const isSameDay = start.toDateString() === end.toDateString();
+    
+    if (isSameDay) {
+      // Same day: "Wednesday, October 15, 2025 at 11:00 AM - 2:00 PM"
+      return `${formatDate(event.startDate)} at ${formatTime(event.startDate)} - ${formatTime(event.endDate)}`;
+    } else {
+      // Different days: "Wednesday, October 15, 2025 at 11:00 AM - Thursday, October 16, 2025 at 11:00 AM"
+      return `${formatDate(event.startDate)} at ${formatTime(event.startDate)} - ${formatDate(event.endDate)} at ${formatTime(event.endDate)}`;
+    }
+  }, [formatDate, formatTime]);
 
   /**
    * Get event category label
@@ -429,26 +517,23 @@ const Events = () => {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-              Events
-            </h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              Discover and connect with alumni events
-            </p>
-          </div>
+        {/* Header - Updated to support both light and dark themes */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+            Discover events
+          </h1>
           
           {/* Create Event Button */}
-          <Button
-            onClick={() => navigate('/events/create')}
-            disabled={!user}
-            className="flex items-center space-x-2 self-start"
-          >
-            <Plus className="h-4 w-4" />
-            <span>{user ? "Create Event" : "Sign in to Create"}</span>
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              onClick={() => navigate('/user/events/create')}
+              disabled={!user}
+              className="flex items-center space-x-2"
+            >
+              <Plus className="h-4 w-4" />
+              <span>{user ? "Create Event" : "Sign in to Create"}</span>
+            </Button>
+          </div>
         </div>
 
         {/* Error Display */}
@@ -498,7 +583,7 @@ const Events = () => {
                       placeholder="Search events by title, description, or location..."
                       value={searchQuery}
                       onChange={(e) => handleSearchQueryChange(e.target.value)}
-                      className="w-full pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm transition-colors hover:border-gray-400 dark:hover:border-gray-500"
+                      className="w-full pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                       aria-label="Search events"
                     />
                     {searchQuery && (
@@ -519,7 +604,7 @@ const Events = () => {
                     <select
                       value={filterType}
                       onChange={(e) => handleFilterTypeChange(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm appearance-none bg-white dark:bg-gray-700 transition-colors hover:border-gray-400 dark:hover:border-gray-500"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm appearance-none transition-colors hover:border-gray-400 dark:hover:border-gray-500"
                       aria-label="Filter events by type"
                     >
                       <option value="all">All Categories</option>
@@ -540,7 +625,7 @@ const Events = () => {
                 {/* Advanced Filter Toggle Button */}
                 <button
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium"
+                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium"
                   aria-label="Toggle advanced filters"
                 >
                   <Filter className="h-4 w-4" />
@@ -562,7 +647,7 @@ const Events = () => {
                         placeholder="Search by location"
                         value={advancedFilters.location}
                         onChange={(e) => handleAdvancedFilterChange('location', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
 
@@ -574,7 +659,7 @@ const Events = () => {
                       <select
                         value={advancedFilters.eventType}
                         onChange={(e) => handleAdvancedFilterChange('eventType', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       >
                         <option value="">All Types</option>
                         {EVENT_TYPE_OPTIONS.map((type) => (
@@ -594,7 +679,7 @@ const Events = () => {
                         type="date"
                         value={advancedFilters.startDate}
                         onChange={(e) => handleAdvancedFilterChange('startDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
 
@@ -607,7 +692,7 @@ const Events = () => {
                         type="date"
                         value={advancedFilters.endDate}
                         onChange={(e) => handleAdvancedFilterChange('endDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
 
@@ -619,7 +704,7 @@ const Events = () => {
                       <select
                         value={advancedFilters.isOnline}
                         onChange={(e) => handleAdvancedFilterChange('isOnline', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       >
                         <option value="">All Events</option>
                         <option value="true">Online Only</option>
@@ -637,7 +722,7 @@ const Events = () => {
                         placeholder="Search by organizer"
                         value={advancedFilters.organizerName}
                         onChange={(e) => handleAdvancedFilterChange('organizerName', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
 
@@ -651,7 +736,7 @@ const Events = () => {
                         placeholder="Search in title"
                         value={advancedFilters.title}
                         onChange={(e) => handleAdvancedFilterChange('title', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
 
@@ -665,7 +750,7 @@ const Events = () => {
                         placeholder="Search in description"
                         value={advancedFilters.description}
                         onChange={(e) => handleAdvancedFilterChange('description', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                       />
                     </div>
                   </div>
@@ -745,7 +830,7 @@ const Events = () => {
                   {searchQuery && ` for "${searchQuery}"`}
                 </p>
                 {eventsPagination?.totalElements > 0 && (activeTab === 'all' || activeTab === 'my-events' || activeTab === 'my-active-events') && (
-                  <p className="text-gray-500 text-sm">
+                  <p className="text-gray-500 dark:text-gray-400 text-sm">
                     (Page {(eventsPagination.page || 0) + 1} of {eventsPagination.totalPages || 0})
                   </p>
                 )}
@@ -790,8 +875,8 @@ const Events = () => {
                 {Math.min(((eventsPagination.page || 0) + 1) * (eventsPagination.size || 10), eventsPagination.totalElements)} of{" "}
                 {eventsPagination.totalElements} results
               </span>
-              <span className="text-gray-400">•</span>
-              <span className="text-gray-400">
+              <span className="text-gray-400 dark:text-gray-500">•</span>
+              <span className="text-gray-400 dark:text-gray-500">
                 {eventsPagination.size || 10} per page
               </span>
             </div>
@@ -823,6 +908,7 @@ const Events = () => {
                           onDelete={handleDeleteEventCallback}
                           getEventTypeLabel={getEventCategoryLabel}
                           formatDate={formatDate}
+                          formatTime={formatTime}
                           // Phase 3: Event Participation props
                           onRsvp={rsvpToEvent}
                           onUpdateRsvp={updateParticipation}
@@ -839,7 +925,7 @@ const Events = () => {
                 {/* Loading State */}
                 {isLoading && displayEvents && displayEvents.length === 0 && (
                   <div className="text-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary-600 mx-auto mb-4" />
+                    <Loader2 className="h-8 w-8 animate-spin text-blue-500 mx-auto mb-4" />
                     <p className="text-gray-500 dark:text-gray-400">
                       Loading events...
                     </p>
@@ -850,7 +936,7 @@ const Events = () => {
                 {isLoading && displayEvents && displayEvents.length > 0 && (
                   <div className="absolute inset-0 bg-white dark:bg-gray-900 bg-opacity-75 dark:bg-opacity-75 flex items-center justify-center z-10 rounded-lg">
                     <div className="flex items-center space-x-2">
-                      <Loader2 className="h-5 w-5 animate-spin text-primary-600" />
+                      <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
                       <span className="text-gray-600 dark:text-gray-300">Loading...</span>
                     </div>
                   </div>
@@ -902,7 +988,7 @@ const Events = () => {
                  onLoadPrevious={loadPreviousUpcomingPage}
                  getEventTypeLabel={getEventCategoryLabel}
                  formatDate={formatDate}
-
+                 formatTime={formatTime}
                  onEditEvent={handleEditEvent}
                  onDeleteEvent={handleDeleteEventCallback}
                  // Phase 3: Event Participation props
@@ -922,6 +1008,7 @@ const Events = () => {
                error={trendingError}
                getEventTypeLabel={getEventCategoryLabel}
                formatDate={formatDate}
+               formatTime={formatTime}
                onEditEvent={handleEditEvent}
                onDeleteEvent={handleDeleteEventCallback}
                // Phase 3: Event Participation props
@@ -946,6 +1033,7 @@ const Events = () => {
                onLoadPrevious={loadPreviousSearchPage}
                getEventTypeLabel={getEventCategoryLabel}
                formatDate={formatDate}
+               formatTime={formatTime}
                onEditEvent={handleEditEvent}
                onDeleteEvent={handleDeleteEventCallback}
                // Phase 3: Event Participation props
@@ -970,6 +1058,7 @@ const Events = () => {
                onClearError={clearParticipationsError}
                getEventTypeLabel={getEventCategoryLabel}
                formatDate={formatDate}
+               formatTime={formatTime}
                onEditEvent={handleEditEvent}
                onDeleteEvent={handleDeleteEventCallback}
                // Phase 3: Event Participation props
@@ -1032,11 +1121,11 @@ const Events = () => {
                           key={invitation.id}
                           event={invitation.event}
                           isMyEvent={false}
-
                           onEdit={handleEditEvent}
                           onDelete={handleDeleteEventCallback}
                           getEventTypeLabel={getEventCategoryLabel}
                           formatDate={formatDate}
+                          formatTime={formatTime}
                           // Phase 3: Event Participation props
                           onRsvp={rsvpToEvent}
                           onUpdateRsvp={updateParticipation}
@@ -1086,6 +1175,7 @@ const Events = () => {
           onViewParticipants={handleViewParticipants}
           getEventTypeLabel={getEventCategoryLabel}
           formatDate={formatDate}
+          formatTime={formatTime}
           // Phase 3: Event Participation props
           onRsvp={rsvpToEvent}
           onUpdateRsvp={updateParticipation}
