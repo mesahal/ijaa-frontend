@@ -282,8 +282,11 @@ const PostCard = ({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            const video = e.target.closest('.group').querySelector('video');
-                            handleVideoPlay(video);
+                            if (onOpenModal) {
+                              onOpenModal(post);
+                            } else if (onComment) {
+                              onComment(post.id);
+                            }
                           }}
                           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-primary-600/90 backdrop-blur-sm rounded-full flex items-center justify-center hover:bg-primary-700/90 transition-all duration-200 cursor-pointer shadow-lg"
                         >

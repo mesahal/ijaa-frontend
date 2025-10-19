@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useImperativeHandle, forwardRef } from 'react';
 import { 
-  User, 
   Image as ImageIcon, 
   Video, 
   FileText, 
@@ -8,12 +7,17 @@ import {
   Send
 } from 'lucide-react';
 import Button from '../../../components/ui/Button';
+import { useAuth } from '../../../hooks/useAuth';
+import UserAvatar from '../../../components/common/UserAvatar';
 
 const CreatePost = forwardRef(({ onSubmit, loading = false }, ref) => {
   const [content, setContent] = useState('');
   const [postType, setPostType] = useState('TEXT');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [showMediaOptions, setShowMediaOptions] = useState(false);
+
+  const { getCurrentUser } = useAuth();
+  const currentUser = getCurrentUser();
 
   // Reset form function
   const resetForm = useCallback(() => {
@@ -100,9 +104,12 @@ const CreatePost = forwardRef(({ onSubmit, loading = false }, ref) => {
       <form onSubmit={handleSubmit}>
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-8 h-8 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-            <User className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-          </div>
+          <UserAvatar 
+            userId={currentUser?.userId}
+            username={currentUser?.email || currentUser?.username}
+            name={currentUser?.name || currentUser?.username || currentUser?.email}
+            size="sm"
+          />
           <div className="flex-1">
             <h3 className="font-medium text-gray-900 dark:text-white">
               Create a post

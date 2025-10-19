@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import apiClient from '../../services/api/apiClient';
 import AuthService from "../../services/auth/AuthService";
 import {
@@ -51,6 +51,21 @@ const Profile = () => {
   const { user } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const coverContainerRef = useRef(null);
+  const [coverAspect, setCoverAspect] = useState(16 / 9);
+  useEffect(() => {
+    const measure = () => {
+      const el = coverContainerRef.current;
+      if (el) {
+        const w = el.clientWidth;
+        const h = el.clientHeight || el.offsetHeight;
+        if (w && h) setCoverAspect(w / h);
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, []);
 
   // Location data hook
   const { 
@@ -672,7 +687,10 @@ const Profile = () => {
     <div className="max-w-4xl mx-auto px-4 py-8">
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden mb-8">
         {/* Cover Photo */}
-        <div className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative">
+        <div
+          ref={coverContainerRef}
+          className="h-48 bg-gradient-to-r from-blue-600 to-emerald-600 relative"
+        >
           <PhotoDisplay
             photoUrl={coverPhotoUrl}
             alt="Cover"
@@ -685,6 +703,7 @@ const Profile = () => {
             onFileUpload={handleFileUpload}
             onFileSelect={handleFileSelect}
             isEditing={isEditing}
+            aspect={coverAspect}
           />
         </div>
 

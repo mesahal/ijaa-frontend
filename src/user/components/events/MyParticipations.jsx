@@ -18,6 +18,7 @@ const MyParticipations = ({
   onLoadPrevious,
   onRsvp,
   onUpdateRsvp,
+  onCancelRsvp,
   rsvpLoading,
   formatDate,
   formatTime,
@@ -214,6 +215,7 @@ const MyParticipations = ({
                   currentStatus={participation.status}
                   onRsvp={onRsvp}
                   onUpdateRsvp={onUpdateRsvp}
+                  onCancelRsvp={onCancelRsvp}
                   loading={rsvpLoading}
                   showMessageInput={true}
                 />

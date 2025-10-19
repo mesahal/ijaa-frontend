@@ -380,7 +380,7 @@ export const ProfilePhotoUploadButton = ({
               </div>
               <div className="max-h-[60vh] overflow-auto">
                 {cropSrc && (
-                  <ReactCrop crop={crop} onChange={(c) => setCrop(c)} onComplete={(c) => setCompletedCrop(c)} aspect={1}>
+                  <ReactCrop crop={crop} onChange={(c) => setCrop(c)} onComplete={(c) => setCompletedCrop(c)} aspect={1} circularCrop>
                     <img
                       ref={imgRef}
                       src={cropSrc}
@@ -415,14 +415,28 @@ export const CoverPhotoUploadButton = ({
   isEditing = false,
   onFileUpload,
   onFileSelect,
+  aspect,
 }) => {
   const [showFileInput, setShowFileInput] = useState(false);
   const [cropSrc, setCropSrc] = useState(null);
   const [showCrop, setShowCrop] = useState(false);
-  const [crop, setCrop] = useState({ unit: '%', width: 90, aspect: 16 / 9 });
+  const computedAspect = aspect || (16 / 9);
+  const [crop, setCrop] = useState({ unit: '%', width: 90, aspect: computedAspect });
   const [completedCrop, setCompletedCrop] = useState(null);
   const imgRef = useRef(null);
   const fileRef = useRef(null);
+
+  useEffect(() => {
+    setCrop((prev) => ({ ...prev, aspect: computedAspect }));
+    if (showCrop && imgRef.current) {
+      const img = imgRef.current;
+      const width = Math.min(img.width * 0.9, img.width);
+      const height = width / computedAspect;
+      const clampedH = Math.min(height, img.height * 0.9);
+      const clampedW = clampedH * computedAspect;
+      setCrop({ unit: 'px', width: clampedW, height: clampedH, x: (img.width - clampedW) / 2, y: (img.height - clampedH) / 2 });
+    }
+  }, [computedAspect, showCrop]);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
@@ -464,7 +478,7 @@ export const CoverPhotoUploadButton = ({
       setShowCrop(false);
       setCropSrc(null);
       setCompletedCrop(null);
-      setCrop({ unit: '%', width: 90, aspect: 16 / 9 });
+      setCrop({ unit: '%', width: 90, aspect: computedAspect });
     }
   };
 
@@ -512,7 +526,7 @@ export const CoverPhotoUploadButton = ({
               </div>
               <div className="max-h-[70vh] overflow-auto">
                 {cropSrc && (
-                  <ReactCrop crop={crop} onChange={(c) => setCrop(c)} onComplete={(c) => setCompletedCrop(c)} aspect={16/9}>
+                  <ReactCrop crop={crop} onChange={(c) => setCrop(c)} onComplete={(c) => setCompletedCrop(c)} aspect={computedAspect}>
                     <img
                       ref={imgRef}
                       src={cropSrc}
@@ -521,9 +535,9 @@ export const CoverPhotoUploadButton = ({
                       onLoad={(e) => {
                         const img = e.currentTarget;
                         const width = Math.min(img.width * 0.9, img.width);
-                        const height = width * (9/16);
+                        const height = width / computedAspect;
                         const clampedH = Math.min(height, img.height * 0.9);
-                        const clampedW = clampedH * (16/9);
+                        const clampedW = clampedH * computedAspect;
                         setCrop({ unit: 'px', width: clampedW, height: clampedH, x: (img.width - clampedW) / 2, y: (img.height - clampedH) / 2 });
                       }}
                     />

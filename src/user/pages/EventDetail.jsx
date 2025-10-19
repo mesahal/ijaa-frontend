@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import {
   Calendar,
   MapPin,
@@ -12,9 +12,13 @@ import {
   Star,
   MoreHorizontal,
   Globe,
+  Edit,
+  Trash2,
+  X,
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import DropdownMenu from '../../components/ui/DropdownMenu';
+import { toast } from 'react-toastify';
 import { useAuth } from '../../hooks/useAuth';
 import eventService from '../../services/api/eventService';
 import postService from '../../services/api/postService';
@@ -22,11 +26,15 @@ import PostCard from '../components/events/PostCard';
 import PostModal from '../components/events/PostModal';
 import CreatePost from '../components/events/CreatePost';
 import ShareModal from '../components/events/ShareModal';
+import PostShareModal from '../components/events/PostShareModal';
 import useEventBanner from '../hooks/events/useEventBanner';
 import BannerUpload from '../components/events/BannerUpload';
+import RSVPButtons from '../components/events/RSVPButtons';
+import { useEventParticipation } from '../hooks/events/useEventParticipation';
 
 const EventDetail = () => {
   const { eventId } = useParams();
+  const location = useLocation();
   const navigate = useNavigate();
   const { user, accessToken, getAccessToken } = useAuth();
   
@@ -48,6 +56,22 @@ const EventDetail = () => {
   const [showCreatePost, setShowCreatePost] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
   const createPostRef = useRef(null);
+  const deepLinkHandledRef = useRef(false);
+  const [showPostShareModal, setShowPostShareModal] = useState(false);
+  const [sharePost, setSharePost] = useState(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Event participation hook
+  const {
+    rsvpLoading: participationLoading,
+    rsvpToEvent,
+    updateParticipation,
+    getParticipationStatus,
+    loadMyParticipations,
+    cancelRsvp,
+  } = useEventParticipation();
 
   // Banner management
   const { 
@@ -151,6 +175,11 @@ const EventDetail = () => {
 
     checkFeatureFlag();
   }, [user]);
+
+  // Load my participations to get current status
+  useEffect(() => {
+    loadMyParticipations();
+  }, [loadMyParticipations]);
 
   const loadPosts = async () => {
     try {
@@ -350,6 +379,26 @@ const EventDetail = () => {
     });
   };
 
+ 
+  const formatDuration = (startString, endString) => {
+    if (!startString || !endString) return '1 day';
+    const start = new Date(startString);
+    const end = new Date(endString);
+    let diffMs = end - start;
+    if (diffMs <= 0) return '0 minutes';
+
+    const totalMinutes = Math.round(diffMs / (1000 * 60));
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+
+    const parts = [];
+    if (days > 0) parts.push(`${days} ${days === 1 ? 'day' : 'days'}`);
+    if (hours > 0) parts.push(`${hours} ${hours === 1 ? 'hour' : 'hours'}`);
+    if (minutes > 0 || parts.length === 0) parts.push(`${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`);
+    return parts.join(' ');
+  };
+
   const canEditPost = (post) => {
     return user?.username === post.username;
   };
@@ -377,6 +426,93 @@ const EventDetail = () => {
     return isCreator;
   };
 
+  // Build a shareable URL for a specific post in this event
+  const getPostShareUrl = (postId) => {
+    const base = window.location.origin;
+    return `${base}/user/events/${eventId}?postId=${postId}`;
+  };
+
+  // Share handler using Web Share API with clipboard fallback
+  const handleSharePost = async (post) => {
+    if (!post) return;
+    const shareUrl = getPostShareUrl(post.id);
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: event?.title || 'Event Post',
+          text: (post.content || '').slice(0, 140),
+          url: shareUrl,
+        });
+        return;
+      }
+    } catch (err) {
+      if (err?.name !== 'AbortError') {
+        console.error('Error sharing post:', err);
+      }
+      // Continue to clipboard fallback
+    }
+
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = shareUrl;
+        ta.style.position = 'fixed';
+        ta.style.left = '-999999px';
+        ta.style.top = '-999999px';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      toast.success('Post link copied to clipboard!');
+    } catch (err) {
+      console.error('Failed to copy post link:', err);
+      toast.error('Failed to copy link. Please copy it manually.');
+      window.prompt('Copy this link:', shareUrl);
+    }
+  };
+
+  // Adapter to share by postId (used by PostCard / PostModal)
+  const handleSharePostById = (postId) => {
+    const post = posts.find(p => p.id === postId);
+    if (!post) {
+      toast.error('Post not found');
+      return;
+    }
+    handleSharePost(post);
+  };
+
+  // Open PostShareModal by postId from list or modal
+  const openSharePostById = (postId) => {
+    const post = posts.find(p => p.id === postId);
+    if (!post) {
+      toast.error('Post not found');
+      return;
+    }
+    setSharePost(post);
+    setShowPostShareModal(true);
+  };
+
+  // Open a post directly when arriving via deep link (?postId=...)
+  useEffect(() => {
+    if (deepLinkHandledRef.current) return;
+    const params = new URLSearchParams(location.search);
+    const pid = params.get('postId') || params.get('post');
+    if (pid && posts && posts.length > 0) {
+      const postIdNum = parseInt(pid, 10);
+      const post = posts.find(p => p.id === postIdNum);
+      if (post) {
+        setSelectedPost(post);
+        setShowPostModal(true);
+        setActiveTab('discussion');
+        deepLinkHandledRef.current = true;
+      }
+    }
+  }, [location.search, posts]);
+
   // Banner upload handlers
   const handleBannerUpload = async (file) => {
     try {
@@ -392,6 +528,32 @@ const EventDetail = () => {
       await deleteBanner();
     } catch (err) {
       console.error('Error deleting banner:', err);
+    }
+  };
+
+  // Handle edit event navigation
+  const handleEditEvent = () => {
+    navigate(`/user/events/edit/${eventId}`);
+  };
+
+  // Handle delete event
+  const handleDeleteEvent = async () => {
+    if (deleteConfirmText !== 'Delete') {
+      return;
+    }
+
+    setIsDeleting(true);
+    try {
+      await eventService.deleteEvent(eventId);
+      toast.success('Event deleted successfully');
+      navigate('/events');
+    } catch (err) {
+      console.error('Error deleting event:', err);
+      toast.error('Failed to delete event');
+    } finally {
+      setIsDeleting(false);
+      setShowDeleteModal(false);
+      setDeleteConfirmText('');
     }
   };
 
@@ -484,28 +646,72 @@ const EventDetail = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-lg transition-colors">
-                <Star className="h-4 w-4" />
-                <span>Interested</span>
-              </button>
-              <button className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors">
-                <CheckCircle className="h-4 w-4" />
-                <span>Going</span>
-              </button>
+            <div className="flex items-center gap-3 flex-wrap">
+              <RSVPButtons
+                eventId={event.id}
+                currentStatus={getParticipationStatus(event.id)}
+                onRsvp={rsvpToEvent}
+                onUpdateRsvp={updateParticipation}
+                onCancelRsvp={cancelRsvp}
+                loading={participationLoading}
+                showMessageInput={false}
+                inline={true}
+                hideStatus={true}
+                buttonSize="sm"
+              />
               <button className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-lg transition-colors">
                 <MessageCircle className="h-4 w-4" />
                 <span>Invite</span>
               </button>
+              
               <DropdownMenu
                 align="right"
-                items={[
-                  {
-                    label: 'Share Event',
-                    icon: <Share2 className="h-4 w-4" />,
-                    onClick: () => setShowShareModal(true)
+                items={(() => {
+                  const isCreator = event.organizerName === user?.name || 
+                                   event.organizerName === user?.username || 
+                                   event.organizerEmail === user?.email ||
+                                   event.organizerId === user?.userId ||
+                                   event.creatorId === user?.userId;
+                  
+                  console.log('🔍 [EventDetail] Creator check:', {
+                    eventOrganizerName: event.organizerName,
+                    eventOrganizerEmail: event.organizerEmail,
+                    eventOrganizerId: event.organizerId,
+                    eventCreatorId: event.creatorId,
+                    userName: user?.name,
+                    userUsername: user?.username,
+                    userEmail: user?.email,
+                    userId: user?.userId,
+                    isCreator
+                  });
+
+                  const items = [
+                    {
+                      label: 'Share',
+                      icon: <Share2 className="h-4 w-4" />,
+                      onClick: () => setShowShareModal(true)
+                    }
+                  ];
+
+                  // Add creator-specific actions
+                  if (isCreator) {
+                    items.push(
+                      {
+                        label: 'Edit',
+                        icon: <Edit className="h-4 w-4" />,
+                        onClick: handleEditEvent
+                      },
+                      {
+                        label: 'Delete',
+                        icon: <Trash2 className="h-4 w-4" />,
+                        onClick: () => setShowDeleteModal(true),
+                        danger: true
+                      }
+                    );
                   }
-                ]}
+
+                  return items;
+                })()}
                 trigger={
                   <button className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-lg transition-colors">
                     <MoreHorizontal className="h-4 w-4" />
@@ -513,6 +719,8 @@ const EventDetail = () => {
                 }
               />
             </div>
+
+            
           </div>
 
           {/* Tabs */}
@@ -563,8 +771,7 @@ const EventDetail = () => {
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                       <Calendar className="h-4 w-4" />
-                      <span>Duration: {event.startDate && event.endDate ? 
-                        Math.ceil((new Date(event.endDate) - new Date(event.startDate)) / (1000 * 60 * 60 * 24)) : 1} days</span>
+                      <span>Duration: {formatDuration(event.startDate, event.endDate)}</span>
                     </div>
                     <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
                       <Globe className="h-4 w-4" />
@@ -621,7 +828,7 @@ const EventDetail = () => {
                           onComment={handleCommentPost}
                           onEdit={handleEditPost}
                           onDelete={handleDeletePost}
-                          onShare={() => {/* Handle share */}}
+                          onShare={(postId) => openSharePostById(postId)}
                           canEdit={canEditPost(post)}
                           canDelete={canDeletePost(post)}
                           isLiked={post.isLikedByUser || post.likedByCurrentUser}
@@ -647,7 +854,7 @@ const EventDetail = () => {
         </div>
 
         {/* Banner Upload Section (for event organizers) */}
-        {showBannerUpload && event.organizerName === user?.username && (
+        {showBannerUpload && (event.organizerName === user?.name || event.organizerName === user?.username || event.organizerEmail === user?.email || event.organizerId === user?.userId || event.creatorId === user?.userId) && (
           <div className="mt-8 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 p-6">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
               Event Banner
@@ -672,6 +879,7 @@ const EventDetail = () => {
           onLike={handleLikePost}
           onEdit={handleEditPost}
           onDelete={handleDeletePost}
+          onShare={openSharePostById}
           canEdit={selectedPost ? canEditPost(selectedPost) : false}
           canDelete={selectedPost ? canDeletePost(selectedPost) : false}
           isLiked={selectedPost?.isLikedByUser || selectedPost?.likedByCurrentUser || false}
@@ -691,6 +899,76 @@ const EventDetail = () => {
             formatDate={formatDate}
             formatTime={formatTime}
           />
+        )}
+
+        {/* Post Share Modal */}
+        {event && (
+          <PostShareModal
+            isOpen={showPostShareModal}
+            onClose={() => { setShowPostShareModal(false); setSharePost(null); }}
+            post={sharePost}
+            event={event}
+          />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                  Delete Event
+                </h3>
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText('');
+                  }}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              <div className="mb-6">
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Are you sure you want to delete this event? This action cannot be undone.
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-500 mb-4">
+                  Type <span className="font-mono bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">Delete</span> to confirm:
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type 'Delete' here"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 dark:bg-gray-700 dark:text-white"
+                />
+              </div>
+              
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => {
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText('');
+                  }}
+                  className="px-4 py-2 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteEvent}
+                  disabled={deleteConfirmText !== 'Delete' || isDeleting}
+                  className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+                >
+                  {isDeleting && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  )}
+                  {isDeleting ? 'Deleting...' : 'Delete Event'}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

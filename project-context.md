@@ -2,55 +2,50 @@
 
 ## Project Overview
 
-IJAA (IIT JU Alumni Association) is a comprehensive web application for managing academic events, publications, and alumni networks. The frontend is built with React and provides a modern, responsive interface for users, authors, reviewers, and administrators.
+IJAA (IIT JU Alumni Association) is a comprehensive web application for managing academic events, publications, and alumni networks. The frontend is built with React and provides a modern, responsive interface for users and administrators.
 
 ## Technology Stack
 
 - **Frontend Framework**: React 18 with functional components and hooks
-- **Build Tool**: Vite for fast development and optimized builds
-- **Styling**: Tailwind CSS with dark mode support
-- **State Management**: React Context API (UnifiedAuthContext, FeatureFlagContext, ThemeContext)
-- **HTTP Client**: Axios for API communication
-- **Testing**: Jest with React Testing Library and Cypress for E2E testing
-- **Icons**: Lucide React for consistent iconography
-- **Routing**: React Router v6 for navigation
-- **Code Quality**: ESLint and Prettier for formatting
-- **Notifications**: React Toastify for user feedback
+- **Build**: Create React App (`react-scripts`) for app dev/build; Vite is used only by Cypress component dev server
+- **Styling**: Tailwind CSS (dark mode via `class`), PostCSS, Autoprefixer
+- **State Management**: React Context API (`AuthContext`, `FeatureFlagContext`, `ThemeContext`; `UnifiedAuthContext` wrapper for legacy tests)
+- **HTTP Client**: Axios with centralized interceptors (`src/utils/api/axiosInstance.js`) and `ApiClient` (`src/services/api/apiClient.js`)
+- **Testing**: Jest + React Testing Library via `react-scripts test`, Cypress for E2E (and component tests)
+- **Icons**: Lucide React, Font Awesome, and `react-icons`
+- **Routing**: React Router v6
+- **Code Quality**: ESLint and Prettier
+- **Notifications**: React Toastify
 
 ## Environment Configuration
 
 ### Required Environment Variables
 
 ```bash
-# API Gateway Base URL (Updated to match backend)
+# Core API base
 REACT_APP_API_BASE_URL=http://localhost:8000/ijaa/api/v1
 
-# Admin API Base URL (Updated to match backend)
+# Admin API base
 REACT_APP_API_ADMIN_URL=http://localhost:8000/ijaa/api/v1/admin
 
-# File Service API Base URL (Updated to match backend)
-REACT_APP_API_FILE_URL=http://localhost:8000/ijaa/api/v1/files/users
+# File service API base
+REACT_APP_API_FILE_URL=http://localhost:8000/ijaa/api/v1/files
 
-# Event Service API Base URL (Updated to match backend)
+# Event service API base
 REACT_APP_API_EVENT_URL=http://localhost:8000/ijaa/api/v1/events
 
-# Theme/Settings API Base URL (Updated to match backend)
+# Theme/settings API base (user settings)
 REACT_APP_THEME_API_BASE_URL=http://localhost:8000/ijaa/api/v1/users
-
-# Application Configuration
-REACT_APP_APP_NAME=IJAA Frontend
-REACT_APP_APP_VERSION=1.0.0
-REACT_APP_ENVIRONMENT=development
 ```
 
 ## Core Features
 
 ### 1. Authentication System
-- **JWT Authentication**: Complete JWT-based authentication with refresh token flow
-- **Memory-Only Access Tokens**: Enhanced security with memory-only token storage
-- **Multi-role Support**: Users, Authors, Reviewers, Admins, Super Admins
-- **Protected Routes**: Role-based access control
-- **Admin Authentication**: Separate admin authentication system
+- **JWT Authentication**: JWT-based authentication with refresh token flow (HttpOnly cookies)
+- **Access Token Storage**: In-memory plus sessionStorage (cleared on logout); refresh token via HttpOnly cookie
+- **Roles**: `USER` and `ADMIN` (see `src/utils/constants/roleConstants.js`)
+- **Protected Routing**: Role-based access control for user and admin areas
+- **Admin Authentication**: Separate admin authentication using `REACT_APP_API_ADMIN_URL`
 
 ### 2. Feature Flag System
 - **Hierarchical Management**: Feature flags grouped by parent features
@@ -59,17 +54,32 @@ REACT_APP_ENVIRONMENT=development
 - **API Integration**: Full backend integration for feature flag control
 
 ### 3. Event Management System
-- **Event Creation**: Rich text editor with media upload support
+- **Event Creation**: Form-based creation with optional banner and media uploads
 - **Event Discovery**: Search, trending events, and recommendations
 - **Event Participation**: RSVP management and attendance tracking
 - **Event Interactions**: Comments, likes, and social features
-- **Advanced Features**: Advanced search, templates, and analytics
+- **Advanced Features**: Advanced search and templates
+
+## Recent Updates (October 2025)
+
+- **RSVP Behavior Refinement**
+  - Update RSVP uses `PUT /events/participation/{eventId}/rsvp?status=...` with the status sent as a query parameter and **no request body**. Implemented in `src/services/api/eventService.js` via `updateRsvp(eventId, status)`.
+  - Clicking the same RSVP status again (Going/Interested/Can't go) now cancels participation via `DELETE /events/participation/{eventId}/rsvp`. Implemented in `src/user/components/events/RSVPButtons.jsx` and propagated to quick Interested in `EventCard.jsx`.
+  - Hook `src/user/hooks/events/useEventParticipation.js` calls `eventService.updateRsvp()` for PUT and `eventService.cancelRsvp()` for DELETE, and refreshes participations.
+
+- **Events Page UX**
+  - Added header tabs: **All Events** and **My Events**, placed on the left of the header row, with the **Create Event** button on the right. Implemented in `src/user/pages/Events.jsx`.
+  - The **My Events** tab uses the same pagination experience as All Events: 6 per page with page controls. Implemented in `src/user/hooks/events/useEvents.js` (local pagination when API returns arrays) and rendered by the unified pagination component in `Events.jsx`.
+  - Event cards have a bottom-anchored action row (Interested + Share) for consistent alignment. Implemented with `flex-1` content container and `mt-auto` action row in `src/user/components/events/EventCard.jsx`.
+
+- **Interested Button Consistency**
+  - Quick Interested on cards uses the shared `Button` component. It shows selected style (blue fill, white text) when status is `MAYBE`, and toggles DELETE on repeat click. Implemented in `src/user/components/events/EventCard.jsx`.
 
 ### 4. User Management
-- **Profile Management**: Comprehensive user profiles with social features
-- **Photo Management**: Profile and cover photo upload with drag-and-drop
-- **Theme Integration**: User theme preferences with cross-device sync
-- **Alumni Network**: Professional networking and mentorship features
+- **Profile Management**: Comprehensive profile with editable fields and settings
+- **Photo Management**: Profile and cover photo upload (drag-and-drop) via `photoApi`
+- **Theme Integration**: User theme preference stored via `themeApi`
+- **Social Features**: Event-centric posts, comments, likes
 
 ### 5. Admin Panel
 - **Dashboard**: Real-time analytics and system overview
@@ -95,93 +105,55 @@ src/
 ## Key Components
 
 ### Context Providers
-- **UnifiedAuthContext**: Centralized authentication state
+- **AuthContext**: Centralized authentication state with token refresh integration
+- **UnifiedAuthContext**: Compatibility wrapper for legacy tests
 - **FeatureFlagContext**: Feature flag state management
 - **ThemeContext**: Dark/light mode theme management
 
 ### Custom Hooks
-- **useFeatureFlag**: Single feature flag checking
-- **useMultiFeatureFlag**: Multiple feature flag checking
-- **useUnifiedAuth**: Authentication state access
-- **Event Management Hooks**: 10+ specialized hooks for event management
-  - **useEvents**: Core event management with pagination
-  - **useEventActions**: Event CRUD operations
-  - **useEventDiscovery**: Event search and discovery
-  - **useEventParticipation**: RSVP management
-  - **useEventInteraction**: Comments and social features
-  - **useEventAdvancedFeatures**: Advanced search and analytics
+- **General**: `useAuth`, `useFeatureFlag`, `usePermissions`
+- **Event Hooks**: `useEvents`, `useEventActions`, `useEventDiscovery`, `useEventParticipation`, `useEventInteraction`, `useEventAdvancedFeatures`, `useEventInvitations`, `useEventSearch`, `useEventTemplates`, `useEventBanner`, `useEventSocialFeatures`
 
 ### API Utilities
-- **AuthService**: Centralized authentication service
-- **axiosInstance**: Enhanced axios with automatic token refresh
-- **adminApi**: Admin-specific API endpoints
-- **eventService**: Event management service layer
-- **photoApi**: Photo upload/management APIs
+- **axiosInstance** (`src/utils/api/axiosInstance.js`): Axios with interceptors and single-refresh handling
+- **ApiClient** (`src/services/api/apiClient.js`): Centralized API client wrapper
+- **AuthService** (`src/services/auth/AuthService.js`): Login/refresh/logout helpers
+- **adminApi** (`src/services/api/adminApi.js`): Admin endpoints
+- **eventApi** and `eventService` (`src/services/api/`): Event operations
+- **userApi** (`src/services/api/userApi.js`)
+- **postService** (`src/services/api/postService.js`)
+- **photoApi** (`src/services/api/photoApi.js`)
+- **themeApi** (`src/services/api/themeApi.js`)
+- **locationApi** (`src/services/api/locationApi.js`)
 
 ## Testing Strategy
 
 ### Testing Infrastructure
-- **Jest**: Primary testing framework with React Testing Library
-- **Cypress**: End-to-end testing framework
-- **Coverage**: 70%+ test coverage requirement
-- **Test Categories**: Unit, integration, component, context, utility, page, and E2E tests
+- **Jest + RTL**: Primary unit/integration testing via `react-scripts test`
+- **Cypress**: E2E tests (`cypress.config.js`); component tests use Vite dev server
+- **Coverage**: Thresholds configured (80% via `package.json` Jest field; 70% in `jest.config.js` for direct Jest)
+- **Test Categories**: Unit, integration, components, context, utils, pages, and E2E flows
 
 ### Key Testing Features
 - **Component Tests**: Individual component testing with proper mocking
 - **Hook Tests**: Custom hook testing with state management
-- **Integration Tests**: Complete application integration testing
+- **Integration Tests**: Cross-module integration tests
 - **E2E Tests**: User flows, authentication, and admin workflows
-- **Performance Tests**: Performance and optimization testing
-- **Security Tests**: Security and vulnerability testing
 
 ## Current Project Status
 
 ### Architecture
 - **Modular Design**: Clean separation between admin, user, and shared components
 - **Advanced State Management**: React Context API with specialized hooks
-- **Comprehensive Testing**: Multi-layered testing strategy with 100+ test files
+- **Testing**: Extensive test suite under `src/__tests__/` and Cypress E2E
 - **Feature Flag System**: Granular control over application functionality
 - **Modern UI/UX**: Facebook-style design with responsive layouts
-- **Security-First**: JWT authentication with memory-only token storage
+- **Security-First**: JWT authentication with memory + sessionStorage token storage
 
-### Key Metrics
-- **Total Components**: 50+ reusable UI components
-- **Custom Hooks**: 20+ specialized hooks
-- **Test Coverage**: 70%+ with comprehensive test suites
-- **API Integration**: 10+ service layers with full backend integration
-- **Feature Flags**: 30+ feature flags for granular control
+## CI/CD & Automation
 
-## Recent Achievements
-
-### Phase 6: Advanced Event Management System
-- **Comprehensive Event Hooks**: 10+ specialized hooks for event management
-- **Service Layer Extensions**: Enhanced eventService.js with full API integration
-- **Testing Infrastructure**: Comprehensive test coverage for all event hooks
-- **UX Enhancements**: Modern event interface with real-time updates
-
-### Phase 7: Enhanced User Management System
-- **Advanced Profile Management**: Comprehensive user profile system
-- **Dashboard Enhancement**: Real data integration with engaging UX
-- **Photo Management**: Profile and cover photo upload with drag-and-drop
-- **Theme Integration**: Cross-device theme synchronization
-
-### Phase 8: Advanced Admin Management System
-- **Admin Dashboard**: Comprehensive admin panel with real-time analytics
-- **Feature Flag System**: Modern hierarchical feature flag management
-- **User Management**: Complete user administration with role management
-- **System Settings**: Configuration and maintenance tools
-
-### Phase 9: Comprehensive Testing Infrastructure
-- **Advanced Testing Scripts**: Extensive npm script ecosystem
-- **Test Categories**: Specialized testing for different aspects
-- **CI/CD Integration**: GitHub Actions workflow for automated testing
-- **Performance Testing**: Performance and optimization testing
-
-### Phase 10: Modern Authentication System
-- **JWT Authentication**: Complete JWT-based authentication system
-- **Memory-Only Access Tokens**: Enhanced security with memory-only storage
-- **Automatic Token Refresh**: Seamless token refresh using HttpOnly cookies
-- **Multi-role Support**: Users, Authors, Reviewers, Admins, Super Admins
+- **GitHub Actions**: Workflow at `.github/workflows/test.yml` for continuous testing/linting
+- **NPM Scripts**: Rich test matrix in `package.json` for unit/integration/E2E runs and reports
 
 ## Development Guidelines
 
@@ -196,9 +168,9 @@ src/
 ## Security Features
 
 ### Authentication Architecture
-- **Token Storage Strategy**: Access tokens in memory only, refresh tokens in HttpOnly cookies
-- **Automatic Token Refresh**: Seamless experience without user intervention
-- **Request Queuing**: Failed requests queued during token refresh
+- **Token Storage Strategy**: Access tokens in memory and sessionStorage; refresh tokens in HttpOnly cookies
+- **Automatic Token Refresh**: Seamless experience via interceptor + single-refresh promise pattern
+- **Single Refresh Handling**: Centralized via `TokenManager` to avoid concurrent refreshes
 - **API Integration**: Automatic token attachment and refresh handling
 
 ### Security Measures
@@ -209,7 +181,7 @@ src/
 
 ## Deployment
 
-- **Build Process**: Vite-optimized production builds
-- **Environment Configuration**: Environment-specific settings
-- **Performance Monitoring**: Real-time performance tracking
-- **Error Tracking**: Comprehensive error monitoring and reporting
+- **Build Process**: `react-scripts build` outputs to `build/`
+- **Hosting**: Static hosting or any provider capable of serving CRA builds (no provider-specific config committed)
+- **Environment Configuration**: See required variables above; `.env` is gitignored
+- **Notes**: Vite is present only for Cypress component testing dev server; the application build uses CRA

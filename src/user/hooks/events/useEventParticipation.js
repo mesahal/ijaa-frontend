@@ -115,14 +115,8 @@ export const useEventParticipation = () => {
 
     try {
       const response = await eventService.rsvpToEvent(eventId, status, message);
-      
-      if (response && (response.success || response.code === "200")) {
-        // Refresh participations to show updated data
-        await loadMyParticipations();
-        return response.data;
-      } else {
-        throw new Error(response?.message || 'RSVP failed');
-      }
+      await loadMyParticipations();
+      return response?.data ?? response;
     } catch (err) {
       const errorMessage = err.message || err.response?.data?.message || 'Failed to RSVP to event';
       setRsvpError(errorMessage);
@@ -135,7 +129,7 @@ export const useEventParticipation = () => {
   /**
    * Update participation status
    */
-  const updateParticipation = useCallback(async (participationId, status, message = '') => {
+  const updateParticipation = useCallback(async (eventId, status, message = '') => {
     if (!user?.userId) {
       setUpdateError('Authentication required');
       return null;
@@ -145,19 +139,9 @@ export const useEventParticipation = () => {
     setUpdateError(null);
 
     try {
-      const response = await eventService.updateParticipation(participationId, status, message);
-      
-      if (response && (response.success || response.code === "200")) {
-        // Update the participation in the local state
-        setParticipations(prev => prev.map(participation => 
-          participation.id === participationId 
-            ? { ...participation, status, message, updatedAt: response.data?.updatedAt || new Date().toISOString() }
-            : participation
-        ));
-        return response.data;
-      } else {
-        throw new Error(response?.message || 'Update failed');
-      }
+      const response = await eventService.updateRsvp(eventId, status, message);
+      await loadMyParticipations();
+      return response?.data ?? response;
     } catch (err) {
       const errorMessage = err.message || err.response?.data?.message || 'Failed to update participation';
       setUpdateError(errorMessage);
@@ -165,14 +149,30 @@ export const useEventParticipation = () => {
     } finally {
       setUpdateLoading(false);
     }
-  }, [user?.userId]);
+  }, [user?.userId, loadMyParticipations]);
 
   /**
    * Cancel RSVP (set status to DECLINED)
    */
   const cancelRsvp = useCallback(async (eventId, message = '') => {
-    return await rsvpToEvent(eventId, 'DECLINED', message);
-  }, [rsvpToEvent]);
+    if (!user?.userId) {
+      setRsvpError('Authentication required');
+      return null;
+    }
+    setRsvpLoading(true);
+    setRsvpError(null);
+    try {
+      const response = await eventService.cancelRsvp(eventId);
+      await loadMyParticipations();
+      return response?.data || response;
+    } catch (err) {
+      const errorMessage = err.message || err.response?.data?.message || 'Failed to cancel RSVP';
+      setRsvpError(errorMessage);
+      return null;
+    } finally {
+      setRsvpLoading(false);
+    }
+  }, [user?.userId, loadMyParticipations]);
 
   /**
    * Join event (set status to CONFIRMED)
@@ -192,7 +192,8 @@ export const useEventParticipation = () => {
    * Get participation status for a specific event
    */
   const getParticipationStatus = useCallback((eventId) => {
-    const participation = participations.find(p => p.eventId === eventId);
+    const targetId = String(eventId);
+    const participation = participations.find(p => String(p.eventId) === targetId);
     return participation ? participation.status : null;
   }, [participations]);
 
@@ -200,7 +201,8 @@ export const useEventParticipation = () => {
    * Get participation for a specific event
    */
   const getParticipation = useCallback((eventId) => {
-    return participations.find(p => p.eventId === eventId) || null;
+    const targetId = String(eventId);
+    return participations.find(p => String(p.eventId) === targetId) || null;
   }, [participations]);
 
   /**

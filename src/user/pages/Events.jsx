@@ -15,8 +15,6 @@ import {
   Heart,
   Share2,
   MoreHorizontal,
-  Grid3X3,
-  List,
   Bell,
   Bookmark,
   X,
@@ -459,7 +457,7 @@ const Events = () => {
           currentPage={eventsPagination.page || 0}
           totalPages={eventsPagination.totalPages || 0}
           totalElements={eventsPagination.totalElements || 0}
-          pageSize={eventsPagination.size || 10}
+          pageSize={eventsPagination.size || 6}
           onPageChange={handlePageChange}
           onPageSizeChange={handlePageSizeChange}
           pageSizeOptions={pageSizeOptions}
@@ -472,58 +470,75 @@ const Events = () => {
     );
   };
 
-  // Load Phase 2 data when component mounts
-  React.useEffect(() => {
-    if (user) {
-      loadUpcomingEvents();
-      loadTrendingEvents();
-    }
-  }, [user, loadUpcomingEvents, loadTrendingEvents]);
+// Load Phase 2 data when component mounts
+React.useEffect(() => {
+  if (user) {
+    loadUpcomingEvents();
+    loadTrendingEvents();
+  }
+}, [user, loadUpcomingEvents, loadTrendingEvents]);
 
-  // Load Phase 3 data when component mounts
-  React.useEffect(() => {
-    if (user) {
-      loadMyParticipations();
-    }
-  }, [user, loadMyParticipations]);
+// Load Phase 3 data when component mounts
+React.useEffect(() => {
+  if (user) {
+    loadMyParticipations();
+  }
+}, [user, loadMyParticipations]);
 
-  // Get filtered events
-  const currentEvents = getCurrentEvents();
-  const displayEvents = getFilteredEvents(currentEvents) || [];
+// Get filtered events
+const currentEvents = getCurrentEvents();
+const displayEvents = getFilteredEvents(currentEvents) || [];
 
-  // Advanced filter handlers
-  const handleAdvancedFilterChange = (field, value) => {
-    setAdvancedFilters(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
+// Advanced filter handlers
+const handleAdvancedFilterChange = (field, value) => {
+  setAdvancedFilters(prev => ({
+    ...prev,
+    [field]: value
+  }));
+};
 
-  const clearAdvancedFilters = () => {
-    setAdvancedFilters({
-      location: "",
-      eventType: "",
-      startDate: "",
-      endDate: "",
-      isOnline: "",
-      organizerName: "",
-      title: "",
-      description: ""
-    });
-  };
+const clearAdvancedFilters = () => {
+  setAdvancedFilters({
+    location: "",
+    eventType: "",
+    startDate: "",
+    endDate: "",
+    isOnline: "",
+    organizerName: "",
+    title: "",
+    description: ""
+  });
+};
 
-  const hasAdvancedFilters = Object.values(advancedFilters).some(value => value !== "");
+const hasAdvancedFilters = Object.values(advancedFilters).some(value => value !== "");
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header - Updated to support both light and dark themes */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
-            Discover events
-          </h1>
-          
-          {/* Create Event Button */}
+return (
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header - Updated to support both light and dark themes */}
+      <div className="mb-8">
+        <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-6">
+          Discover events
+        </h1>
+        {/* Tabs + Create Event on one line */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={activeTab === 'all' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => handleTabChangeWithClear('all')}
+            >
+              All Events
+            </Button>
+            <Button
+              variant={activeTab === 'my-events' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => handleTabChangeWithClear('my-events')}
+              disabled={!user}
+            >
+              My Events
+            </Button>
+          </div>
           <div className="flex justify-end">
             <Button
               onClick={() => navigate('/user/events/create')}
@@ -535,283 +550,286 @@ const Events = () => {
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Error Display */}
-        {error && (
-          <Card className="mb-6 border-error-200 dark:border-error-700">
-            <div className="p-4">
-              <div className="flex items-center space-x-3">
-                <AlertCircle className="h-5 w-5 text-error-500 flex-shrink-0" />
-                <p className="text-error-700 dark:text-error-300">{error}</p>
-              </div>
+      {/* Error Display */}
+      {error && (
+        <Card className="mb-6 border-error-200 dark:border-error-700">
+          <div className="p-4">
+            <div className="flex items-center space-x-3">
+              <AlertCircle className="h-5 w-5 text-error-500 flex-shrink-0" />
+              <p className="text-error-700 dark:text-error-300">{error}</p>
             </div>
-          </Card>
-        )}
+          </div>
+        </Card>
+      )}
 
-        {/* Authentication Required Message */}
-        {!error && !isLoading && !authLoading && !user && (
-          <Card className="mb-6 border-warning-200 dark:border-warning-700">
-            <div className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-warning-100 dark:bg-warning-900/50 rounded-lg">
-                  <AlertCircle className="h-6 w-6 text-warning-600 dark:text-warning-400" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-warning-800 dark:text-warning-200">
-                    Sign in to view events
-                  </h3>
-                  <p className="text-warning-700 dark:text-warning-300 mt-1">
-                    Please sign in to your account to access the events feature.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Search and Filter Form */}
-        <Card className="mb-6">
+      {/* Authentication Required Message */}
+      {!error && !isLoading && !authLoading && !user && (
+        <Card className="mb-6 border-warning-200 dark:border-warning-700">
           <div className="p-6">
-            <div>
-              <div className="flex flex-col lg:flex-row gap-4">
-                {/* Search */}
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" aria-hidden="true" />
-                    <input
-                      type="text"
-                      placeholder="Search events by title, description, or location..."
-                      value={searchQuery}
-                      onChange={(e) => handleSearchQueryChange(e.target.value)}
-                      className="w-full pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm transition-colors hover:border-gray-400 dark:hover:border-gray-500"
-                      aria-label="Search events"
-                    />
-                    {searchQuery && (
-                      <button
-                        onClick={() => handleSearchQueryChange('')}
-                        className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-                        aria-label="Clear search"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    )}
+            <div className="flex items-center space-x-4">
+              <div className="p-3 bg-warning-100 dark:bg-warning-900/50 rounded-lg">
+                <AlertCircle className="h-6 w-6 text-warning-600 dark:text-warning-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-warning-800 dark:text-warning-200">
+                  Sign in to view events
+                </h3>
+                <p className="text-warning-700 dark:text-warning-300 mt-1">
+                  Please sign in to your account to access the events feature.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+      )}
+
+      {/* Search and Filter Form */}
+      <Card className="mb-6">
+        <div className="p-6">
+          <div>
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Search */}
+              <div className="flex-1">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" aria-hidden="true" />
+                  <input
+                    type="text"
+                    placeholder="Search events by title, description, or location..."
+                    value={searchQuery}
+                    onChange={(e) => handleSearchQueryChange(e.target.value)}
+                    className="w-full pl-10 pr-8 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm transition-colors hover:border-gray-400 dark:hover:border-gray-500"
+                    aria-label="Search events"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => handleSearchQueryChange('')}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                      aria-label="Clear search"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Basic Filter */}
+              <div className="lg:w-48">
+                <div className="relative">
+                  <select
+                    value={filterType}
+                    onChange={(e) => handleFilterTypeChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm appearance-none transition-colors hover:border-gray-400 dark:hover:border-gray-500"
+                    aria-label="Filter events by type"
+                  >
+                    <option value="all">All Categories</option>
+                    {EVENT_TYPE_OPTIONS.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
                   </div>
                 </div>
+              </div>
 
-                {/* Basic Filter */}
-                <div className="lg:w-48">
-                  <div className="relative">
+              {/* Advanced Filter Toggle Button */}
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium"
+                aria-label="Toggle advanced filters"
+              >
+                <Filter className="h-4 w-4" />
+                <span>Filters</span>
+              </button>
+            </div>
+
+            {/* Advanced Filters */}
+            {showAdvancedFilters && (
+              <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {/* Location Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Search by location"
+                      value={advancedFilters.location}
+                      onChange={(e) => handleAdvancedFilterChange('location', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  {/* Event Type Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Event Type
+                    </label>
                     <select
-                      value={filterType}
-                      onChange={(e) => handleFilterTypeChange(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm appearance-none transition-colors hover:border-gray-400 dark:hover:border-gray-500"
-                      aria-label="Filter events by type"
+                      value={advancedFilters.eventType}
+                      onChange={(e) => handleAdvancedFilterChange('eventType', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
-                      <option value="all">All Categories</option>
+                      <option value="">All Types</option>
                       {EVENT_TYPE_OPTIONS.map((type) => (
                         <option key={type.value} value={type.value}>
                           {type.label}
                         </option>
                       ))}
                     </select>
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
-                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Advanced Filter Toggle Button */}
-                <button
-                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors flex items-center justify-center space-x-2 font-medium"
-                  aria-label="Toggle advanced filters"
-                >
-                  <Filter className="h-4 w-4" />
-                  <span>Filters</span>
-                </button>
-              </div>
-
-              {/* Advanced Filters */}
-              {showAdvancedFilters && (
-                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {/* Location Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Location
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Search by location"
-                        value={advancedFilters.location}
-                        onChange={(e) => handleAdvancedFilterChange('location', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-
-                    {/* Event Type Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Event Type
-                      </label>
-                      <select
-                        value={advancedFilters.eventType}
-                        onChange={(e) => handleAdvancedFilterChange('eventType', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        <option value="">All Types</option>
-                        {EVENT_TYPE_OPTIONS.map((type) => (
-                          <option key={type.value} value={type.value}>
-                            {type.label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Start Date Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Start Date
-                      </label>
-                      <input
-                        type="date"
-                        value={advancedFilters.startDate}
-                        onChange={(e) => handleAdvancedFilterChange('startDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-
-                    {/* End Date Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        End Date
-                      </label>
-                      <input
-                        type="date"
-                        value={advancedFilters.endDate}
-                        onChange={(e) => handleAdvancedFilterChange('endDate', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-
-                    {/* Online Status Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Online Status
-                      </label>
-                      <select
-                        value={advancedFilters.isOnline}
-                        onChange={(e) => handleAdvancedFilterChange('isOnline', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      >
-                        <option value="">All Events</option>
-                        <option value="true">Online Only</option>
-                        <option value="false">In-Person Only</option>
-                      </select>
-                    </div>
-
-                    {/* Organizer Name Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Organizer Name
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Search by organizer"
-                        value={advancedFilters.organizerName}
-                        onChange={(e) => handleAdvancedFilterChange('organizerName', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-
-                    {/* Title Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Title
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Search in title"
-                        value={advancedFilters.title}
-                        onChange={(e) => handleAdvancedFilterChange('title', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
-
-                    {/* Description Filter */}
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Description
-                      </label>
-                      <input
-                        type="text"
-                        placeholder="Search in description"
-                        value={advancedFilters.description}
-                        onChange={(e) => handleAdvancedFilterChange('description', e.target.value)}
-                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                      />
-                    </div>
                   </div>
 
-                  {/* Clear Filters */}
-                  <div className="mt-4 flex justify-end">
-                    <button
-                      onClick={clearAdvancedFilters}
-                      className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                  {/* Start Date Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Start Date
+                    </label>
+                    <input
+                      type="date"
+                      value={advancedFilters.startDate}
+                      onChange={(e) => handleAdvancedFilterChange('startDate', e.target.value)}
+                      onClick={(e) => { if (typeof e.currentTarget.showPicker === 'function') { try { e.currentTarget.showPicker(); } catch {} } }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  {/* End Date Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      End Date
+                    </label>
+                    <input
+                      type="date"
+                      value={advancedFilters.endDate}
+                      onChange={(e) => handleAdvancedFilterChange('endDate', e.target.value)}
+                      onClick={(e) => { if (typeof e.currentTarget.showPicker === 'function') { try { e.currentTarget.showPicker(); } catch {} } }}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  {/* Online Status Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Online Status
+                    </label>
+                    <select
+                      value={advancedFilters.isOnline}
+                      onChange={(e) => handleAdvancedFilterChange('isOnline', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
-                      <X className="h-4 w-4" />
-                      <span>Clear Filters</span>
-                    </button>
+                      <option value="">All Events</option>
+                      <option value="true">Online Only</option>
+                      <option value="false">In-Person Only</option>
+                    </select>
                   </div>
-                </div>
-              )}
 
-              {/* Active Filters Display */}
-              {(searchQuery || (filterType && filterType !== 'all') || hasAdvancedFilters) && (
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active filters:</span>
-                    <div className="flex flex-wrap gap-2">
-                      {searchQuery && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
-                          Search: "{searchQuery}"
-                          <button
-                            onClick={() => handleSearchQueryChange('')}
-                            className="ml-1 p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      )}
-                      {filterType && filterType !== 'all' && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300">
-                          Category: {EVENT_TYPE_OPTIONS.find(t => t.value === filterType)?.label || filterType}
-                          <button
-                            onClick={() => handleFilterTypeChange('all')}
-                            className="ml-1 p-0.5 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      )}
-                      {hasAdvancedFilters && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
-                          Advanced filters active
-                          <button
-                            onClick={clearAdvancedFilters}
-                            className="ml-1 p-0.5 hover:bg-green-200 dark:hover:bg-green-800 rounded-full transition-colors"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </span>
-                      )}
-                    </div>
+                  {/* Organizer Name Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Organizer Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Search by organizer"
+                      value={advancedFilters.organizerName}
+                      onChange={(e) => handleAdvancedFilterChange('organizerName', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  {/* Title Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Title
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Search in title"
+                      value={advancedFilters.title}
+                      onChange={(e) => handleAdvancedFilterChange('title', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+
+                  {/* Description Filter */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Description
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Search in description"
+                      value={advancedFilters.description}
+                      onChange={(e) => handleAdvancedFilterChange('description', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
                   </div>
                 </div>
-              )}
-            </div>
+
+                {/* Clear Filters */}
+                <div className="mt-4 flex justify-end">
+                  <button
+                    onClick={clearAdvancedFilters}
+                    className="px-4 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center space-x-2"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>Clear Filters</span>
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Active Filters Display */}
+            {(searchQuery || (filterType && filterType !== 'all') || hasAdvancedFilters) && (
+              <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Active filters:</span>
+                  <div className="flex flex-wrap gap-2">
+                    {searchQuery && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">
+                        Search: "{searchQuery}"
+                        <button
+                          onClick={() => handleSearchQueryChange('')}
+                          className="ml-1 p-0.5 hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                    {filterType && filterType !== 'all' && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300">
+                        Category: {EVENT_TYPE_OPTIONS.find(t => t.value === filterType)?.label || filterType}
+                        <button
+                          onClick={() => handleFilterTypeChange('all')}
+                          className="ml-1 p-0.5 hover:bg-purple-200 dark:hover:bg-purple-800 rounded-full transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                    {hasAdvancedFilters && (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">
+                        Advanced filters active
+                        <button
+                          onClick={clearAdvancedFilters}
+                          className="ml-1 p-0.5 hover:bg-green-200 dark:hover:bg-green-800 rounded-full transition-colors"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
           </div>
         </Card>
 
@@ -839,45 +857,15 @@ const Events = () => {
           </div>
 
           {displayEvents && displayEvents.length > 0 && !isLoading && (
-            <div className="flex items-center space-x-2">
-              <span className="text-sm text-gray-500 dark:text-gray-400">View:</span>
-              <div className="flex items-center space-x-1 bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'grid'
-                      ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                  title="Grid view"
-                >
-                  <Grid3X3 className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`p-2 rounded-md transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                  title="List view"
-                >
-                  <List className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
-
-          {eventsPagination?.totalElements > 0 && !isLoading && (activeTab === 'all' || activeTab === 'my-events' || activeTab === 'my-active-events') && (
             <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
               <span>
-                Showing {(eventsPagination.page || 0) * (eventsPagination.size || 10) + 1} to{" "}
-                {Math.min(((eventsPagination.page || 0) + 1) * (eventsPagination.size || 10), eventsPagination.totalElements)} of{" "}
+                Showing {(eventsPagination.page || 0) * (eventsPagination.size || 6) + 1} to{" "}
+                {Math.min(((eventsPagination.page || 0) + 1) * (eventsPagination.size || 6), eventsPagination.totalElements)} of{" "}
                 {eventsPagination.totalElements} results
               </span>
               <span className="text-gray-400 dark:text-gray-500">•</span>
               <span className="text-gray-400 dark:text-gray-500">
-                {eventsPagination.size || 10} per page
+                {eventsPagination.size || 6} per page
               </span>
             </div>
           )}
@@ -912,6 +900,7 @@ const Events = () => {
                           // Phase 3: Event Participation props
                           onRsvp={rsvpToEvent}
                           onUpdateRsvp={updateParticipation}
+                          onCancelRsvp={cancelRsvp}
                           rsvpLoading={rsvpLoading}
                           currentParticipationStatus={currentParticipationStatus}
                           showRsvpButtons={true}
@@ -980,68 +969,71 @@ const Events = () => {
           if (activeTab === 'upcoming') {
             return (
                              <UpcomingEvents
-                 events={upcomingEvents}
-                 loading={upcomingLoading}
-                 error={upcomingError}
-                 pagination={upcomingPagination}
-                 onLoadMore={loadNextUpcomingPage}
-                 onLoadPrevious={loadPreviousUpcomingPage}
-                 getEventTypeLabel={getEventCategoryLabel}
-                 formatDate={formatDate}
-                 formatTime={formatTime}
-                 onEditEvent={handleEditEvent}
-                 onDeleteEvent={handleDeleteEventCallback}
-                 // Phase 3: Event Participation props
-                 onRsvp={rsvpToEvent}
-                 onUpdateRsvp={updateParticipation}
-                 rsvpLoading={rsvpLoading}
-                 getParticipationStatus={getParticipationStatus}
-               />
+                events={upcomingEvents}
+                loading={upcomingLoading}
+                error={upcomingError}
+                pagination={upcomingPagination}
+                onLoadMore={loadNextUpcomingPage}
+                onLoadPrevious={loadPreviousUpcomingPage}
+                getEventTypeLabel={getEventCategoryLabel}
+                formatDate={formatDate}
+                formatTime={formatTime}
+                onEditEvent={handleEditEvent}
+                onDeleteEvent={handleDeleteEventCallback}
+                // Phase 3: Event Participation props
+                onRsvp={rsvpToEvent}
+                onUpdateRsvp={updateParticipation}
+                onCancelRsvp={cancelRsvp}
+                rsvpLoading={rsvpLoading}
+                getParticipationStatus={getParticipationStatus}
+              />
             );
           }
 
           if (activeTab === 'trending') {
             return (
                            <TrendingEvents
-               events={trendingEvents}
-               loading={trendingLoading}
-               error={trendingError}
-               getEventTypeLabel={getEventCategoryLabel}
-               formatDate={formatDate}
-               formatTime={formatTime}
-               onEditEvent={handleEditEvent}
-               onDeleteEvent={handleDeleteEventCallback}
-               // Phase 3: Event Participation props
-               onRsvp={rsvpToEvent}
-               onUpdateRsvp={updateParticipation}
-               rsvpLoading={rsvpLoading}
-               getParticipationStatus={getParticipationStatus}
-             />
+              events={trendingEvents}
+              loading={trendingLoading}
+              error={trendingError}
+              getEventTypeLabel={getEventCategoryLabel}
+              formatDate={formatDate}
+              formatTime={formatTime}
+              onEditEvent={handleEditEvent}
+              onDeleteEvent={handleDeleteEventCallback}
+              // Phase 3: Event Participation props
+              onRsvp={rsvpToEvent}
+              onUpdateRsvp={updateParticipation}
+              onCancelRsvp={cancelRsvp}
+              rsvpLoading={rsvpLoading}
+              getParticipationStatus={getParticipationStatus}
+            />
             );
           }
 
           if (activeTab === 'search') {
             return (
                            <AdvancedSearch
-               searchResults={searchResults}
-               loading={discoverySearchLoading}
-               error={discoverySearchError}
-               pagination={searchPagination}
-               onSearch={discoverySearchEvents}
-               onClear={clearDiscoverySearch}
-               onLoadMore={loadNextSearchPage}
-               onLoadPrevious={loadPreviousSearchPage}
-               getEventTypeLabel={getEventCategoryLabel}
-               formatDate={formatDate}
-               formatTime={formatTime}
-               onEditEvent={handleEditEvent}
-               onDeleteEvent={handleDeleteEventCallback}
-               // Phase 3: Event Participation props
-               onRsvp={rsvpToEvent}
-               onUpdateRsvp={updateParticipation}
-               rsvpLoading={rsvpLoading}
-               getParticipationStatus={getParticipationStatus}
-             />
+              searchResults={searchResults}
+              loading={discoverySearchLoading}
+              error={discoverySearchError}
+              pagination={searchPagination}
+              onSearch={discoverySearchEvents}
+              onClear={clearDiscoverySearch}
+              onLoadMore={loadNextSearchPage}
+              onLoadPrevious={loadPreviousSearchPage}
+              getEventTypeLabel={getEventCategoryLabel}
+              formatDate={formatDate}
+              formatTime={formatTime}
+              onEditEvent={handleEditEvent}
+              onDeleteEvent={handleDeleteEventCallback}
+              // Phase 3: Event Participation props
+              onRsvp={rsvpToEvent}
+              onUpdateRsvp={updateParticipation}
+              onCancelRsvp={cancelRsvp}
+              rsvpLoading={rsvpLoading}
+              getParticipationStatus={getParticipationStatus}
+            />
             );
           }
 
@@ -1049,24 +1041,25 @@ const Events = () => {
           if (activeTab === 'participations') {
             return (
                            <MyParticipations
-               participations={participations}
-               loading={participationsLoading}
-               error={participationsError}
-               pagination={participationsPagination}
-               onLoadMore={loadNextParticipationsPage}
-               onLoadPrevious={loadPreviousParticipationsPage}
-               onClearError={clearParticipationsError}
-               getEventTypeLabel={getEventCategoryLabel}
-               formatDate={formatDate}
-               formatTime={formatTime}
-               onEditEvent={handleEditEvent}
-               onDeleteEvent={handleDeleteEventCallback}
-               // Phase 3: Event Participation props
-               onRsvp={rsvpToEvent}
-               onUpdateRsvp={updateParticipation}
-               rsvpLoading={rsvpLoading}
-               getParticipationStatus={getParticipationStatus}
-             />
+              participations={participations}
+              loading={participationsLoading}
+              error={participationsError}
+              pagination={participationsPagination}
+              onLoadMore={loadNextParticipationsPage}
+              onLoadPrevious={loadPreviousParticipationsPage}
+              onClearError={clearParticipationsError}
+              getEventTypeLabel={getEventCategoryLabel}
+              formatDate={formatDate}
+              formatTime={formatTime}
+              onEditEvent={handleEditEvent}
+              onDeleteEvent={handleDeleteEventCallback}
+              // Phase 3: Event Participation props
+              onRsvp={rsvpToEvent}
+              onUpdateRsvp={updateParticipation}
+              onCancelRsvp={cancelRsvp}
+              rsvpLoading={rsvpLoading}
+              getParticipationStatus={getParticipationStatus}
+            />
             );
           }
 
@@ -1129,6 +1122,7 @@ const Events = () => {
                           // Phase 3: Event Participation props
                           onRsvp={rsvpToEvent}
                           onUpdateRsvp={updateParticipation}
+                          onCancelRsvp={cancelRsvp}
                           rsvpLoading={rsvpLoading}
                           currentParticipationStatus={currentParticipationStatus}
                           showRsvpButtons={true}
@@ -1179,6 +1173,7 @@ const Events = () => {
           // Phase 3: Event Participation props
           onRsvp={rsvpToEvent}
           onUpdateRsvp={updateParticipation}
+          onCancelRsvp={cancelRsvp}
           rsvpLoading={rsvpLoading}
           getParticipationStatus={getParticipationStatus}
           loading={isLoading}

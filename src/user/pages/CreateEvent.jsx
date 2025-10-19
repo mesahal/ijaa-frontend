@@ -23,6 +23,7 @@ import {
 
 // Import authentication context
 import { useAuth } from '../../hooks/useAuth';
+import { toast } from 'react-toastify';
 
 // Import custom hooks
 import { useEventActions } from '../hooks/events/useEventActions';
@@ -92,6 +93,9 @@ const CreateEvent = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [eventLoading, setEventLoading] = useState(false);
+  
+  // State for banner deletion staging
+  const [shouldDeleteBanner, setShouldDeleteBanner] = useState(false);
 
   // Custom hooks
   const {
@@ -100,7 +104,9 @@ const CreateEvent = () => {
     handleCreateEvent,
     handleUpdateEvent,
     clearError: clearActionsError,
-  } = useEventActions();
+  } = useEventActions(() => {
+    // Dummy refresh function - not needed for create/edit pages
+  });
 
   // Event banner hook (for edit mode)
   const {
@@ -109,6 +115,7 @@ const CreateEvent = () => {
     loading: bannerLoading,
     uploadBanner,
     deleteBanner,
+    loadBannerUrl,
     clearError: clearBannerError,
   } = useEventBanner(eventId);
 
@@ -116,33 +123,70 @@ const CreateEvent = () => {
   useEffect(() => {
     if (eventId) {
       setIsEditMode(true);
+      setShouldDeleteBanner(false); // Reset staged deletion
       loadEventForEdit(eventId);
+      // Load banner for edit mode
+      loadBannerUrl();
     }
-  }, [eventId]);
+  }, [eventId, loadBannerUrl]);
 
   // Load event data for editing
   const loadEventForEdit = async (id) => {
     setEventLoading(true);
     try {
-      // This would be replaced with actual API call to get event details
-      // For now, we'll use placeholder data
-      const eventData = {
-        title: 'Sample Event',
-        description: 'This is a sample event for editing',
-        location: 'Sample Location',
-        startDate: '2024-12-20T19:00',
-        endDate: '2024-12-20T21:00',
-        maxParticipants: '50',
-        eventType: 'NETWORKING',
-        isOnline: false,
-        meetingLink: '',
-        privacy: 'PUBLIC',
-        inviteMessage: '',
-        organizerName: user?.name || '',
-        organizerEmail: user?.email || ''
-      };
-      setFormData(eventData);
+      console.log('🔄 [CreateEvent] Loading event for edit:', id);
+      
+      // Try to get user's own event first
+      let response;
+      try {
+        response = await eventService.getMyEventById(id);
+        console.log('✅ [CreateEvent] Got user event data:', response);
+      } catch (myEventError) {
+        console.log('⚠️ [CreateEvent] Failed to get user event, trying public endpoint:', myEventError);
+        // Fallback to public endpoint
+        response = await eventService.getEventById(id);
+        console.log('✅ [CreateEvent] Got public event data:', response);
+      }
+      
+      // Handle different response structures
+      let event;
+      if (response && response.data) {
+        event = response.data;
+      } else if (response) {
+        event = response;
+      } else {
+        throw new Error('No response received from server');
+      }
+
+      console.log('📝 [CreateEvent] Processing event data:', event);
+      
+      if (event && (event.title || event.id)) {
+        const eventData = {
+          title: event.title || '',
+          description: event.description || '',
+          location: event.location || '',
+          startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : '',
+          endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : '',
+          maxParticipants: event.maxParticipants?.toString() || '',
+          eventType: event.eventType || event.category || 'NETWORKING',
+          isOnline: event.isOnline || false,
+          meetingLink: event.meetingLink || '',
+          privacy: event.privacy || 'PUBLIC',
+          inviteMessage: event.inviteMessage || '',
+          organizerName: event.organizerName || user?.name || '',
+          organizerEmail: event.organizerEmail || user?.email || ''
+        };
+        
+        console.log('📋 [CreateEvent] Setting form data:', eventData);
+        setFormData(eventData);
+        toast.success('Event data loaded successfully');
+      } else {
+        console.error('❌ [CreateEvent] Invalid event data structure:', event);
+        toast.error('Invalid event data received');
+      }
     } catch (error) {
+      console.error('❌ [CreateEvent] Error loading event for edit:', error);
+      toast.error(`Failed to load event data: ${error.message || 'Unknown error'}`);
     } finally {
       setEventLoading(false);
     }
@@ -224,7 +268,28 @@ const CreateEvent = () => {
     try {
       if (isEditMode) {
         console.log('Updating event...');
-        await handleUpdateEvent(eventId, formData);
+        
+        // Handle staged banner deletion
+        if (shouldDeleteBanner) {
+          try {
+            await deleteBanner();
+            console.log('Banner deleted successfully');
+          } catch (bannerError) {
+            console.error('Error deleting banner:', bannerError);
+            // Don't fail the entire update if banner deletion fails
+            toast.warning('Event updated but failed to delete banner');
+          }
+        }
+        
+        const result = await handleUpdateEvent(eventId, formData);
+        if (result && result.success) {
+          toast.success('Event updated successfully');
+          // Redirect to the specific event page
+          navigate(`/user/events/${eventId}`);
+          return; // Exit early to prevent further processing
+        } else {
+          throw new Error(result?.error || 'Failed to update event');
+        }
       } else {
         console.log('Creating new event...');
         const result = await handleCreateEvent(formData);
@@ -278,13 +343,23 @@ const CreateEvent = () => {
   };
 
   // Handle banner image selection
-  const handleBannerImageChange = (e) => {
+  const handleBannerImageChange = async (e) => {
     const file = e.target.files[0];
     if (file) {
       setFormData(prev => ({ ...prev, bannerImage: file }));
       // Clear any previous banner errors
       if (errors.bannerImage) {
         setErrors(prev => ({ ...prev, bannerImage: null }));
+      }
+      
+      // In edit mode, automatically upload the banner
+      if (isEditMode && eventId) {
+        try {
+          await handleBannerUpload(file);
+        } catch (error) {
+          console.error('Error uploading banner:', error);
+          toast.error('Failed to upload banner');
+        }
       }
     }
   };
@@ -305,8 +380,17 @@ const CreateEvent = () => {
       await uploadBanner(file);
       // Clear the form banner image since it's now uploaded
       setFormData(prev => ({ ...prev, bannerImage: null }));
+      toast.success('Banner uploaded successfully');
     } catch (error) {
+      console.error('Error uploading banner:', error);
+      toast.error('Failed to upload banner');
     }
+  };
+
+  // Handle banner deletion staging (for edit mode)
+  const handleBannerDelete = () => {
+    setShouldDeleteBanner(true);
+    toast.info('Banner will be deleted when you save the event');
   };
 
   // Format date for datetime-local input
@@ -500,23 +584,60 @@ const CreateEvent = () => {
 
             <div className="space-y-4">
               {/* Current Banner Display (Edit Mode) */}
-              {isEditMode && bannerExists && (
-                <div className="relative">
-                  <img
-                    src={bannerUrl}
-                    alt="Current event banner"
-                    className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
-                  />
-                  <button
-                    type="button"
-                    onClick={deleteBanner}
-                    disabled={bannerLoading}
-                    className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 text-white rounded-full transition-colors"
-                    title="Remove banner"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                </div>
+              {isEditMode && (
+                <>
+                  {bannerLoading ? (
+                    <div className="w-full h-32 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+                      <div className="flex items-center space-x-2 text-gray-500 dark:text-gray-400">
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        <span>Loading banner...</span>
+                      </div>
+                    </div>
+                  ) : bannerExists && bannerUrl && !shouldDeleteBanner ? (
+                    <div className="relative">
+                      <img
+                        src={bannerUrl}
+                        alt="Current event banner"
+                        className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-600"
+                        onError={(e) => {
+                          console.error('Failed to load banner image:', e);
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={handleBannerDelete}
+                        disabled={bannerLoading}
+                        className="absolute top-2 right-2 p-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 text-white rounded-full transition-colors"
+                        title="Delete banner"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ) : shouldDeleteBanner ? (
+                    <div className="w-full h-32 bg-red-50 dark:bg-red-900/20 rounded-lg border-2 border-dashed border-red-300 dark:border-red-600 flex items-center justify-center">
+                      <div className="text-center text-red-600 dark:text-red-400">
+                        <Trash2 className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-sm font-medium">Banner marked for deletion</p>
+                        <p className="text-xs mt-1">Will be removed when you save</p>
+                        <button
+                          type="button"
+                          onClick={() => setShouldDeleteBanner(false)}
+                          className="mt-2 text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          Undo
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full h-32 bg-gray-100 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 flex items-center justify-center">
+                      <div className="text-center text-gray-500 dark:text-gray-400">
+                        <Image className="h-8 w-8 mx-auto mb-2" />
+                        <p className="text-sm">No banner image</p>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
 
               {/* Banner Upload Area */}
@@ -539,22 +660,6 @@ const CreateEvent = () => {
                         <X className="h-4 w-4" />
                         <span>Remove</span>
                       </Button>
-                      {isEditMode && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => handleBannerUpload(formData.bannerImage)}
-                          disabled={bannerLoading}
-                          className="flex items-center space-x-2"
-                        >
-                          {bannerLoading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Upload className="h-4 w-4" />
-                          )}
-                          <span>Upload Now</span>
-                        </Button>
-                      )}
                     </div>
                   </div>
                 ) : (

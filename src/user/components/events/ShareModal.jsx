@@ -279,17 +279,7 @@ const ShareModal = ({ isOpen, onClose, event, formatDate, formatTime }) => {
             </div>
           </div>
         </div>
-
-        {/* Footer */}
-        <div className="flex justify-end p-6 border-t border-gray-200 dark:border-gray-700">
-          <Button
-            onClick={onClose}
-            variant="ghost"
-            size="md"
-          >
-            Close
-          </Button>
-        </div>
+        
       </div>
     </div>
   );

@@ -25,6 +25,7 @@ const UpcomingEvents = ({
   // Phase 3: Event Participation props
   onRsvp,
   onUpdateRsvp,
+  onCancelRsvp,
   rsvpLoading = false,
   getParticipationStatus
 }) => {
@@ -106,6 +107,7 @@ const UpcomingEvents = ({
               // Phase 3: Event Participation props
               onRsvp={onRsvp}
               onUpdateRsvp={onUpdateRsvp}
+              onCancelRsvp={onCancelRsvp}
               rsvpLoading={rsvpLoading}
               currentParticipationStatus={currentParticipationStatus}
               showRsvpButtons={true}

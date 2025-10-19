@@ -1,4 +1,4 @@
-import apiClient from '../../services/api/apiClient';
+import apiClient from './apiClient';
 
 /**
  * Event Service - Handles all event-related API calls
@@ -54,6 +54,20 @@ class EventService {
   async getEventById(eventId) {
     try {
       const response = await apiClient.get(`/events/all-events/${eventId}`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Get user's specific event (for editing)
+   * @param {string} eventId - Event ID
+   * @returns {Promise<Object>} User's event details
+   */
+  async getMyEventById(eventId) {
+    try {
+      const response = await apiClient.get(`/events/my-events/${eventId}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;
@@ -258,6 +272,27 @@ class EventService {
   }
 
   /**
+   * Update RSVP Status by eventId (preferred)
+   * PUT /api/v1/events/participation/{eventId}/rsvp
+   * @param {string|number} eventId - Event ID
+   * @param {string} status - New participation status
+   * @returns {Promise<Object>} Updated participation data
+   */
+  async updateRsvp(eventId, status) {
+    try {
+      // Backend expects status as query param and NO request body for PUT
+      const response = await apiClient.put(
+        `/events/participation/${eventId}/rsvp`,
+        null,
+        { params: { status } }
+      );
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
    * Get user's participation for a specific event
    * @param {string} eventId - Event ID
    * @returns {Promise<Object>} Participation data
@@ -279,6 +314,22 @@ class EventService {
   async getEventParticipants(eventId) {
     try {
       const response = await apiClient.get(`/events/participation/${eventId}/participants`);
+      return response.data;
+    } catch (error) {
+      throw error.response?.data || error;
+    }
+  }
+
+  /**
+   * Get event participants filtered by status
+   * GET /api/v1/events/participation/{eventId}/participants/{status}
+   * @param {string|number} eventId - Event ID
+   * @param {string} status - Participation status (CONFIRMED | MAYBE | DECLINED)
+   * @returns {Promise<Object>} Participants data
+   */
+  async getEventParticipantsByStatus(eventId, status) {
+    try {
+      const response = await apiClient.get(`/events/participation/${eventId}/participants/${status}`);
       return response.data;
     } catch (error) {
       throw error.response?.data || error;

@@ -16,8 +16,10 @@ const Input = React.forwardRef(({
 }, ref) => {
   const [showPassword, setShowPassword] = React.useState(false);
   const [isFocused, setIsFocused] = React.useState(false);
+  const { onClick: userOnClick, onFocus: userOnFocus, onBlur: userOnBlur, ...restProps } = props;
   
   const inputType = type === 'password' && showPassword ? 'text' : type;
+  const isDateLike = ['date', 'datetime-local', 'time', 'month', 'week'].includes(inputType);
   
   const baseClasses = 'w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors duration-200';
   const stateClasses = error ? 'border-error-300 dark:border-error-600 focus:border-error-500 dark:focus:border-error-400 focus:ring-error-500' : success ? 'border-success-300 dark:border-success-600 focus:border-success-500 dark:focus:border-success-400 focus:ring-success-500' : '';
@@ -36,12 +38,19 @@ const Input = React.forwardRef(({
   
   const handleFocus = (e) => {
     setIsFocused(true);
-    props.onFocus?.(e);
+    userOnFocus?.(e);
   };
   
   const handleBlur = (e) => {
     setIsFocused(false);
-    props.onBlur?.(e);
+    userOnBlur?.(e);
+  };
+  
+  const handleClick = (e) => {
+    if (isDateLike && typeof e.currentTarget.showPicker === 'function') {
+      try { e.currentTarget.showPicker(); } catch {}
+    }
+    userOnClick?.(e);
   };
   
   return (
@@ -66,13 +75,14 @@ const Input = React.forwardRef(({
           className={classes}
           onFocus={handleFocus}
           onBlur={handleBlur}
+          onClick={handleClick}
           aria-invalid={error ? 'true' : 'false'}
           aria-describedby={
             error ? `${props.id || 'input'}-error` :
             success ? `${props.id || 'input'}-success` :
             helpText ? `${props.id || 'input'}-help` : undefined
           }
-          {...props}
+          {...restProps}
         />
         
         {type === 'password' && (

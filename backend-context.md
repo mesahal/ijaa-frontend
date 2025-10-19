@@ -3,24 +3,16 @@
 ## Project Overview
 IJAA (IIT JU Alumni Association) is a comprehensive microservices-based alumni management system built with Spring Boot. The system facilitates alumni networking, event management, file handling, and advanced event features through a distributed architecture.
 
-**Recent Update (December 2024)**: Complete API standardization following REST conventions, JWT authentication with refresh tokens, database schema alignment, SQL initialization, and comprehensive feature flag system with 44 hierarchical flags. **CRITICAL FIX**: Added missing feature flags to all API endpoints for complete access control.
-
-**API Standardization (December 2024)**: All API endpoints have been standardized to follow industry best practices:
-- **Resource-based URLs**: `/api/v1/users/`, `/api/v1/events/`, `/api/v1/files/`
-- **Consistent HTTP methods**: GET for retrieval, POST for creation, PUT for updates, DELETE for removal
-- **Hierarchical resource organization**: `/users/{userId}/experiences/`, `/events/{eventId}/comments/`
-- **Standardized authentication**: `/api/v1/auth/` for all authentication endpoints
-- **Centralized admin management**: `/api/v1/admin/` for all administrative functions
 
 ## Architecture
 
 ### Service Architecture
 ```
-Gateway Service (8080) → User Service (8081), Event Service (8082), File Service (8083)
+Gateway Service (8000) → User Service (8081), Event Service (8082), File Service (8083)
                        ↓
                  Discovery Service (8761)
                        ↓  
-                 Config Service (8888)
+                 Config Service (8071)
 ```
 
 ### Current Services
@@ -30,12 +22,12 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
 - **Purpose**: Service registry and discovery
 - **Status**: ✅ Functional
 
-#### 2. Config Service (Port: 8888)  
+#### 2. Config Service (Port: 8071)  
 - **Technology**: Spring Cloud Config Server
-- **Purpose**: Centralized configuration management
+- **Purpose**: Centralized configuration server (native file system). Currently, services use their local `application.yml` and do not import from Config Server.
 - **Status**: ✅ Functional
 
-#### 3. Gateway Service (Port: 8080)
+#### 3. Gateway Service (Port: 8000)
 - **Technology**: Spring Cloud Gateway
 - **Purpose**: API Gateway and routing
 - **Status**: ✅ Functional
@@ -44,6 +36,7 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
   - JWT token validation and user context propagation
   - Public access for feature flag status checks
   - File serving routes for public image access
+  - Centralized token blacklisting with PostgreSQL via `/api/v1/token/*`
 
 #### 4. User Service (Port: 8081)
 - **Technology**: Spring Boot + PostgreSQL + JPA
@@ -95,19 +88,21 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
 
 ### Event Service Tables
 - `events`: Event information and metadata
-- `event_comments`: Comment system with nested replies
+- `event_posts`: Event discussion posts with mixed content support
+- `event_comments`: Comment system with nested replies (now post-based)
 - `event_participations`: Event RSVP and participation tracking
 - `event_invitations`: Event invitation management
 
 ### File Service Tables
 - `users`: User file metadata
 - `event_banners`: Event banner file metadata
+- `event_post_media`: Post media files (images and videos)
 
 ### Database Configuration
 - **SQL Initialization**: `spring.sql.init.mode=always` with `ddl-auto=none`
 - **Schema Files**: `classpath:db/schema.sql` for table creation
 - **Data Files**: `classpath:db/data.sql` for initial data
-- **Initial Data**: 1 admin account, 245 countries, 381 cities, 44 feature flags
+- **Initial Data**: 1 admin account, 245 countries, 381 cities, 52 feature flags
 
 ## API Endpoints
 
@@ -115,7 +110,7 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
 - ✅ `POST /login` - User authentication (**Feature Flag**: `user.login`)
 - ✅ `POST /register` - User registration (**Feature Flag**: `user.registration`)
 - ✅ `POST /refresh` - Refresh access token (**Feature Flag**: `user.refresh`)
-- ✅ `POST /logout` - Logout and invalidate refresh token (No feature flag required)
+- ✅ `POST /logout` - Logout and invalidate refresh token (**Feature Flag**: `user.logout`)
 - ✅ `POST /change-password` - Password management (**Feature Flag**: `user.password-change`)
 
 ### User Management APIs (`/ijaa/api/v1/users/`)
@@ -139,16 +134,17 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
 
 ### Admin Management APIs (`/ijaa/api/v1/admin/`)
 - ✅ `POST /login` - Admin authentication (**Feature Flag**: `admin.auth`)
+- ✅ `POST /logout` - Admin logout (**Feature Flag**: `admin.logout`)
 - ✅ `POST /admins` - Admin registration (**Feature Flag**: `admin.auth`)
 - ✅ `GET /admins` - Get all admins (**Feature Flag**: `admin.features`)
-- ✅ `PUT /admins/{adminId}/password` - Change admin password (**Feature Flag**: `admin.auth`)
-- ✅ `GET /admins/profile` - Get admin profile (**Feature Flag**: `admin.auth`)
-- ✅ `PUT /admins/{adminId}/deactivate` - Deactivate admin (**Feature Flag**: `admin.features`)
-- ✅ `PUT /admins/{adminId}/activate` - Activate admin (**Feature Flag**: `admin.features`)
-- ✅ `GET /dashboard/stats` - Dashboard statistics (**Feature Flag**: `admin.features`)
+- ✅ `PUT /change-password` - Change admin password (**Feature Flag**: `admin.auth`)
+- ✅ `GET /profile` - Get admin profile (**Feature Flag**: `admin.auth`)
+- ✅ `POST /admins/{adminId}/deactivate` - Deactivate admin (**Feature Flag**: `admin.features`)
+- ✅ `POST /admins/{adminId}/activate` - Activate admin (**Feature Flag**: `admin.features`)
+- ✅ `GET /dashboard` - Dashboard statistics (**Feature Flag**: `admin.features`)
 - ✅ `GET /users` - Get all users (**Feature Flag**: `admin.user-management`)
-- ✅ `PUT /users/{userId}/block` - Block user (**Feature Flag**: `admin.user-management`)
-- ✅ `PUT /users/{userId}/unblock` - Unblock user (**Feature Flag**: `admin.user-management`)
+- ✅ `POST /users/{userId}/block` - Block user (**Feature Flag**: `admin.user-management`)
+- ✅ `POST /users/{userId}/unblock` - Unblock user (**Feature Flag**: `admin.user-management`)
 - ✅ `DELETE /users/{userId}` - Delete user (**Feature Flag**: `admin.user-management`)
 
 ### Feature Flag Management APIs (`/ijaa/api/v1/admin/feature-flags/`)
@@ -158,7 +154,6 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
 - ✅ `PUT /{name}` - Update feature flag (ADMIN only)
 - ✅ `DELETE /{name}` - Delete feature flag (ADMIN only)
 - ✅ `GET /{name}/enabled` - Check feature flag status (Public - No authentication required)
-- ✅ `POST /refresh-cache` - Refresh feature flag cache (ADMIN only)
 
 ### Location APIs (`/ijaa/api/v1/locations/`)
 - ✅ `GET /countries` - Get all countries (**Feature Flag**: `user.location`)
@@ -184,15 +179,26 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
 - ✅ `GET /{eventId}/participants/{status}` - Get participants by status
 - ✅ `GET /my-participations` - Get user's event participations
 
+### Event Posts APIs (`/ijaa/api/v1/events/posts/`)
+- ✅ `POST /` - Create event post (**Feature Flag**: `events.posts.create`)
+- ✅ `GET /event/{eventId}` - Get event posts (paginated) (**Feature Flag**: `events.posts`)
+- ✅ `GET /event/{eventId}/all` - Get all event posts (**Feature Flag**: `events.posts`)
+- ✅ `GET /{postId}` - Get specific post (**Feature Flag**: `events.posts`)
+- ✅ `PUT /{postId}` - Update post (**Feature Flag**: `events.posts.update`)
+- ✅ `DELETE /{postId}` - Delete post (**Feature Flag**: `events.posts.delete`)
+- ✅ `POST /{postId}/like` - Toggle post like (**Feature Flag**: `events.posts.like`)
+- ✅ `GET /user/{username}` - Get user's posts (paginated) (**Feature Flag**: `events.posts`)
+- ✅ `GET /user/{username}/event/{eventId}` - Get user's posts for event (**Feature Flag**: `events.posts`)
+
 ### Event Comments APIs (`/ijaa/api/v1/events/comments/`)
-- ✅ `POST /` - Add event comment
-- ✅ `GET /event/{eventId}` - Get event comments with nested replies
-- ✅ `GET /{commentId}` - Get specific comment
-- ✅ `PUT /{commentId}` - Update comment
-- ✅ `DELETE /{commentId}` - Delete comment
-- ✅ `POST /{commentId}/like` - Toggle comment like
-- ✅ `GET /recent` - Get recent comments
-- ✅ `GET /popular` - Get popular comments
+- ✅ `POST /` - Add post comment (**Feature Flag**: `events.comments`)
+- ✅ `GET /post/{postId}` - Get post comments with nested replies (**Feature Flag**: `events.comments`)
+- ✅ `GET /{commentId}` - Get specific comment (**Feature Flag**: `events.comments`)
+- ✅ `PUT /{commentId}` - Update comment (**Feature Flag**: `events.comments`)
+- ✅ `DELETE /{commentId}` - Delete comment (**Feature Flag**: `events.comments`)
+- ✅ `POST /{commentId}/like` - Toggle comment like (**Feature Flag**: `events.comments`)
+- ✅ `GET /recent/post/{postId}` - Get recent comments for post (**Feature Flag**: `events.comments`)
+- ✅ `GET /popular/post/{postId}` - Get popular comments for post (**Feature Flag**: `events.comments`)
 
 ### Event Invitations APIs (`/ijaa/api/v1/events/invitations/`)
 - ✅ `POST /send` - Send event invitation
@@ -205,11 +211,6 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
 - ✅ `GET /{eventId}/invitations` - Get event invitations
 - ✅ `GET /sent-by-me` - Get invitations sent by user
 - ✅ `GET /counts` - Get invitation counts
-
-### Event Banner APIs (`/ijaa/api/v1/events/banner/`)
-- ✅ `POST /{eventId}` - Upload/Update event banner (**Feature Flag**: `events.banner`)
-- ✅ `GET /{eventId}` - Get event banner URL (**Feature Flag**: `events.banner`)
-- ✅ `DELETE /{eventId}` - Delete event banner (**Feature Flag**: `events.banner`)
 
 ### Advanced Event Search APIs (`/ijaa/api/v1/events/advanced-search/`)
 - ✅ `POST /advanced` - Advanced event search with multiple filters
@@ -232,15 +233,22 @@ Gateway Service (8080) → User Service (8081), Event Service (8082), File Servi
 - ✅ `GET /{userId}/cover-photo/file/**` - Serve cover photo file (public - no feature flag)
 
 ### Event File APIs (`/ijaa/api/v1/files/events/`)
-- ✅ `POST /{eventId}/banner` - Upload event banner
-- ✅ `GET /{eventId}/banner` - Get event banner URL
-- ✅ `DELETE /{eventId}/banner` - Delete event banner
+- ✅ `POST /{eventId}/banner` - Upload event banner (**Feature Flag**: `events.banner`)
+- ✅ `GET /{eventId}/banner` - Get event banner URL (**Feature Flag**: `events.banner`)
+- ✅ `DELETE /{eventId}/banner` - Delete event banner (**Feature Flag**: `events.banner`)
 - ✅ `GET /{eventId}/banner/file/{fileName}` - Serve event banner file (public)
+
+### Post Media APIs (`/ijaa/api/v1/files/posts/`)
+- ✅ `GET /{postId}/media` - Get all post media files (protected)
+- ✅ `POST /{postId}/media` - Upload post media (**Feature Flag**: `events.posts.media`)
+- ✅ `GET /{postId}/media/{fileName}` - Get post media URL (**Feature Flag**: `file-download`)
+- ✅ `GET /{postId}/media/file/{fileName}` - Serve post media file (public)
+- ✅ `DELETE /{postId}/media/{fileName}` - Delete post media (**Feature Flag**: `file-delete`)
 
 ## Feature Flag System
 
 ### Overview
-The system implements a sophisticated feature flag mechanism with 44 hierarchical flags:
+The system implements a sophisticated feature flag mechanism with 52 hierarchical flags:
 - **Hierarchical Structure**: Parent-child relationships between flags
 - **Database-Driven**: Flags stored in database for runtime changes
 - **Public Status Checks**: Feature flag status accessible without authentication
@@ -250,6 +258,7 @@ The system implements a sophisticated feature flag mechanism with 44 hierarchica
 **User Service Feature Flags:**
 - `user.registration` → User signup endpoints
 - `user.login` → User signin endpoints  
+- `user.logout` → User logout endpoints
 - `user.password-change` → Password change endpoints
 - `user.profile` → Profile management endpoints (get, update, visibility)
 - `user.experiences` → Experience management endpoints (add, update, delete)
@@ -259,6 +268,7 @@ The system implements a sophisticated feature flag mechanism with 44 hierarchica
 
 **Admin Service Feature Flags:**
 - `admin.auth` → Admin authentication endpoints (login, signup, password change, profile)
+- `admin.logout` → Admin logout endpoints
 - `admin.features` → Admin management endpoints (list admins, deactivate, activate, dashboard)
 - `admin.user-management` → User management endpoints (list users, block, unblock, delete)
 
@@ -273,10 +283,16 @@ The system implements a sophisticated feature flag mechanism with 44 hierarchica
 - `search.advanced-filters` → Advanced event search endpoints
 - `events` → Core event management (creation, update, deletion)
 - `events.participation` → Event participation/RSVP
-- `events.comments` → Event commenting system
+- `events.comments` → Event commenting system (now post-based)
 - `events.invitations` → Event invitation system
 - `events.media` → Event media attachments
 - `events.banner` → Event banner upload and management
+- `events.posts` → Event posts and discussion system
+- `events.posts.create` → Create event posts
+- `events.posts.update` → Update event posts
+- `events.posts.delete` → Delete event posts
+- `events.posts.like` → Like event posts
+- `events.posts.media` → Upload media for posts
 
 **System Feature Flags:**
 - `alumni.search` → Alumni search functionality
@@ -289,7 +305,7 @@ The system implements a sophisticated feature flag mechanism with 44 hierarchica
 
 ### Overview
 Production-ready JWT authentication with refresh tokens:
-- **Access Tokens**: 15-minute expiration, JWT format with user claims
+- **Access Tokens**: 60-minute expiration, JWT format with user claims
 - **Refresh Tokens**: 7-day expiration, stored in database
 - **Secure Cookies**: HttpOnly, Secure, SameSite=Strict for refresh tokens
 - **Multi-device Support**: Each device gets its own refresh token
@@ -303,10 +319,10 @@ Production-ready JWT authentication with refresh tokens:
 ### Public Endpoints (No Authentication Required)
 - `GET /ijaa/api/v1/admin/feature-flags/{name}/enabled` - Feature flag status check (**Feature Flag**: `system.health`)
 - `POST /ijaa/api/v1/auth/refresh` - Refresh access token (**Feature Flag**: `user.refresh`)
-- `POST /ijaa/api/v1/auth/logout` - Logout endpoint (No feature flag required)
 - `GET /ijaa/api/v1/files/users/*/profile-photo/file/**` - Profile photo serving (**Feature Flag**: `file-download`)
 - `GET /ijaa/api/v1/files/users/*/cover-photo/file/**` - Cover photo serving (**Feature Flag**: `file-download`)
 - `GET /ijaa/api/v1/files/events/{eventId}/banner/file/{fileName}` - Event banner serving (**Feature Flag**: `file-download`)
+- `GET /ijaa/api/v1/files/posts/{postId}/media/file/{fileName}` - Serve post media files (public)
 
 ## Health Check APIs
 
@@ -360,17 +376,64 @@ src/
 - **Authorization Tests**: Role-based access control validation
 - **Feature Flag Tests**: Feature toggle functionality validation
 
+## Post System (NEW FEATURE)
+
+### Overview
+The IJAA system now includes a comprehensive post system for event discussions, allowing event creators to create rich, interactive content within their events.
+
+### Key Features
+- **Mixed Content Posts**: Support for text, multiple images, and multiple videos in a single post
+- **Media Ordering**: Proper ordering and display of media files with `fileOrder` field
+- **Post-based Comments**: Comments are now associated with posts rather than directly with events
+- **Access Control**: Only event creators can create, update, and delete posts on their events
+- **Public Media Access**: Media files can be accessed without authentication for display
+- **Real-time Integration**: Media files are automatically included in post responses
+
+### Post Types
+- **TEXT**: Text-only posts
+- **IMAGE**: Posts with images only
+- **VIDEO**: Posts with videos only
+- **MIXED**: Posts with both images and videos
+
+### Media Support
+- **Images**: JPG, JPEG, PNG, WEBP (max 5MB each)
+- **Videos**: MP4, AVI, MOV, WMV, FLV, WEBM (max 50MB each)
+- **Multiple Files**: Support for multiple media files per post with proper ordering
+
+### Database Tables
+- `event_posts`: Main posts table with content and metadata
+- `event_post_media`: Media files associated with posts
+- `event_comments`: Comments now reference posts instead of events directly
+
+### API Endpoints
+- **Post Management**: Create, read, update, delete posts
+- **Media Management**: Upload, serve, delete media files
+- **Comment System**: Post-based commenting with nested replies
+- **User Posts**: Get posts by user across all events or for specific events
+
 ## System Status
 
 **Key Strengths**:
 - ✅ **Complete microservices architecture** with proper service separation
 - ✅ **JWT authentication system** with refresh tokens and secure cookies
 - ✅ **Comprehensive API coverage** for all core features
-- ✅ **Feature flag system** with 44 hierarchical flags
+- ✅ **Feature flag system** with 52 hierarchical flags
 - ✅ **Database schema alignment** with JPA entities
 - ✅ **SQL initialization** for automatic database setup
 - ✅ **Production-ready database** with clean, essential-only data
+- ✅ **Advanced post system** with mixed content support (text, images, videos)
+- ✅ **Post-based commenting system** with nested replies
+- ✅ **Media management** for posts with proper ordering and validation
 
-**Ready for Frontend Integration**: All APIs are stable and tested, with proper authentication flow and error handling in place.
+**Ready for Frontend Integration**: All APIs are stable and tested, with proper authentication flow and error handling in place. The new post system provides rich discussion capabilities for events.
 
-**System Status**: 🟢 **READY FOR PRODUCTION** with comprehensive functionality and standardized API structure.
+## API Summary
+
+- **Total Endpoints**: 100+ (including new post system)
+- **Authentication Required**: 85+
+- **Public Endpoints**: 15+
+- **Feature Flags**: 52 hierarchical flags
+- **Services**: 5 (User, Event, File, Config, Discovery)
+- **New Features**: Post system with mixed content support
+
+**System Status**: 🟢 **READY FOR PRODUCTION** with comprehensive functionality, standardized API structure, and advanced social features.

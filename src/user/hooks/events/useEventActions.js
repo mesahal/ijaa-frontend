@@ -46,6 +46,7 @@ export const useEventActions = (refreshEvents = null) => {
           startDate: eventForm.startDate,
           endDate: eventForm.endDate,
           location: eventForm.isOnline ? eventForm.meetingLink : (eventForm.location || ''),
+          meetingLink: eventForm.isOnline ? eventForm.meetingLink : undefined,
           category: eventForm.eventType || 'NETWORKING',
           maxParticipants: eventForm.maxParticipants || 50,
           isPublic: eventForm.privacy !== 'PRIVATE', // Default to true
@@ -72,6 +73,46 @@ export const useEventActions = (refreshEvents = null) => {
     } catch (err) {
       console.error('Error creating event:', err);
       setError(err.message || 'Failed to save event');
+      return { success: false, error: err.message };
+    } finally {
+      setLoading(false);
+    }
+  }, [refreshEvents]);
+
+  /**
+   * Update an event (Phase 1.5)
+   */
+  const handleUpdateEvent = useCallback(async (eventId, eventForm) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      // Enhanced validation for Phase 1 requirements
+      if (!eventForm.title || !eventForm.startDate || !eventForm.endDate) {
+        throw new Error('Please fill in all required fields: title, start date, and end date');
+      }
+
+      if (new Date(eventForm.startDate) >= new Date(eventForm.endDate)) {
+        throw new Error('Start date must be before end date');
+      }
+
+      // Validate max participants
+      if (eventForm.maxParticipants && (eventForm.maxParticipants < 1 || eventForm.maxParticipants > 1000)) {
+        throw new Error('Maximum participants must be between 1 and 1000');
+      }
+
+      const response = await eventService.updateEvent(eventId, eventForm);
+      const result = response;
+
+      // Check if the response indicates success (either success: true or message contains "successfully")
+      if (result && (result.success || (result.message && result.message.toLowerCase().includes('successfully')))) {
+        await refreshEvents();
+        return { success: true, data: result.data };
+      } else {
+        throw new Error(result?.message || 'Failed to update event');
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to update event');
       return { success: false, error: err.message };
     } finally {
       setLoading(false);
@@ -176,6 +217,7 @@ export const useEventActions = (refreshEvents = null) => {
     
     // Actions
     handleCreateEvent,
+    handleUpdateEvent,
     handleDeleteEvent,
     handleRsvp,
     handleCancelRsvp,

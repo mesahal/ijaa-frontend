@@ -23,6 +23,7 @@ const Button = React.forwardRef(({
     danger: 'bg-error-600 hover:bg-error-700 active:bg-error-800 text-white shadow-sm hover:shadow-md rounded-lg',
     error: 'bg-red-500 hover:bg-red-600 active:bg-red-700 text-white shadow-sm hover:shadow-md rounded-lg',
     success: 'bg-success-600 hover:bg-success-700 active:bg-success-800 text-white shadow-sm hover:shadow-md rounded-lg',
+    warning: 'bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white shadow-sm hover:shadow-md rounded-lg',
     outline: 'border-2 border-primary-600 text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-lg',
     link: 'text-primary-600 hover:text-primary-700 underline-offset-4 hover:underline',
   };

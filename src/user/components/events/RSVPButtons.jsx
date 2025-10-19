@@ -13,10 +13,14 @@ const RSVPButtons = ({
   currentStatus = null,
   onRsvp,
   onUpdateRsvp,
+  onCancelRsvp,
   loading = false,
   disabled = false,
   showMessageInput = false,
-  className = ''
+  className = '',
+  inline = false,
+  hideStatus = false,
+  buttonSize = 'sm'
 }) => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [message, setMessage] = useState('');
@@ -33,8 +37,13 @@ const RSVPButtons = ({
 
   const performRsvpAction = async (status, messageText) => {
     if (currentStatus) {
-      // Update existing RSVP
-      await onUpdateRsvp(eventId, status, messageText);
+      // If clicking the same status again, delete RSVP
+      if (status === currentStatus && typeof onCancelRsvp === 'function') {
+        await onCancelRsvp(eventId);
+      } else {
+        // Update existing RSVP
+        await onUpdateRsvp(eventId, status, messageText);
+      }
     } else {
       // New RSVP
       await onRsvp(eventId, status, messageText);
@@ -79,22 +88,24 @@ const RSVPButtons = ({
   const getStatusText = (status) => {
     switch (status) {
       case 'CONFIRMED':
-        return 'Joined';
+        return 'Going';
       case 'MAYBE':
-        return 'Maybe';
+        return 'Interested';
       case 'DECLINED':
-        return 'Declined';
+        return "Can't go";
       default:
         return 'RSVP';
     }
   };
 
+  const containerClasses = inline ? `flex items-center space-x-2 ${className}` : `space-y-3 ${className}`;
+
   return (
-    <div className={`space-y-3 ${className}`}>
+    <div className={containerClasses}>
       {/* Current Status Display */}
-      {currentStatus && (
+      {!inline && !hideStatus && currentStatus && (
         <div className="flex items-center justify-center">
-          <div className={`inline-flex items-center space-x-2 px-3 py-2 rounded-lg bg-${getStatusColor(currentStatus)}-100 dark:bg-${getStatusColor(currentStatus)}-900/20 text-${getStatusColor(currentStatus)}-700 dark:text-${getStatusColor(currentStatus)}-300`}>
+          <div className={`inline-flex items-center space-x-2 px-3 py-2 rounded-full shadow-sm bg-${getStatusColor(currentStatus)}-100 dark:bg-${getStatusColor(currentStatus)}-900/20 text-${getStatusColor(currentStatus)}-700 dark:text-${getStatusColor(currentStatus)}-300`}>
             {getStatusIcon(currentStatus)}
             <span className="text-sm font-medium">
               {getStatusText(currentStatus)}
@@ -104,38 +115,38 @@ const RSVPButtons = ({
       )}
 
       {/* RSVP Buttons */}
-      <div className="flex space-x-2">
+      <div className={`flex space-x-2 ${inline ? '' : ''}`}>
         <Button
           onClick={() => handleRsvpAction('CONFIRMED')}
-          variant={currentStatus === 'CONFIRMED' ? 'success' : 'primary'}
-          size="sm"
+          variant={currentStatus === 'CONFIRMED' ? 'primary' : 'outline'}
+          size={buttonSize}
           disabled={disabled || loading}
-          className="flex-1"
+          className={`${inline ? 'rounded-full px-4 shadow-sm' : 'flex-1'} `}
           icon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
         >
-          {loading ? 'Joining...' : 'Join Event'}
+          {loading ? 'Joining...' : (inline ? 'Going' : 'Join Event')}
         </Button>
 
         <Button
           onClick={() => handleRsvpAction('MAYBE')}
-          variant={currentStatus === 'MAYBE' ? 'warning' : 'outline'}
-          size="sm"
+          variant={currentStatus === 'MAYBE' ? 'primary' : 'outline'}
+          size={buttonSize}
           disabled={disabled || loading}
-          className="flex-1"
+          className={`${inline ? 'rounded-full px-4 shadow-sm' : 'flex-1'}`}
           icon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Clock className="h-4 w-4" />}
         >
-          {loading ? 'Updating...' : 'Maybe'}
+          {loading ? 'Updating...' : 'Interested'}
         </Button>
 
         <Button
           onClick={() => handleRsvpAction('DECLINED')}
-          variant={currentStatus === 'DECLINED' ? 'error' : 'outline'}
-          size="sm"
+          variant={currentStatus === 'DECLINED' ? 'primary' : 'outline'}
+          size={buttonSize}
           disabled={disabled || loading}
-          className="flex-1"
+          className={`${inline ? 'rounded-full px-4 shadow-sm' : 'flex-1'}`}
           icon={loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
         >
-          {loading ? 'Declining...' : 'Decline'}
+          {loading ? 'Declining...' : "Can't go"}
         </Button>
       </div>
 

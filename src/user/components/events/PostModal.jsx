@@ -37,6 +37,7 @@ const PostModal = ({
   onLike, 
   onEdit, 
   onDelete,
+  onShare,
   canEdit,
   canDelete,
   isLiked,
@@ -643,7 +644,7 @@ const PostModal = ({
                   </div>
                   
                   <button
-                    onClick={() => {/* Handle share */}}
+                    onClick={() => { if (onShare) onShare(post.id); }}
                     className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-all duration-200"
                   >
                     <Share2 className="h-5 w-5" />

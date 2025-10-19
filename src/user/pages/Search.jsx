@@ -43,7 +43,7 @@ const Search = () => {
   const [alumni, setAlumni] = useState([]);
   const [pagination, setPagination] = useState({
     page: 0,
-    size: 12,
+    size: 6,
     totalElements: 0,
     totalPages: 0,
     first: true,
@@ -104,7 +104,7 @@ const Search = () => {
       setAlumni([]);
       setPagination({
         page: 0,
-        size: 12,
+        size: 6,
         totalElements: 0,
         totalPages: 0,
         first: true,

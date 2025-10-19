@@ -20,6 +20,7 @@ import {
 import RSVPButtons from './RSVPButtons';
 import ShareModal from './ShareModal';
 import useEventBanner from '../../hooks/events/useEventBanner';
+import Button from '../../../components/ui/Button';
 
 /**
  * EventCard Component
@@ -46,6 +47,7 @@ const EventCard = ({
   // Phase 3: Event Participation props
   onRsvp,
   onUpdateRsvp,
+  onCancelRsvp,
   rsvpLoading = false,
   currentParticipationStatus = null,
   showRsvpButtons = false,
@@ -185,6 +187,7 @@ const EventCard = ({
                     currentStatus={currentParticipationStatus}
                     onRsvp={onRsvp}
                     onUpdateRsvp={onUpdateRsvp}
+                    onCancelRsvp={onCancelRsvp}
                     loading={rsvpLoading}
                     showMessageInput={false}
                   />
@@ -228,7 +231,7 @@ const EventCard = ({
       </div>
 
       {/* Event Content - Flexible height with fixed bottom buttons */}
-      <div className="p-4 flex flex-col">
+      <div className="p-4 flex flex-col flex-1">
         {/* Date - Fixed Height */}
         <div className="text-gray-500 dark:text-gray-400 text-sm mb-1">
           {event.endDate ? (() => {
@@ -266,10 +269,26 @@ const EventCard = ({
         {/* Action Buttons - Fixed at bottom */}
         <div className="mt-auto">
           <div className="flex items-center space-x-2">
-            <button className="flex-1 flex items-center justify-center space-x-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white px-3 py-2 rounded-lg transition-colors font-medium">
-              <Star className="h-4 w-4" />
-              <span>Interested</span>
-            </button>
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                if (currentParticipationStatus === 'MAYBE' && onCancelRsvp) {
+                  onCancelRsvp(event.id);
+                } else if (currentParticipationStatus && onUpdateRsvp) {
+                  onUpdateRsvp(event.id, 'MAYBE', '');
+                } else if (onRsvp) {
+                  onRsvp(event.id, 'MAYBE', '');
+                }
+              }}
+              disabled={rsvpLoading}
+              variant={currentParticipationStatus === 'MAYBE' ? 'primary' : 'outline'}
+              size="sm"
+              className="flex-1"
+              title="Mark as Interested"
+              icon={<Star className="h-4 w-4" />}
+            >
+              Interested
+            </Button>
             <button 
               onClick={handleShareClick}
               className="p-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-white rounded-lg transition-colors"

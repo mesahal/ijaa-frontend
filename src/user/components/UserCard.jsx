@@ -77,7 +77,7 @@ const UserCard = ({
             <GraduationCap className="h-4 w-4 flex-shrink-0" />
             <span className="truncate">
               {user.batch
-                ? `Batch ${user.batch}`
+                ? ` ${user.batch}`
                 : "Batch not specified"}
             </span>
           </div>
@@ -117,7 +117,7 @@ const UserCard = ({
 
         {/* Interests Section - Fixed Height */}
         {isInterestsEnabled ? (
-          <div className="mb-6 h-8 flex items-start">
+          <div className="mb-6 min-h-[2rem] flex items-start">
             {user.interests && user.interests.length > 0 ? (
               <div className="flex flex-wrap gap-1">
                 {user.interests.slice(0, 2).map((interest, index) => (
@@ -125,7 +125,7 @@ const UserCard = ({
                     key={index}
                     variant="secondary"
                     size="sm"
-                    className="max-w-20 truncate"
+                    className="max-w-[12rem] break-words whitespace-normal"
                   >
                     <Tag className="h-3 w-3 flex-shrink-0 mr-1" />
                     {interest}
